@@ -1,0 +1,80 @@
+.Navstyle {
+  margin-top: 0;
+  position: fixed;
+  width: 100%;
+  z-index: 15;
+  background-color: #111;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between; /* ซ้ายขวา */
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.NavLeft, .NavRight {
+  display: flex;
+  align-items: center;
+}
+
+.NavLink {
+  text-decoration: none;
+  color: #FFD700;
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.NavLink:hover {
+  background-color: #FFD700;
+  color: #111;
+  transform: scale(1.05);
+}
+
+/* โปรไฟล์ด้านขวา */
+.Profile {
+  color: #FFD700;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.Profile:hover {
+  background-color: #FFD700;
+  color: #111;
+}
+
+/* Dropdown ของโปรไฟล์ */
+/* Style สำหรับ ProfileDropdown */
+.ProfileDropdown {
+  position: absolute;
+  top: 100%; /* อยู่ใต้ปุ่ม Profile */
+  right: 0;
+  background-color: #333; /* พื้นหลังสีดำเข้ม */
+  min-width: 120px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  border-radius: 4px;
+  padding: 8px 0; /* เพิ่ม padding ด้านบนและล่าง */
+}
+
+/* เพิ่ม Style นี้เพื่อกำหนดสีข้อความของลิงก์ใน ProfileDropdown */
+.ProfileDropdown a,
+.ProfileDropdown .LogoutButton { /* กำหนดให้ div.LogoutButton มี style เหมือนกัน */
+  color: white; /* เปลี่ยนเป็นสีขาว */
+  padding: 8px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+/* Style เมื่อนำเมาส์ไปชี้ */
+.ProfileDropdown a:hover,
+.ProfileDropdown .LogoutButton:hover {
+  background-color: #575757; /* เปลี่ยนสีพื้นหลังเมื่อ hover */
+}

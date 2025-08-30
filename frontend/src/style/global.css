@@ -1,0 +1,93 @@
+/* src/style/global.css */
+
+/* สีพื้นหลังโดยรวมของเว็บไซต์ */
+body {
+    background-color: #333333; /* สีเทาเข้ม */
+}
+
+/* สีส่วนหัว Navbar */
+.ant-layout-header {
+    background-color: #4A4A4A !important;
+    color: black !important;
+}
+
+/* สีพื้นหลัง Footer */
+.ant-layout-footer {
+    background-color: #4A4A4A !important;
+    color: white !important;
+    padding: 24px 50px;
+}
+
+/* สีพื้นหลัง Content และกล่องต่างๆ */
+.ant-layout-content {
+    background-color: #262626;
+    padding: 24px;
+}
+
+/* ปรับสีพื้นหลังของ div ที่ครอบส่วน content หลักให้เป็นสีดำ */
+.ant-layout-content > div {
+    background-color: #262626 !important;
+    color: white !important; /* ข้อความในส่วนนี้เป็นสีขาว */
+}
+
+/* ปรับสีของข้อความและไอคอนให้เป็นสีขาวหรือเทาอ่อน */
+h1, p, span, .ant-breadcrumb a, .ant-breadcrumb-separator, .ant-tabs-tab {
+    color: white !important;
+}
+
+/* ปรับสีพื้นหลังของ Select และ Input */
+.ant-select-selector,
+.ant-input,
+.ant-select-selection-item {
+    background-color: #4a4a4a !important;
+    border: 1px solid #666666 !important;
+    color: white !important;
+}
+
+.ant-select-selection-placeholder,
+.ant-input::placeholder {
+    color: #cccccc !important;
+}
+.ant-select-arrow svg {
+    color: white !important;
+}
+
+/* ปรับสีของ Tabs */
+.ant-tabs-nav-wrap::before {
+    border-bottom: 1px solid #666666;
+}
+.ant-tabs-tab {
+    color: #cccccc !important;
+}
+.ant-tabs-tab-active {
+    color: white !important;
+}
+.ant-tabs-ink-bar {
+    background: #f1d846ff !important;
+}
+
+/* ปรับสีพื้นหลังของ Drawer (เมนู) */
+.ant-drawer-content-wrapper, .ant-drawer-header {
+    background-color: #262626 !important;
+    color: white !important;
+    border-color: #4a4a4a;
+}
+.ant-drawer-close {
+    color: white !important;
+}
+
+/* ปรับสีของเมนูใน Drawer */
+.ant-menu {
+    background-color: #262626 !important;
+    color: white !important;
+}
+.ant-menu-item {
+    color: white !important;
+}
+.ant-menu-item-selected {
+    background-color: #666666 !important;
+    color: black !important;
+}
+.ant-menu-item:hover {
+    color: #f1d846ff !important;
+}

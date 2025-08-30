@@ -1,0 +1,56 @@
+/* === ฟอร์มขาวดำ ขอบดำ === */
+.ant-form-item-label > label {
+  color: #000 !important; /* label สีดำ */
+  font-weight: 500;
+}
+
+.ant-input,
+.ant-input-textarea,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-select-selector {
+  background-color: #fff !important; /* พื้นหลังขาว */
+  color: #000 !important;            /* ตัวอักษรดำ */
+  border: 1px solid #000 !important; /* ขอบดำ */
+  border-radius: 6px;
+}
+
+.ant-input::placeholder,
+.ant-input-textarea::placeholder,
+.ant-select-selection-placeholder {
+  color: rgba(0, 0, 0, 0.5) !important; /* placeholder เทาเข้ม */
+}
+
+/* hover และ focus */
+.ant-input:hover,
+.ant-input:focus,
+.ant-input-number:hover,
+.ant-input-number-focused,
+.ant-select-selector:hover,
+.ant-select-focused .ant-select-selector {
+  border-color: #000 !important; /* hover/focus ขอบดำเหมือนเดิม */
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3) !important; /* เงาอ่อน */
+}
+
+/* ปุ่ม */
+
+.ant-btn-primary {
+  background-color: #d69455 !important; 
+  border: 1px solid #ffffff !important;
+  color: #fff !important;   /* ตัวหนังสือปุ่มสีขาว */
+  font-weight: bold;
+}
+
+
+.ant-btn:hover {
+  background-color: #e0cece !important;
+  color: #d1c8c8 !important;
+  border-color: #000 !important;
+}
+.showCar {
+  top: 0;
+  left: 0;
+  transform: scale(1.1);
+  transform-origin: top left;
+  margin-left: 60;
+}
