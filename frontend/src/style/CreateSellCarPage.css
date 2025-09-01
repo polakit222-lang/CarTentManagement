@@ -1,56 +1,197 @@
-/* === ฟอร์มขาวดำ ขอบดำ === */
-.ant-form-item-label > label {
-  color: #000 !important; /* label สีดำ */
-  font-weight: 500;
+/* โครงสร้างหลัก */
+.sell-page-root {
+  background: #222;
+  min-height: 100vh;
+  padding-bottom: 40px;
 }
 
-.ant-input,
-.ant-input-textarea,
-.ant-input-affix-wrapper,
-.ant-input-number,
-.ant-select-selector {
-  background-color: #fff !important; /* พื้นหลังขาว */
-  color: #000 !important;            /* ตัวอักษรดำ */
-  border: 1px solid #000 !important; /* ขอบดำ */
-  border-radius: 6px;
+.sell-page-root h1 {
+  color: #ffe600;
+  font-weight: bold;
+  margin-bottom: 32px;
+  letter-spacing: 1px;
 }
 
-.ant-input::placeholder,
-.ant-input-textarea::placeholder,
-.ant-select-selection-placeholder {
-  color: rgba(0, 0, 0, 0.5) !important; /* placeholder เทาเข้ม */
+/* ฟอร์ม */
+.sell-page-root .ant-form {
+  background: #181818;
+  border-radius: 18px;
+  padding: 36px 32px 24px 32px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.sell-page-root .ant-form-item-label > label {
+  color: #ffe600 !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+/* ให้ label ฟอร์มชิดซ้าย */
+.sell-page-root .ant-form-item-label {
+  text-align: left !important;
+}
+
+.sell-page-root .ant-form-item {
+  margin-bottom: 22px;
+}
+
+/* input, textarea, number, select wrapper */
+.sell-page-root .ant-input,
+.sell-page-root .ant-input-textarea,
+.sell-page-root .ant-input-affix-wrapper,
+.sell-page-root .ant-input-number,
+.sell-page-root .ant-select-selector {
+  background-color: #111 !important;
+  border: 2px solid #ffe600 !important;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  padding: 8px 14px;
+  box-shadow: 0 2px 8px rgba(34, 34, 34, 0.06);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+/* ✅ ทำให้ฟอนต์ขาวแน่นอน */
+.sell-page-root .ant-input,
+.sell-page-root .ant-input input,
+.sell-page-root .ant-input-number input,
+.sell-page-root .ant-input-textarea textarea,
+.sell-page-root .ant-select-selection-item {
+  color: #fff !important;
+}
+
+/* placeholder สีเทา */
+.sell-page-root .ant-input::placeholder,
+.sell-page-root .ant-input input::placeholder,
+.sell-page-root .ant-input-textarea textarea::placeholder,
+.sell-page-root .ant-input-number input::placeholder,
+.sell-page-root .ant-select-selection-placeholder {
+  color: #888 !important;
+  opacity: 1;
 }
 
 /* hover และ focus */
-.ant-input:hover,
-.ant-input:focus,
-.ant-input-number:hover,
-.ant-input-number-focused,
-.ant-select-selector:hover,
-.ant-select-focused .ant-select-selector {
-  border-color: #000 !important; /* hover/focus ขอบดำเหมือนเดิม */
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3) !important; /* เงาอ่อน */
+.sell-page-root .ant-input:hover,
+.sell-page-root .ant-input:focus,
+.sell-page-root .ant-input-number:hover,
+.sell-page-root .ant-input-number-focused,
+.sell-page-root .ant-select-selector:hover,
+.sell-page-root .ant-select-focused .ant-select-selector {
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 0 3px rgba(255, 230, 0, 0.18) !important;
 }
 
 /* ปุ่ม */
+.sell-page-root .ant-btn-primary {
+  background: linear-gradient(135deg, #ffe600 0%, #ffd700 100%) !important;
+  border: none !important;
+  color: #111 !important;
+  font-weight: bold;
+  border-radius: 12px !important;
+  padding: 10px 36px !important;
+  font-size: 1.08rem;
+  box-shadow: 0 4px 18px rgba(255, 215, 0, 0.25);
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
+  letter-spacing: 1px;
+}
 
-.ant-btn-primary {
-  background-color: #d69455 !important; 
-  border: 1px solid #ffffff !important;
-  color: #fff !important;   /* ตัวหนังสือปุ่มสีขาว */
+.sell-page-root .ant-btn-primary:hover, 
+.sell-page-root .ant-btn-primary:focus {
+  background: linear-gradient(135deg, #fff200 0%, #ffe600 100%) !important;
+  color: #000 !important;
+  box-shadow: 0 6px 24px rgba(255, 230, 0, 0.35);
+  transform: translateY(-2px) scale(1.04);
+}
+
+.sell-page-root .ant-btn:not(.ant-btn-primary) {
+  background: #222 !important;
+  color: #ffe600 !important;
+  border: 1.5px solid #ffe600 !important;
+  border-radius: 12px !important;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.sell-page-root .ant-btn:not(.ant-btn-primary):hover {
+  background: #ffe600 !important;
+  color: #222 !important;
+}
+
+/* ปุ่มเพิ่ม/ลดของ InputNumber */
+.sell-page-root .ant-input-number .ant-input-number-handler-wrap {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  right: 0;
+}
+
+.sell-page-root .ant-input-number-handler-up,
+.sell-page-root .ant-input-number-handler-down {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 50%;
+  min-height: 18px;
+  color: #ffd600;
+  background: #111;
+  border-radius: 0 6px 0 0;
+  border: none;
+  transition: background 0.2s;
+}
+
+.sell-page-root .ant-input-number-handler-down {
+  border-radius: 0 0 6px 0;
+}
+
+.sell-page-root .ant-input-number-handler-up:hover,
+.sell-page-root .ant-input-number-handler-down:hover {
+  background: #ffd600;
+  color: #111;
+}
+
+/* Select dropdown */
+.sell-page-root .ant-select-item-option-selected:not(.ant-select-item-option-disabled),
+.sell-page-root .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: #ffe600 !important;
+  color: #111 !important;
   font-weight: bold;
 }
 
-
-.ant-btn:hover {
-  background-color: #e0cece !important;
-  color: #d1c8c8 !important;
-  border-color: #000 !important;
+.sell-page-root .ant-select-dropdown {
+  background: #222 !important;
+  border-radius: 10px !important;
 }
-.showCar {
+
+.sell-page-root .ant-select-item {
+  color: #fff !important;
+}
+
+.sell-page-root .ant-select-arrow {
+  color: #ffe600 !important;
+}
+
+/* showCar */
+.sell-page-root .showCar {
+  background: #111;
+  border-radius: 18px;
+  margin: 32px 20px;
+  color: #fff;
+  font-size: 1.08rem;
+  font-weight: 500;
   top: 0;
   left: 0;
-  transform: scale(1.1);
+  transform: scale(1.2);
   transform-origin: top left;
-  margin-left: 60;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .sell-page-root .ant-form {
+    padding: 18px 6vw;
+  }
+  .sell-page-root .showCar {
+    padding: 14px 4vw;
+  }
 }

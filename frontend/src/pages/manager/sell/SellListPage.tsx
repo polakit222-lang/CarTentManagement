@@ -90,7 +90,7 @@ const SellListPage = () => {
       </div>
       <div style={{ marginLeft: 280, marginTop: 45 ,width:'100%'}}>
         <div style={{ height: 80, display: 'Flex', alignItems: 'center', position: 'fixed', width: '100%', backgroundColor: '#FFD700', zIndex: 10, justifyContent: 'space-between', padding: 20 }}>
-          <h2>รถที่วางขาย</h2>
+          <h2 style={{color:'black'}}>รถที่วางขาย</h2>
           <Sorter value={sortOption} onChange={setSortOption} />
           <div style={{ marginRight: 300 }}>
             <Link to="/add-sell">

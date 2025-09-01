@@ -1,7 +1,7 @@
 import { useParams,useNavigate } from "react-router-dom";
 import CarGrid from "../../../components/CarGrid";
 import { carList } from "../../../data/carList";
-import "../../../style/CreateSellCarPage.css"
+import "../../../style/CreateSellCarPage.css";
 import { carSellList } from "../../../data/carSellList";
 import {
   Button,
@@ -13,7 +13,7 @@ import {
 const formItemLayout = {
   labelCol: {
     xs: { span: 24 },
-    sm: { span: 6 },
+    sm: { span: 24},
   },
   wrapperCol: {
     xs: { span: 24 },
@@ -67,7 +67,7 @@ function CreateSellCar() {
 
   return (
     <>
-      <div style={{  minHeight: '110vh' }}>
+      <div className="sell-page-root" style={{  minHeight: '110vh' }}>
         <h1 style={{ marginTop: 90, marginLeft: 30 }}>กรอกข้อมูลการขายเพิ่มเติม</h1>
         <div style={{ display: "flex", paddingRight: 10, paddingLeft: 10, width: '100%'}}>
           <div style={{ marginTop: 20 }}>
@@ -101,6 +101,7 @@ function CreateSellCar() {
                   style={{ width: '100%' }}
                   placeholder="กรอกราคาขาย"
                   size="large"
+                  controls={true} // เพิ่มบรรทัดนี้
                   formatter={(value) =>
                     value !== undefined && value !== null
                       ? `฿ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -108,7 +109,7 @@ function CreateSellCar() {
                   }
                   parser={(displayValue) => {
                     const n = Number((displayValue ?? '').replace(/[^\d.-]/g, ''));
-                    return Number.isNaN(n) ? NaN : n; // ต้องคืน number เสมอ
+                    return Number.isNaN(n) ? NaN : n;
                   }}
                   min={0}
                 />
@@ -119,6 +120,7 @@ function CreateSellCar() {
                   style={{ width: '100%' }}
                   placeholder="กรอกส่วนลด"
                   size="large"
+                  controls={true} // เพิ่มบรรทัดนี้
                   formatter={(value) =>
                     value !== undefined && value !== null ? `${value}%` : ''
                   }

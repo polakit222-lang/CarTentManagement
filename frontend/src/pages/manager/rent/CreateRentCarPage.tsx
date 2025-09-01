@@ -9,6 +9,7 @@ import {
   Form,
   Input,
 } from 'antd';
+import "../../../style/CreateRentCar.css";
 
 const formItemLayout = {
   labelCol: {
@@ -56,7 +57,7 @@ function CreateRentCarPage() {
 
   return (
     <>
-      <div style={{  minHeight: '110vh' }}>
+      <div className="rent-page-root" style={{  minHeight: '110vh' }}>
         <h1 style={{ marginTop: 90, marginLeft: 30 }}>กรอกข้อมูลการเช่าเพิ่มเติม</h1>
         <div style={{ display: "flex", paddingRight: 10, paddingLeft: 10, width: '100%' }}>
           <div style={{ marginTop: 20 }}>

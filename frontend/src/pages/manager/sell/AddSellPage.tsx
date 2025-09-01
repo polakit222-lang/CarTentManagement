@@ -92,8 +92,8 @@ const AddSellPage = () => {
       </div>
       <div style={{ marginLeft: 280, marginTop: 45 ,width:'100%'}}>
         <div style={{ height: 80, display: 'Flex', alignItems: 'center', position: 'fixed', width: '100%', backgroundColor: '#FFD700', zIndex: 10, padding: 20 }}>
-          <h2>เลือกรถยนต์ที่จะวางขาย</h2>
-          <div style={{ marginLeft: 600 }}>
+          <h2 style={{color:'black'}}>เลือกรถยนต์ที่จะวางขาย</h2>
+          <div style={{ marginRight: 300, marginLeft: 'auto' }}>
             <Sorter value={sortOption} onChange={setSortOption} />
           </div>
         </div>
