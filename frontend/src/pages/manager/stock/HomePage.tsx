@@ -80,14 +80,14 @@ const HomePage: React.FC = () => {
               <h2>รถทั้งหมดในเตนท์</h2>
               <Sorter value={sortOption} onChange={setSortOption} />
               <div style={{ marginRight: 300 }}>
-                <Link to="/homepage/add">
+                <Link to="/add-car">
                   <Button type="primary">+ ลงทะเบียนรถใหม่</Button>
                 </Link>
               </div>
             </div>
           </main>
           <div style={{ paddingTop: 80, paddingLeft: 30}}>
-            <CarGrid cars={filteredCars} sellBasePath="/sell/add" rentBasePath="/rent/add" addBasePath="/homepage/add" editBasePath="/homepage/edit" />
+            <CarGrid cars={filteredCars} sellBasePath="/add-sell" rentBasePath="/rent-add" addBasePath="/homepage/add" editBasePath="/homepage/edit" />
           </div>
         </div>
       </div>

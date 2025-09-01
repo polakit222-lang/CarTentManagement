@@ -34,10 +34,10 @@ const Navbar: React.FC = () => {
       menu.push(
         { key: 'payment', label: 'การชำระเงิน', path: '/payment' },
         { key: 'buy-insurance', label: 'ซื้อประกัน', path: '/buy-insurance' },
-        { key: 'inspection', label: 'นัดตรวจสภาพรถ', path: '/inspection' },
+        { key: 'inspection', label: 'นัดตรวจสภาพรถ', path: '/inspection-car' },
         { key: 'pickup-car', label: 'นัดรับ-ส่งรถ', path: '/pickup-car' },
         { type: 'divider' },
-        { key: 'profile', label: 'ข้อมูลของฉัน', icon: <UserOutlined />, path: '/profile' },
+        { key: 'profile', label: 'ข้อมูลของฉัน', icon: <UserOutlined />, path: '/Cus-profile' },
         { key: 'logout', label: 'ออกจากระบบ', icon: <LogoutOutlined /> }
       );
     } else {

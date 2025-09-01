@@ -93,7 +93,7 @@ const SellListPage = () => {
           <h2>รถที่วางขาย</h2>
           <Sorter value={sortOption} onChange={setSortOption} />
           <div style={{ marginRight: 300 }}>
-            <Link to="/sell/add">
+            <Link to="/add-sell">
               <Button type="primary">+ เพิ่มรายการขาย</Button>
             </Link>
           </div>
@@ -101,8 +101,8 @@ const SellListPage = () => {
         <div style={{paddingTop:80,paddingLeft:30}}>
         <CarGrid
           cars={filteredCars}
-          editBasePath="/sell/edit"
-          addBasePath="/sell/add"
+          editBasePath="/edit-sell"
+          addBasePath="/add-sell"
           />
         </div>
       </div>

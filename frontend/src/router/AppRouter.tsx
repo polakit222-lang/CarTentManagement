@@ -32,6 +32,7 @@ import AddSellPage from '../pages/manager/sell/AddSellPage';
 import CreateSellCarPage from '../pages/manager/sell/CreateSellCarPage';
 import EditSellPage from '../pages/manager/sell/EditSellPage';
 import SellListPage from '../pages/manager/sell/SellListPage';
+import ManagerInsurancePage from '../pages/manager/insurance/ManagerInsurance'
 
 //Manager Blank Page
 import TentSummaryPage from '../pages/manager/summary/TentSummaryPage';
@@ -77,17 +78,19 @@ const AppRouter: React.FC = () => {
                     <Route path="/edit-car/:id" element={<EditCarTentPage />} />
                     <Route path="/rent" element={<RentListPage />} />
                     <Route path="/edit-rent/:id" element={<EditRentPage />} />
-                    <Route path="/create-rent/:id" element={<CreateRentCarPage />} />
+                    <Route path="/add-rent/:id" element={<CreateRentCarPage />} />
                     <Route path="/add-rent" element={<AddRentPage />} />
                     <Route path="/sell" element={<SellListPage />} />
                     <Route path="/edit-sell/:id" element={<EditSellPage />} />
-                    <Route path="/create-sell/:id" element={<CreateSellCarPage />} />
+                    <Route path="/add-sell/:id" element={<CreateSellCarPage />} />
                     <Route path="/add-sell" element={<AddSellPage />} />
 
-                    {/* blank page */}
+                    {/* blank page  */}
                     <Route path="/tent-summary" element={<TentSummaryPage />} />
                     <Route path="/manage-employee" element={<ManageEmployeePage />} />
                     <Route path="/manager-profile" element={<MaProfilePage />} />
+                    <Route path="/manager-insurance" element={<ManagerInsurancePage />} />
+                    
 
                 </Route>
             </Route>
@@ -100,7 +103,7 @@ const AppRouter: React.FC = () => {
                     <Route path="/AppointmentAll" element={<AppointmentAll />} />
                     <Route path="/Inspection" element={<InspectionPage />} />
                     <Route path="/Summary" element={<SummaryPage />} />
-                    <Route path="/Profile" element={<EmpProfilePage />} />
+                    <Route path="/Emp-Profile" element={<EmpProfilePage />} />
 
 
                 </Route>
@@ -112,10 +115,10 @@ const AppRouter: React.FC = () => {
                 <Route path="/buycar" element={<BuyCar />} />
                 <Route path="/rentcar" element={<RentCarPage />} />
                 <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
-                    <Route path="/profile" element={<CusProfilePage />} />
+                    <Route path="/Cus-profile" element={<CusProfilePage />} />
                     <Route path="/payment" element={<PaymentPage />} />
                     <Route path="/buy-insurance" element={<BuyInsurancePage />} />
-                    <Route path="/inspection" element={<InspectionCarPage />} />
+                    <Route path="/inspection-car" element={<InspectionCarPage />} />
                     <Route path="/inspection-create" element={<InspectionCreatePage />} />
                     <Route path="/pickup-car" element={<PickupCarPage />} />
                     <Route path="/pickup-car/create" element={<PickupCarCreatePage />} />

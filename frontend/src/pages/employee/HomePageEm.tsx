@@ -54,7 +54,7 @@ const HomePageEm: React.FC = () => {
     );
 
     return (
-        <div style={{ padding: '24px', background: '#f0f2f5' }}>
+        <div style={{ padding: '24px', background: '#f0f2f5' ,  minHeight: '100vh'}}>
             <Title style={{ color: '#FFD700', marginTop: '50px' }} level={2}>แดชบอร์ดพนักงาน</Title>
             <Text>ยินดีต้อนรับ, {user?.name}!</Text>
 

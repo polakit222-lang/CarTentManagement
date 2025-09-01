@@ -105,7 +105,7 @@ const RentListPage = () => {
           <h2>รถยนต์ที่กำลังให้เช่า</h2>
           <Sorter value={sortOption} onChange={setSortOption} />
           <div style={{ marginRight: 300 }}>
-            <Link to="/rent/add">
+            <Link to="/add-rent">
               <Button type="primary">+ เพิ่มรายการให้เช่า</Button>
             </Link>
           </div>
@@ -113,8 +113,8 @@ const RentListPage = () => {
         <div style={{ paddingTop: 80, paddingLeft: 30 }}>
           <CarGrid
             cars={filteredCars}
-            editBasePath="/rent/edit"
-            addBasePath="/rent/add"
+            editBasePath="/edit-rent"
+            addBasePath="/add-rent"
           />
         </div>
       </div>

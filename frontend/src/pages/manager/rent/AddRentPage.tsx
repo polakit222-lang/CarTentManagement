@@ -113,7 +113,7 @@ const AddRentPage = () => {
         </div>
         <div style={{ paddingTop: 80, paddingLeft: 30 }}>
           {/* ======================= จุดที่แก้ไข ======================= */}
-          <CarGrid cars={filteredCars} rentBasePath="/rent/add" />
+          <CarGrid cars={filteredCars} rentBasePath="/add-rent" />
           {/* ========================================================== */}
         </div>
       </div>

@@ -100,7 +100,7 @@ const AddSellPage = () => {
         <div style={{ paddingTop: 80, paddingLeft: 30 }}>
           <CarGrid
             cars={filteredCars}
-            sellBasePath="/sell/add"
+            sellBasePath="/add-sell"
           />
         </div>
       </div>

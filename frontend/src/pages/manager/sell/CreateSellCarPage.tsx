@@ -67,7 +67,7 @@ function CreateSellCar() {
 
   return (
     <>
-      <div >
+      <div style={{  minHeight: '110vh' }}>
         <h1 style={{ marginTop: 90, marginLeft: 30 }}>กรอกข้อมูลการขายเพิ่มเติม</h1>
         <div style={{ display: "flex", paddingRight: 10, paddingLeft: 10, width: '100%'}}>
           <div style={{ marginTop: 20 }}>

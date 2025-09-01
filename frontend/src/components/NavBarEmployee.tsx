@@ -27,7 +27,7 @@ const NavBarEmployee: React.FC = () => {
         <Link to="/AppointmentAll" className="NavLink">🏷️ รายการนัดหมาย</Link>
         <Link to="/Inspection" className="NavLink">📆 รายการตรวจสภาพรถยนต์</Link>
         <Link to="/Summary" className="NavLink">📈 สรุปยอดขาย</Link>
-        <Link to="/Profile" className="NavLink">👨🏻‍💼 ข้อมูลของฉัน</Link>
+        <Link to="/Emp-Profile" className="NavLink">👨🏻‍💼 ข้อมูลของฉัน</Link>
       </div>
 
       <div className="NavRight">
