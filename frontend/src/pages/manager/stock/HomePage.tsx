@@ -77,7 +77,7 @@ const HomePage: React.FC = () => {
         <div style={{ marginLeft: 280, marginTop: 45 ,width:'100%'}}>
           <main className="mainWithSidebar">
             <div style={{ height: 80, display: 'Flex', alignItems: 'center', position: 'fixed', width: '100%', backgroundColor: '#FFD700', zIndex: 10, justifyContent: 'space-between', padding: 20 }}>
-              <h2>รถทั้งหมดในเตนท์</h2>
+              <h2 style={{color:'black'}}>รถทั้งหมดในเตนท์</h2>
               <Sorter value={sortOption} onChange={setSortOption} />
               <div style={{ marginRight: 300 }}>
                 <Link to="/add-car">
@@ -87,7 +87,7 @@ const HomePage: React.FC = () => {
             </div>
           </main>
           <div style={{ paddingTop: 80, paddingLeft: 30}}>
-            <CarGrid cars={filteredCars} sellBasePath="/add-sell" rentBasePath="/rent-add" addBasePath="/homepage/add" editBasePath="/homepage/edit" />
+            <CarGrid cars={filteredCars} sellBasePath="/add-sell" rentBasePath="/add-rent" addBasePath="/homepage/add" editBasePath="/homepage/edit" />
           </div>
         </div>
       </div>

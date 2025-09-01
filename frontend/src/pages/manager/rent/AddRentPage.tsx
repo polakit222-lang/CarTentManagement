@@ -106,8 +106,8 @@ const AddRentPage = () => {
             padding: 20,
           }}
         >
-          <h2>เลือกรถยนต์ที่จะให้เช่า</h2>
-          <div style={{ marginLeft: 600 }}>
+          <h2 style={{color:'black'}}>เลือกรถยนต์ที่จะให้เช่า</h2>
+          <div style={{ marginRight: 300, marginLeft: 'auto'  }}>
             <Sorter value={sortOption} onChange={setSortOption} />
           </div>
         </div>

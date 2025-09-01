@@ -3,6 +3,7 @@ import  { useState } from "react";
 import { DatePicker, InputNumber, Button, Space, List } from "antd";
 import type { RangePickerProps } from "antd/es/date-picker";
 import dayjs from "dayjs";
+import "../style/CreateRentCar.css";
 
 const { RangePicker } = DatePicker;
 
@@ -42,7 +43,7 @@ export default function RentDateRange({ value = [], onChange }: Props) {
   };
 
   return (
-    <div style={{ maxWidth: 500 }}>
+    <div className="rent-page-root" style={{ maxWidth: 500 }}>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <RangePicker
           value={dates as RangePickerProps["value"]}
@@ -78,8 +79,7 @@ export default function RentDateRange({ value = [], onChange }: Props) {
                     type="link"
                     danger
                     onClick={() => removePeriod(item.id)}
-                  >
-                    ลบ
+                  >ลบ
                   </Button>,
                 ]}
               >

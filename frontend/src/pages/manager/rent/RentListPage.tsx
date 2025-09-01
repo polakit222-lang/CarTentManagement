@@ -102,7 +102,7 @@ const RentListPage = () => {
             padding: 20,
           }}
         >
-          <h2>รถยนต์ที่กำลังให้เช่า</h2>
+          <h2 style={{color:'black'}}>รถยนต์ที่กำลังให้เช่า</h2>
           <Sorter value={sortOption} onChange={setSortOption} />
           <div style={{ marginRight: 300 }}>
             <Link to="/add-rent">
