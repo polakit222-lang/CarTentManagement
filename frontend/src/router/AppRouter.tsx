@@ -45,7 +45,7 @@ import AppointmentDetailsPage from '../pages/employee/pickup-delivery/Appointmen
 import AppointmentAll from '../pages/employee/pickup-delivery/AppointmentAll';
 import InspectionPage from '../pages/employee/inspection/InspectionPage';
 import SummaryPage from '../pages/employee/sell-summary/SummaryPage'
-import EmpProfilePage from '../pages/employee/profile/ProfilePage'
+import EmployeeDashboard from '../pages/employee/profile/EmployeeDashboard'
 // --- vvvvv --- THIS IS THE FIX --- vvvvv ---
 interface ProtectedRouteProps {
     allowedRoles: string[];
@@ -100,7 +100,7 @@ const AppRouter: React.FC = () => {
                     <Route path="/AppointmentAll" element={<AppointmentAll />} />
                     <Route path="/Inspection" element={<InspectionPage />} />
                     <Route path="/Summary" element={<SummaryPage />} />
-                    <Route path="/Profile" element={<EmpProfilePage />} />
+                    <Route path="/Profile" element={<EmployeeDashboard />} />
 
 
                 </Route>
