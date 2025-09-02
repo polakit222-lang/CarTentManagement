@@ -12,7 +12,7 @@ const EditCarTentPage = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSubmit = (data: any) => {
     console.log("แก้ไขรถในเตนท์:", data);
-    navigate('/homepage');
+    navigate('/home');
   };
 
   return (

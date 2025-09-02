@@ -99,8 +99,8 @@ const HomePage: React.FC = () => {
             <CarGrid cars={filteredCars}
               sellBasePath="/add-sell"
               rentBasePath="/add-rent"
-              addBasePath="/homepage/add"
-              editBasePath="/homepage/edit" 
+              addBasePath="/add-car"
+              editBasePath="/edit-car" 
               detailBasePath="/add-sell"
               />
           </div>
