@@ -10,6 +10,7 @@ import EmployeeLayout from '../layout/EmployeeLayout';
 
 // Pages
 import LoginPage from '../pages/login/LoginPage';
+import RegisterPage from '../pages/customer/register/RegisterPage';
 import BuyCar from '../pages/customer/buycar/BuyCar';
 import RentCarPage from '../pages/customer/rentcar/RentCarPage';
 import CusProfilePage from '../pages/customer/profile/ProfilePage';
@@ -69,6 +70,7 @@ const AppRouter: React.FC = () => {
     return (
         <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
             {/* --- Manager Routes --- */}
             <Route element={<ProtectedRoute allowedRoles={['manager']} />}>

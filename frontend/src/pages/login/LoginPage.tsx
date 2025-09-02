@@ -15,7 +15,7 @@ import type { Customer, Manager, Employee } from '../../data/users';
 // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
 const { Content } = Layout;
-const { Title, Text } = Typography;
+const { Title, Text, Link } = Typography;
 
 interface LoginFormValues {
   email?: string;
@@ -155,6 +155,12 @@ const LoginPage: React.FC = () => {
                 <Text style={{ color: 'white' }}>ลงชื่อเข้าใช้สำหรับลูกค้า, พนักงาน และผู้จัดการ</Text>
               </div>
               <Tabs defaultActiveKey="1" items={items} centered />
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <Text style={{ color: 'white' }}>ยังไม่มีบัญชี? </Text>
+                <Link onClick={() => navigate('/register')} style={{ color: '#1677ff' }}>
+                  สมัครสมาชิกที่นี่
+                </Link>
+              </div>
             </Card>
           </Col>
         </Row>

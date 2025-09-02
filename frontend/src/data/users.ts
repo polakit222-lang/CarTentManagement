@@ -41,3 +41,5 @@ export const mockEmployees: Employee[] = [
   { id: 202, name: 'สมศรี', employeeId: 'EMP02', password: 'emppassword', role: 'employee' },
   { id: 203, name: 'John Doe', employeeId: 'EMP03', password: 'emppassword', role: 'employee' },
 ];
+
+export type User = Customer | Manager | Employee;

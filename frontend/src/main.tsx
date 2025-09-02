@@ -4,7 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import  AuthProvider from './contexts/AuthProvider.tsx';
+import { AuthProvider } from './contexts/AuthProvider.tsx';
 // เราจะใช้ BrowserRouter จากที่นี่เป็นหลัก
 import { BrowserRouter } from 'react-router-dom';
 
