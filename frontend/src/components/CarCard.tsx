@@ -9,6 +9,7 @@ interface CarCardProps {
   deletePath?: string;
   rentPath?: string;
   sellPath?: string;
+  detailPath?: string; // 👈 เพิ่ม path สำหรับปุ่มรายละเอียด
 }
 
 const CarCard: React.FC<CarCardProps> = ({
@@ -18,26 +19,37 @@ const CarCard: React.FC<CarCardProps> = ({
   deletePath,
   rentPath,
   sellPath,
+  detailPath, // 👈 รับ prop
 }) => {
   const [currentPicIndex, setCurrentPicIndex] = useState(0);
 
   const handleNext = () => {
-    setCurrentPicIndex((prev) => 
+    setCurrentPicIndex((prev) =>
       prev === car.pic.length - 1 ? 0 : prev + 1
     );
   };
 
   const handlePrev = () => {
-    setCurrentPicIndex((prev) => 
+    setCurrentPicIndex((prev) =>
       prev === 0 ? car.pic.length - 1 : prev - 1
     );
   };
 
+  const currentYear = new Date().getFullYear();
+  const usageAge = currentYear - (car.yearUsed ?? currentYear);
+
   return (
-    <div style={{ border: '1px solid #ccc', borderRadius: 8, padding: 10 ,width:450 }}>
+    <div
+      style={{
+        border: '1px solid #ccc',
+        borderRadius: 8,
+        padding: 10,
+        width: 450,
+      }}
+    >
       {/* รูปเลื่อน */}
       {car.pic.length > 0 && (
-        <div style={{ position: 'relative', textAlign: 'center'}}>
+        <div style={{ position: 'relative', textAlign: 'center' }}>
           <img
             src={car.pic[currentPicIndex]}
             alt={`${car.brand} ${car.model}`}
@@ -83,17 +95,45 @@ const CarCard: React.FC<CarCardProps> = ({
         </div>
       )}
 
-      <h3>{car.brand} {car.model} {car.subModel} ปี {car.yearManufactured}</h3>
+      <h3>
+        {car.brand} {car.model} {car.subModel} ปี {car.yearManufactured}
+      </h3>
       <p>ราคาซื้อ: {car.price.toLocaleString()} บาท</p>
       <p>สภาพ: {car.condition}</p>
       <p>เลขไมล์: {car.mileage.toLocaleString()} กิโลเมตร</p>
-      <p>อายุการใช้งาน: {car.yearUsed} ปี</p>
-      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-        {editPath && <Link to={editPath}><button>แก้ไข</button></Link>}
-        {selectPath && <Link to={selectPath}><button>เลือก</button></Link>}
-        {deletePath && <Link to={deletePath}><button>ลบ</button></Link>}
-        {rentPath && <Link to={rentPath}><button>ให้เช่า</button></Link>}
-        {sellPath && <Link to={sellPath}><button>ขาย</button></Link>}
+      <p>อายุการใช้งาน: {usageAge} ปี</p>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+        {editPath && (
+          <Link to={editPath}>
+            <button>แก้ไข</button>
+          </Link>
+        )}
+        {selectPath && (
+          <Link to={selectPath}>
+            <button>เลือก</button>
+          </Link>
+        )}
+        {deletePath && (
+          <Link to={deletePath}>
+            <button>ลบ</button>
+          </Link>
+        )}
+        {rentPath && (
+          <Link to={rentPath}>
+            <button>ให้เช่า</button>
+          </Link>
+        )}
+        {sellPath && (
+          <Link to={sellPath}>
+            <button>ขาย</button>
+          </Link>
+        )}
+        {detailPath && (
+          <Link to={detailPath}>
+            <button>แสดงรายละเอียด</button>
+          </Link>
+        )}
       </div>
     </div>
   );

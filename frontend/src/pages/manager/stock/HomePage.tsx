@@ -37,6 +37,16 @@ const HomePage: React.FC = () => {
         if (filters.conditions && filters.conditions.length > 0) {
           if (!filters.conditions.includes(c.condition ?? '')) return false;
         }
+        if (filters.status && filters.status.length > 0) {
+          // สมมติว่า c.status เก็บเป็น string เช่น 'selling' | 'renting' | 'pending'
+          const carStatus = Array.isArray(c.status) ? c.status[0] : undefined; // ✅ ดึงค่า index ที่ 1
+          if (!filters.status.includes(carStatus ?? '')) return false;
+        }
+        if (filters.usageRange) {
+          const currentYear = new Date().getFullYear();
+          const usageAge = currentYear - (c.yearUsed ?? currentYear);
+          if (usageAge < filters.usageRange[0] || usageAge > filters.usageRange[1]) return false;
+        }
         return true;
       });
     }
@@ -61,23 +71,22 @@ const HomePage: React.FC = () => {
     return result;
   }, [filters, sortOption]);
 
-
   return (
     <>
-
       <div style={{ display: 'Flex', width: '100%', marginTop: 5, padding: 10 }}>
         <div style={{ zIndex: 2 }}>
           <Filter
             carList={carList}
             width={300}
+            // enabledFilters={['brand', 'model', 'price', 'year', 'status', 'usage']} // ✅ เลือกได้ว่าจะให้มี filter อะไรบ้าง
             onApply={(v) => setFilters(v)}
             onClear={() => setFilters(null)}
           />
         </div>
-        <div style={{ marginLeft: 280, marginTop: 45 ,width:'100%'}}>
+        <div style={{ marginLeft: 280, marginTop: 45, width: '100%' }}>
           <main className="mainWithSidebar">
             <div style={{ height: 80, display: 'Flex', alignItems: 'center', position: 'fixed', width: '100%', backgroundColor: '#FFD700', zIndex: 10, justifyContent: 'space-between', padding: 20 }}>
-              <h2 style={{color:'black'}}>รถทั้งหมดในเตนท์</h2>
+              <h2 style={{ color: 'black' }}>รถทั้งหมดในเตนท์</h2>
               <Sorter value={sortOption} onChange={setSortOption} />
               <div style={{ marginRight: 300 }}>
                 <Link to="/add-car">
@@ -86,8 +95,14 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           </main>
-          <div style={{ paddingTop: 80, paddingLeft: 30}}>
-            <CarGrid cars={filteredCars} sellBasePath="/add-sell" rentBasePath="/add-rent" addBasePath="/homepage/add" editBasePath="/homepage/edit" />
+          <div style={{ paddingTop: 80, paddingLeft: 30 }}>
+            <CarGrid cars={filteredCars}
+              sellBasePath="/add-sell"
+              rentBasePath="/add-rent"
+              addBasePath="/homepage/add"
+              editBasePath="/homepage/edit" 
+              detailBasePath="/add-sell"
+              />
           </div>
         </div>
       </div>
