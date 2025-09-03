@@ -1,36 +1,37 @@
 // src/contexts/AuthProvider.tsx
 import React, { useState } from 'react';
-import type { ReactNode } from 'react'; // <-- แก้ไขตรงนี้
-import { AuthContext } from './AuthContext';
-import type { User } from './AuthContext'; // <-- แก้ไขตรงนี้
+import type { ReactNode } from 'react'; // แก้ไขการ import 'ReactNode'
+import type { User } from '../data/users';
+import { AuthContext } from './AuthContext'; // import context จากไฟล์ใหม่
 
 interface AuthProviderProps {
-  children: ReactNode;
+    children: ReactNode;
 }
 
-const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+    const [user, setUser] = useState<User | null>(() => {
+        try {
+            const storedUser = localStorage.getItem('user');
+            return storedUser ? JSON.parse(storedUser) : null;
+        } catch (error) {
+            console.error("Failed to parse user from localStorage", error);
+            return null;
+        }
+    });
 
-  const login = (userData: User) => {
-    setUser(userData);
-  };
+    const login = (userData: User) => {
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+    };
 
-  const logout = () => {
-    setUser(null);
-  };
+    const logout = () => {
+        localStorage.removeItem('user');
+        setUser(null);
+    };
 
-  const authContextValue = {
-    isAuthenticated: !!user,
-    user,
-    login,
-    logout,
-  };
-
-  return (
-    <AuthContext.Provider value={authContextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={{ user, login, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
-
-export default AuthProvider;

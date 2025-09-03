@@ -1,0 +1,187 @@
+.rent-page-root body {
+  background: #222 !important;
+}
+
+.rent-page-root h1 {
+  color: #ffe600;
+  font-weight: bold;
+  margin-bottom: 32px;
+  letter-spacing: 1px;
+}
+
+.rent-page-root .ant-form {
+  background: #181818;
+  border-radius: 18px;
+  padding: 36px 32px 24px 32px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.rent-page-root .ant-form-item-label > label {
+  color: #ffe600 !important;
+  font-weight: 600;
+  font-size: 1.08rem;
+  letter-spacing: 0.5px;
+}
+
+.rent-page-root .ant-form-item {
+  margin-bottom: 22px;
+}
+
+.rent-page-root .ant-input,
+.rent-page-root .ant-input-textarea,
+.rent-page-root .ant-input-affix-wrapper {
+  background-color: #000000 !important;
+  color: #dddddd !important;
+  border: 2px solid #ffe600 !important;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  padding: 8px 14px;
+  box-shadow: 0 2px 8px rgba(34, 34, 34, 0.06);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.rent-page-root .ant-input::placeholder,
+.rent-page-root .ant-input-textarea::placeholder {
+  color: #888 !important;
+  opacity: 1;
+}
+
+.rent-page-root .ant-input:hover,
+.rent-page-root .ant-input:focus {
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 0 3px rgba(255, 230, 0, 0.18) !important;
+}
+
+.rent-page-root .ant-btn-primary {
+  background: linear-gradient(135deg, #ffe600 0%, #ffd700 100%) !important;
+  border: none !important;
+  color: #111 !important;
+  font-weight: bold;
+  border-radius: 12px !important;
+  padding: 10px 36px !important;
+  font-size: 1.08rem;
+  box-shadow: 0 4px 18px rgba(255, 215, 0, 0.25);
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
+  letter-spacing: 1px;
+}
+
+.rent-page-root .ant-btn-primary:hover, .ant-btn-primary:focus {
+  background: linear-gradient(135deg, #fff200 0%, #ffe600 100%) !important;
+  color: #000 !important;
+  box-shadow: 0 6px 24px rgba(255, 230, 0, 0.35);
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* --- ปรับ RentDateRange ให้เข้ากับพื้นหลังดำ --- */
+.rent-page-root .ant-picker,
+.rent-page-root .ant-picker-range {
+  background: #080808 !important;
+  color: #030303 !important;
+  border: 2px solid #ffe600 !important;
+  border-radius: 8px;
+}
+
+.rent-page-root .ant-picker-range ::placeholder {
+  color: #888 !important;
+  opacity: 1;
+}
+.rent-page-root .ant-picker-input > input {
+  background: transparent !important;
+  color: #ffffff !important;
+  font-weight: bold;
+}
+
+
+
+.rent-page-root .ant-input-number {
+  background: #000000 !important;
+  color: #ffe600 !important;
+  border: 2px solid #ffe600 !important;
+  border-radius: 8px;
+}
+
+.rent-page-root .ant-input-number-input {
+  background: transparent !important;
+  color: #ffffff !important;
+  font-weight: bold;
+}
+
+.rent-page-root .ant-input-number-group-addon {
+  background: #222 !important;
+  color: #ffe600 !important;
+  border: 2px solid #ffe600  !important;
+}
+
+.rent-page-root .ant-btn-dashed {
+  background: #222 !important;
+  color: #1f1f1f !important;
+  border: 2px dashed #ffe600 !important;
+  font-weight: bold;
+ 
+}
+
+.rent-page-root .ant-btn-dashed:hover {
+  background: #ffe600 !important;
+  color: #222 !important;
+  border-color: #ffe600 !important;
+}
+ 
+.rent-page-root .ant-list {
+  background: #181818 !important;
+  border:solid #ffe600 !important;
+ 
+}
+
+.rent-page-root .ant-list-item {
+  background: transparent !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid #ffe600 !important;
+  padding: 15px 15px !important;
+  align-items: center;
+}
+
+.rent-page-root .ant-list-item:last-child {
+  border-bottom: none !important;
+}
+
+.rent-page-root .ant-btn-link {
+  color: #ff4d4f !important;
+  font-weight: bold;
+  margin-top: 0px;
+ 
+}
+
+.rent-page-root .ant-btn-link:hover {
+  color: #fff !important;
+  background: #ff4d4f !important;
+}
+
+/* Scrollbar ใน list */
+.rent-page-root .ant-list {
+  scrollbar-width: thin;
+  scrollbar-color: #ffe600 #222;
+}
+.rent-page-root .ant-list::-webkit-scrollbar {
+  width: 7px;
+}
+.rent-page-root .ant-list::-webkit-scrollbar-thumb {
+  background: #ffe600;
+  border-radius: 8px;
+}
+.rent-page-root .ant-list::-webkit-scrollbar-track {
+  background: #222;
+}
+
+.rent-page-root .showCar {
+  background: #111;
+  margin: 32px 0;
+  color: #ffffff;
+  font-size: 1.08rem;
+  font-weight: 500;
+  top: 0;
+  left: 0;
+  transform: scale(1.2);
+  transform-origin: top left;
+}

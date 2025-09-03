@@ -33,7 +33,7 @@ export const mockCustomers: Customer[] = [
 ];
 
 export const mockManagers: Manager[] = [
-  { id: 101, name: 'Manager Mike', ManagerId: 'MGR01', password: 'mgrpassword', role: 'manager' },
+  { id: 101, name: 'Manager Mike', ManagerId: 'MGR01', password: '1234567', role: 'manager' },
 ];
 
 export const mockEmployees: Employee[] = [
@@ -41,3 +41,5 @@ export const mockEmployees: Employee[] = [
   { id: 202, name: 'สมศรี', employeeId: 'EMP02', password: 'emppassword', role: 'employee' },
   { id: 203, name: 'John Doe', employeeId: 'EMP03', password: 'emppassword', role: 'employee' },
 ];
+
+export type User = Customer | Manager | Employee;

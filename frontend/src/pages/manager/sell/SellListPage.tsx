@@ -27,21 +27,28 @@ const SellListPage = () => {
         if (filters.model && c.model !== filters.model) return false;
         if (filters.priceRange) {
           const p = c.price ?? 0;
-          if (p < filters.priceRange[0] || p > filters.priceRange[1])
-            return false;
+          if (p < filters.priceRange[0] || p > filters.priceRange[1]) return false;
         }
         if (filters.yearRange) {
           const y = c.yearManufactured ?? 0;
-          if (y < filters.yearRange[0] || y > filters.yearRange[1])
-            return false;
+          if (y < filters.yearRange[0] || y > filters.yearRange[1]) return false;
         }
         if (filters.mileageMax !== null && filters.mileageMax !== undefined) {
-          if ((c.mileage ?? 0) > (filters.mileageMax ?? Number.MAX_SAFE_INTEGER))
-            return false;
+          if ((c.mileage ?? 0) > (filters.mileageMax ?? Number.MAX_SAFE_INTEGER)) return false;
         }
         if (filters.isAvailable && !c.status?.includes('available')) return false;
         if (filters.conditions && filters.conditions.length > 0) {
           if (!filters.conditions.includes(c.condition ?? '')) return false;
+        }
+        if (filters.status && filters.status.length > 0) {
+          // สมมติว่า c.status เก็บเป็น string เช่น 'selling' | 'renting' | 'pending'
+          const carStatus = Array.isArray(c.status) ? c.status[0] : undefined; // ✅ ดึงค่า index ที่ 1
+          if (!filters.status.includes(carStatus ?? '')) return false;
+        }
+        if (filters.usageRange) {
+          const currentYear = new Date().getFullYear();
+          const usageAge = currentYear - (c.yearUsed ?? currentYear);
+          if (usageAge < filters.usageRange[0] || usageAge > filters.usageRange[1]) return false;
         }
         return true;
       });
@@ -90,7 +97,7 @@ const SellListPage = () => {
       </div>
       <div style={{ marginLeft: 280, marginTop: 45 ,width:'100%'}}>
         <div style={{ height: 80, display: 'Flex', alignItems: 'center', position: 'fixed', width: '100%', backgroundColor: '#FFD700', zIndex: 10, justifyContent: 'space-between', padding: 20 }}>
-          <h2>รถที่วางขาย</h2>
+          <h2 style={{color:'black'}}>รถที่วางขาย</h2>
           <Sorter value={sortOption} onChange={setSortOption} />
           <div style={{ marginRight: 300 }}>
             <Link to="/add-sell">

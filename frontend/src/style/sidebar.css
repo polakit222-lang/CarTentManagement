@@ -24,8 +24,6 @@
   font-family: "Kanit", "Sarabun", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-
-
 /* header */
 .sidebar-header {
   
@@ -109,7 +107,7 @@
 }
 
 /* Checkbox text สีอ่อน */
-.ant-checkbox-wrapper, .ant-checkbox + span {
+.ant-checkbox-wrapper, .ant-checkbox + span{
   color: var(--text-light);
 }
 
