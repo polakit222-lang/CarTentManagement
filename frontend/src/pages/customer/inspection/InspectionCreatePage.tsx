@@ -44,6 +44,8 @@ const InspectionCreatePage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const editingId = searchParams.get('id');
+    // --- บรรทัดที่เพิ่มเข้ามา ---
+    const [bookedTimes, setBookedTimes] = useState<string[]>([]);
 
     // Form state
     const [firstName, setFirstName] = useState('');
@@ -66,7 +68,31 @@ const InspectionCreatePage: React.FC = () => {
             setIsSaveDisabled(false);
         }
     }, [firstName, lastName, contractNumber, selectedDate, selectedTime, selectedSystems]);
+    // Effect to check for booked times on the selected date
+    useEffect(() => {
+        if (selectedDate) {
+            const storedBookings: InspectionBooking[] = JSON.parse(localStorage.getItem('inspectionBookings') || '[]');
+            const formattedDate = selectedDate.locale('th').format('DD MMMM YYYY');
 
+            // --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
+            // ดึงเวลาการจองทั้งหมดในวันที่เลือก
+            const allBookedTimes = storedBookings
+                .filter(booking => booking.appointmentDate === formattedDate)
+                .map(booking => booking.appointmentTime.split(' ')[0]);
+
+            // นับจำนวนการจองในแต่ละช่วงเวลา
+            const timeCounts = allBookedTimes.reduce((acc, time) => {
+                acc[time] = (acc[time] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            // กรองเฉพาะเวลาที่มีการจองตั้งแต่ 3 ครั้งขึ้นไป
+            const fullyBookedTimes = Object.keys(timeCounts).filter(time => timeCounts[time] >= 3);
+
+            setBookedTimes(fullyBookedTimes);
+            // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
+        }
+    }, [selectedDate]);
 
     // Effect for editing existing booking
     useEffect(() => {
@@ -110,11 +136,11 @@ const InspectionCreatePage: React.FC = () => {
         
         localStorage.setItem('inspectionBookings', JSON.stringify(updatedBookings));
         message.success(editingId ? 'บันทึกการแก้ไขเรียบร้อย!' : 'สร้างการนัดหมายสำเร็จ!');
-        navigate('/inspection');
+        navigate('/inspection-car');
     };
 
     const handleCancel = () => {
-        navigate('/inspection');
+        navigate('/inspection-car');
     };
 
     return (
@@ -145,11 +171,32 @@ const InspectionCreatePage: React.FC = () => {
                             <CustomDatePicker selectedDate={selectedDate} setSelectedDate={setSelectedDate as (date: Dayjs) => void} />
                             <div style={{ padding: '24px' }}>
                                 <Row gutter={[16, 16]}>
-                                    {timeOptions.map((time) => (
-                                        <Col xs={12} sm={6} key={time}>
-                                            <Button block style={{ height: '50px', background: selectedTime === time ? '#f1d430ff' : 'rgba(255, 255, 255, 0.05)', color: selectedTime === time ? 'black' : 'white', borderColor: selectedTime === time ? '#f1d430ff' : '#666', fontWeight: selectedTime === time ? 'bold' : 'normal' }} onClick={() => setSelectedTime(time)}>{time}</Button>
-                                        </Col>
-                                    ))}
+                                    {timeOptions.map((time, index) => {
+                                        // --- บรรทัดที่เพิ่มเข้ามา ---
+                                        const isBooked = bookedTimes.includes(time);
+                                        const isSelected = selectedTime === time;
+
+                                        return (
+                                            <Col xs={12} sm={8} md={6} key={index}>
+                                                <Button
+                                                    // --- บรรทัดที่เพิ่มเข้ามา ---
+                                                    disabled={isBooked}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '50px',
+                                                        background: isSelected ? '#f1d430ff' : 'transparent',
+                                                        color: isSelected ? 'black' : isBooked ? '#888' : 'white',
+                                                        borderColor: isSelected ? '#f1d430ff' : isBooked ? '#555' : '#ddd',
+                                                        borderRadius: '6px',
+                                                        cursor: isBooked ? 'not-allowed' : 'pointer',
+                                                    }}
+                                                    onClick={() => setSelectedTime(time)}
+                                                >
+                                                    {time}
+                                                </Button>
+                                            </Col>
+                                        );
+                                    })}
                                 </Row>
                             </div>
                         </div>

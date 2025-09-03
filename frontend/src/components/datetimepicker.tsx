@@ -19,14 +19,14 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selectedDate, setSe
   const [weekStartDate, setWeekStartDate] = useState(dayjs());
 
   const handlePrevWeek = () => {
-    setWeekStartDate(weekStartDate.subtract(7, 'day'));
+    setWeekStartDate(weekStartDate.subtract(6, 'day'));
   };
 
   const handleNextWeek = () => {
-    setWeekStartDate(weekStartDate.add(7, 'day'));
+    setWeekStartDate(weekStartDate.add(6, 'day'));
   };
 
-  const dateOptions = generateDateOptions(7, weekStartDate);
+  const dateOptions = generateDateOptions(6, weekStartDate);
 
   return (
     <div style={{ background: '#333333', padding: '10px 0', borderRadius: '10px 10px 0 0' }}>
