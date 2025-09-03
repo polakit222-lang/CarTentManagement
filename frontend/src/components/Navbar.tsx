@@ -70,7 +70,10 @@ const Navbar: React.FC = () => {
     <>
         <Header style={{backgroundColor: '#424141ff',
            padding: '0 20px', 
-           position: 'sticky',top: 0,zIndex: 1,width: '100%'}}>
+           position: 'sticky',
+           top: 0,
+           zIndex: 1,
+           width: '100%'}}>
         <Row align="middle" justify="space-between" style={{ height: '100%' }}>
           <Col><span style={{ fontSize: '24px', fontWeight: 'bold' }}>SA เต็นท์รถ</span></Col>
           <Col><Button type="text" onClick={showDrawer} icon={<MenuOutlined style={{ fontSize: '24px', color: 'black' }} />} /></Col>
