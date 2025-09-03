@@ -5,6 +5,9 @@
   --white: #ffffff;
   --gray: #1e1e1e;
   --font-main: 'Poppins', sans-serif;
+
+  /* ✅ ความสูง Topbar ของเพื่อน */
+  --topbar-height: 60px;
 }
 
 body {
@@ -17,42 +20,9 @@ body {
 .dashboard-container {
   display: flex;
   min-height: 100vh;
+  margin-top: var(--topbar-height); /* ✅ เลื่อนลงไม่ชน bar */
 }
 
-/* Sidebar */
-.sidebar {
-  width: 240px;
-  background-color: var(--gray);
-  color: var(--white);
-  padding: 2rem;
-  border-right: 1px solid var(--gold);
-}
-.sidebar h2 {
-  font-size: 1.2rem;
-  margin-bottom: 1.5rem;
-  color: var(--gold);
-}
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-.sidebar li {
-  margin-bottom: 1rem;
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-.sidebar li:hover {
-  background-color: var(--gold-dark);
-  color: var(--black);
-}
-.sidebar li.active {
-  background-color: var(--gold-dark);
-  color: var(--black);
-}
-
-/* Main content */
 .main-content {
   flex: 1;
   padding: 2rem;
@@ -83,6 +53,34 @@ body {
 }
 .dashboard-header button:hover {
   background-color: var(--gold-dark);
+}
+
+/* ✅ ปุ่มแท็บด้านบน (แทน Sidebar) */
+.tab-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-buttons button {
+  background-color: var(--gray);
+  border: 1px solid var(--gold);
+  color: var(--white);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.tab-buttons button.active {
+  background-color: var(--gold);
+  color: var(--black);
+  font-weight: bold;
+}
+
+.tab-buttons button:hover {
+  background-color: var(--gold-dark);
+  color: var(--black);
 }
 
 /* Card sections */
@@ -288,12 +286,14 @@ body {
   margin-bottom: 1rem;
 }
 
+/* Notification */
 .notification {
   padding: 0.75rem 1rem;
   border-radius: 6px;
   margin-bottom: 1rem;
   font-weight: 500;
   animation: fadeIn 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .notification.success {
@@ -304,6 +304,11 @@ body {
 .notification.error {
   background-color: red;
   color: white;
+}
+
+.notification.fade-out {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 @keyframes fadeIn {
@@ -358,45 +363,4 @@ body {
   background-color: var(--gold-dark);
 }
 
-.modal-content {
-  width: 400px;
-  max-width: 90%;
-  border-radius: 12px;
-  padding: 2rem;
-}
-
-.notification {
-  transition: all 0.3s ease;
-}
-
-.notification.fade-out {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.tab-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.tab-buttons button {
-  background-color: var(--gray);
-  border: 1px solid var(--gold);
-  color: var(--white);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.tab-buttons button.active {
-  background-color: var(--gold);
-  color: var(--black);
-  font-weight: bold;
-}
-
-.tab-buttons button:hover {
-  background-color: var(--gold-dark);
-  color: var(--black);
-}
+/*แก้ไม่ให้ชนแถบด้านบน */
