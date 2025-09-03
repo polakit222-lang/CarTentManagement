@@ -7,12 +7,10 @@ import { UserOutlined, LockOutlined, IdcardOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
-// --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
 // 1. Import "ค่า" (values) ที่จะใช้งานจริง
-import { mockCustomers, mockManagers, mockEmployees } from '../../data/users'; 
+import { mockCustomers, mockManagers, mockEmployees } from '../../data/users';
 // 2. Import "ชนิดข้อมูล" (types) ด้วย `import type`
 import type { Customer, Manager, Employee } from '../../data/users';
-// --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
 const { Content } = Layout;
 const { Title, Text, Link } = Typography;
@@ -32,6 +30,11 @@ const LoginPage: React.FC = () => {
   const [showCustomerPassword, setShowCustomerPassword] = useState(false);
   const [showEmployeePassword, setShowEmployeePassword] = useState(false);
   const [showManagerPassword, setShowManagerPassword] = useState(false);
+  
+  // --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
+  // 1. สร้าง state เพื่อเก็บ key ของ tab ที่กำลังถูกเลือก
+  const [activeTabKey, setActiveTabKey] = useState('1'); 
+  // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
   const onFinishCustomer = (values: LoginFormValues) => {
     const foundUser: Customer | undefined = mockCustomers.find(
@@ -154,13 +157,27 @@ const LoginPage: React.FC = () => {
                 <Title level={2} style={{ color: 'white' }}>SA Car Tent</Title>
                 <Text style={{ color: 'white' }}>ลงชื่อเข้าใช้สำหรับลูกค้า, พนักงาน และผู้จัดการ</Text>
               </div>
-              <Tabs defaultActiveKey="1" items={items} centered />
-              <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                <Text style={{ color: 'white' }}>ยังไม่มีบัญชี? </Text>
-                <Link onClick={() => navigate('/register')} style={{ color: '#1677ff' }}>
-                  สมัครสมาชิกที่นี่
-                </Link>
-              </div>
+              
+              {/* --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv --- */}
+              {/* 2. ควบคุม component ด้วย state ที่สร้างขึ้น */}
+              <Tabs
+                activeKey={activeTabKey}
+                items={items}
+                centered
+                onChange={(key) => setActiveTabKey(key)}
+              />
+
+              {/* 3. ใช้เงื่อนไขเพื่อแสดงผลส่วนนี้เฉพาะเมื่อ activeTabKey เป็น '1' */}
+              {activeTabKey === '1' && (
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                  <Text style={{ color: 'white' }}>ยังไม่มีบัญชี? </Text>
+                  <Link onClick={() => navigate('/register')} style={{ color: '#1677ff' }}>
+                    สมัครสมาชิกที่นี่
+                  </Link>
+                </div>
+              )}
+              {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
+              
             </Card>
           </Col>
         </Row>

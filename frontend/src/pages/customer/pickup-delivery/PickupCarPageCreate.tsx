@@ -69,6 +69,12 @@ const PickupCarCreatePage: React.FC = () => {
   // State for disabling save button
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
 
+  // --- vvvvv --- ส่วนที่เพิ่มเข้ามาใหม่ --- vvvvv ---
+  // State to store booked time slots for the selected date
+  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
+  // --- ^^^^^ --- จบส่วนที่เพิ่มเข้ามาใหม่ --- ^^^^^ ---
+
+
   // Dynamic options for address dropdowns using the correct property names
   const districtOptions = useMemo(() => {
     if (!selectedProvince) return [];
@@ -124,6 +130,23 @@ const PickupCarCreatePage: React.FC = () => {
       }
     }
   }, [editingId]);
+
+  // --- vvvvv --- ส่วนที่เพิ่มเข้ามาใหม่ --- vvvvv ---
+  // Effect to check for booked times on the selected date
+  useEffect(() => {
+    if (selectedDate) {
+      const storedBookings: PickupBooking[] = JSON.parse(localStorage.getItem('pickupBookings') || '[]');
+      const formattedDate = selectedDate.locale('th').format('DD MMMM YYYY');
+      
+      const times = storedBookings
+        .filter(booking => booking.appointmentDate === formattedDate)
+        .map(booking => booking.appointmentTime.split(' ')[0]); // Extract "HH:mm"
+      
+      setBookedTimes(times);
+    }
+  }, [selectedDate]);
+  // --- ^^^^^ --- จบส่วนที่เพิ่มเข้ามาใหม่ --- ^^^^^ ---
+
 
   // Handlers
   const handleProvinceChange = (value: string) => {
@@ -184,23 +207,32 @@ const PickupCarCreatePage: React.FC = () => {
               <CustomDatePicker selectedDate={selectedDate} setSelectedDate={setSelectedDate as (date: Dayjs) => void} />
               <div style={{ padding: '24px' }}>
                 <Row gutter={[16, 16]}>
-                  {timeOptions.map((time, index) => (
-                    <Col xs={12} sm={8} md={6} key={index}>
-                      <Button
-                        style={{
-                          width: '100%',
-                          height: '50px',
-                          background: selectedTime === time ? '#f1d430ff' : 'transparent',
-                          color: selectedTime === time ? 'black' : 'white',
-                          borderColor: selectedTime === time ? '#f1d430ff' : '#ddd',
-                          borderRadius: '6px'
-                        }}
-                        onClick={() => setSelectedTime(time)}
-                      >
-                        {time}
-                      </Button>
-                    </Col>
-                  ))}
+                  {/* --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv --- */}
+                  {timeOptions.map((time, index) => {
+                    const isBooked = bookedTimes.includes(time);
+                    const isSelected = selectedTime === time;
+
+                    return (
+                      <Col xs={12} sm={8} md={6} key={index}>
+                        <Button
+                          disabled={isBooked} // ปิดการใช้งานปุ่มถ้าเวลานั้นถูกจองแล้ว
+                          style={{
+                            width: '100%',
+                            height: '50px',
+                            background: isSelected ? '#f1d430ff' : 'transparent',
+                            color: isSelected ? 'black' : isBooked ? '#888' : 'white', // เปลี่ยนสีตัวอักษรเป็นสีเทาถ้าถูกจอง
+                            borderColor: isSelected ? '#f1d430ff' : isBooked ? '#555' : '#ddd', // เปลี่ยนสีขอบเป็นสีเทาเข้มถ้าถูกจอง
+                            borderRadius: '6px',
+                            cursor: isBooked ? 'not-allowed' : 'pointer', // เปลี่ยน cursor ถ้าถูกจอง
+                          }}
+                          onClick={() => setSelectedTime(time)}
+                        >
+                          {time}
+                        </Button>
+                      </Col>
+                    );
+                  })}
+                  {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
                 </Row>
               </div>
             </div>
