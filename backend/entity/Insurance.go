@@ -8,7 +8,7 @@ import (
 
 type Insurance struct {
 	gorm.Model
-	PurchaseDate time.Time
+	PurchaseDate   time.Time
 	ExpirationDate time.Time
 
 	// 1 Insurance can have many Status
