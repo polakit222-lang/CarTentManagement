@@ -1,7 +1,8 @@
 package configs
 
 import (
-	"example.com/go-example-api/entity"
+	"usedcartent/entity"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -22,25 +23,36 @@ func ConnectDB() {
 
 func SetupDatabase() {
 	db.AutoMigrate(
-		&entity.Brand{},
+		// &entity.Brand{},
+		// &entity.Car{},
+		// &entity.Company{},
+		// &entity.Condition{},
+		// &entity.Detail{},
+		// &entity.Employee{},
+		// &entity.Image{},
+		// &entity.Insurance{},
+		// &entity.InsuranceStatus{},
+		// &entity.Model{},
+		// &entity.SubModel{},
+		// &entity.Plan{},
+		// &entity.InsurancePrice{},
+		// &entity.PriceInsurance{},
+		// &entity.Province{},
+		// &entity.Repair{},
+		// &entity.SalesContract{},
+		// &entity.Type{},
 		&entity.Car{},
-		&entity.Company{},
-		&entity.Condition{},
-		&entity.Detail{},
 		&entity.Employee{},
+		&entity.Manager{},
+		&entity.SaleList{},
+		&entity.RentList{},
 		&entity.Image{},
-		&entity.Insurance{},
-		&entity.InsuranceStatus{},
-		&entity.Model{},
+		&entity.Detail{},
 		&entity.SubModel{},
-		&entity.Plan{},
-		&entity.InsurancePrice{},
-		&entity.PriceInsurance{},
-		&entity.Province{},
-		&entity.Repair{},
-		&entity.SalesContract{},
-		&entity.Type{},
+		&entity.Model{},
+		&entity.Brand{},
+		&entity.RentAbleDate{},
+		&entity.DateforRent{},
 	)
 
-	
 }

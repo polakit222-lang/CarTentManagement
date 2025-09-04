@@ -1,12 +1,10 @@
 package controllers
 
 import (
-	"example.com/go-example-api/configs"
-	"example.com/go-example-api/entity"
+	"c:\\Users\\lylot\\Documents\\GitHub\\CarTentManagement\\backend\\configs"
+	"c:\\Users\\lylot\\Documents\\GitHub\\CarTentManagement\\backend\\entity"
+
 	"github.com/dgrijalva/jwt-go"
-	"golang.org/x/crypto/bcrypt"
-	"net/http"
-	"time"
 )
 
 var jwtKey = []byte("your_secret_key")
