@@ -76,6 +76,8 @@ const AppointmentDetailsPage: React.FC = () => {
     return <Title level={3} style={{ textAlign: 'center', marginTop: '50px', color: colors.white }}>ไม่พบข้อมูลการนัดหมาย</Title>;
   }
 
+  const labelStyle: React.CSSProperties = { color: colors.gold };
+
   return (
     <ConfigProvider
       theme={{
@@ -85,12 +87,9 @@ const AppointmentDetailsPage: React.FC = () => {
             headerBg: colors.gray,
             colorBorderSecondary: colors.gold,
           },
-          // ✅ FIX: Updated Descriptions theme
           Descriptions: {
-            colorText: colors.white,          // ทำให้เนื้อหาทั้งหมดเป็น "สีขาว"
-            colorTextLabel: colors.gold,      // ทำให้หัวข้อ Label เป็น "สีทอง"
-            colorSplit: colors.gold,          // ทำให้เส้นขอบเป็น "สีทอง"
-            // We let the Card component handle the background for better compatibility
+            colorText: colors.white,
+            colorSplit: colors.gold,
           },
           Button: {
             colorPrimary: colors.gold,
@@ -120,19 +119,19 @@ const AppointmentDetailsPage: React.FC = () => {
               bordered={true}
             >
               <Descriptions bordered column={1}>
-                <Descriptions.Item label="หมายเลขสัญญา">{appointment.contractNumber}</Descriptions.Item>
-                <Descriptions.Item label="วันที่นัดหมาย">{appointment.appointmentDate}</Descriptions.Item>
-                <Descriptions.Item label="เวลา">{appointment.appointmentTime}</Descriptions.Item>
-                <Descriptions.Item label="พนักงานดูแล">{appointment.employee}</Descriptions.Item>
-                <Descriptions.Item label="วิธีการรับรถ">{appointment.appointmentMethod}</Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>หมายเลขสัญญา</Text>}>{appointment.contractNumber}</Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>วันที่นัดหมาย</Text>}>{appointment.appointmentDate}</Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>เวลา</Text>}>{appointment.appointmentTime}</Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>พนักงานดูแล</Text>}>{appointment.employee}</Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>วิธีการรับรถ</Text>}>{appointment.appointmentMethod}</Descriptions.Item>
                 {appointment.appointmentMethod === 'จัดส่งรถถึงที่' && (
-                  <Descriptions.Item label="ที่อยู่จัดส่ง">
-                    <Text>
+                  <Descriptions.Item label={<Text style={labelStyle}>ที่อยู่จัดส่ง</Text>}>
+                    <Text style={{ color: colors.white }}>
                       {`${appointment.address || ''} ต.${appointment.subdistrict || ''} อ.${appointment.district || ''} จ.${appointment.province || ''}`}
                     </Text>
                   </Descriptions.Item>
                 )}
-                <Descriptions.Item label="สถานะ">
+                <Descriptions.Item label={<Text style={labelStyle}>สถานะ</Text>}>
                   <Tag color={appointment.status === 'จัดส่งสำเร็จ' ? 'success' : 'processing'}>
                     {(appointment.status || 'รอดำเนินการ').toUpperCase()}
                   </Tag>
@@ -143,13 +142,15 @@ const AppointmentDetailsPage: React.FC = () => {
               
               <Row justify="space-between" align="middle">
                 <Col>
-                  <Button 
-                    type="primary" 
-                    onClick={handleUpdateStatus}
-                    disabled={appointment.status === 'จัดส่งสำเร็จ'}
-                  >
-                    อัปเดตสถานะเป็น "จัดส่งสำเร็จ"
-                  </Button>
+                  {/* ✅ FIX: ใช้เงื่อนไขเพื่อซ่อนปุ่มเมื่อสถานะเป็น 'จัดส่งสำเร็จ' */}
+                  {appointment.status !== 'จัดส่งสำเร็จ' && (
+                    <Button 
+                      type="primary" 
+                      onClick={handleUpdateStatus}
+                    >
+                      อัปเดตสถานะเป็น "จัดส่งสำเร็จ"
+                    </Button>
+                  )}
                 </Col>
                 <Col>
                   <Button 

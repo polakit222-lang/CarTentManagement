@@ -11,7 +11,7 @@ import buddhistEra from 'dayjs/plugin/buddhistEra';
 import thTH from 'antd/locale/th_TH';
 
 // Import CSS files
-import './Employeestyle.css';
+
 import './Employeestyle.css';
 
 
@@ -256,7 +256,7 @@ const HomePageEm: React.FC = () => {
                                     ))}
                                 </Timeline>
                             ) : (
-                                <Text style={{color: '#ccc'}}>{selectedDate ? `ไม่มีนัดหมายในวันที่ ${selectedDate.format('D MMMM YYYY')}` : 'ไม่มีรายการนัดหมายในช่วงเวลานี้'}</Text>
+                                <Text style={{color: '#ccc'}}>{selectedDate ? `ไม่มีนัดหมายในวันที่ ${selectedDate.format('D MMMM BBBB')}` : 'ไม่มีรายการนัดหมายในช่วงเวลานี้'}</Text>
                             )}
                         </Card>
                     </Col>
