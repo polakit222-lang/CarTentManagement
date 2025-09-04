@@ -9,25 +9,24 @@ import (
 type Payment struct {
 	gorm.Model
 
-	Amount      string    `json:"amount"`
-	PaymentDate time.Time `json:"paymentdate"`
-	Status      string    `json:"status"`
+	Amount      string
+	PaymentDate time.Time
+	Status      string
 
-	CustomerID uint      `json:"CustomerID"`
-	Customer   *Customer `gorm:"foreignKey:CustomerID" json:"Customer"`
+	CustomerID uint
+	Customer   *Customer `gorm:"foreignKey:CustomerID"`
 
-	EmployeeID uint      `json:"employeeID"`
-	Employee   *Employee `gorm:"foreignKey:EmployeeID" json:"employee"`
+	EmployeeID uint
+	Employee   *Employee `gorm:"foreignKey:EmployeeID"`
 
-	RentContractID uint          `json:"RentcontractID"`
-	RentContract   *RentContract `gorm:"foreignKey:RentContractID" json:"RentContract"`
+	RentContractID uint
+	RentContract   *RentContract `gorm:"foreignKey:RentContractID"`
 
-	SalesContractID uint          `json:"SalesContractID"`
-	SalesContract   *SalesContract `gorm:"foreignKey:SalesContractID" json:"SalesContract"`
+	SalesContractID uint
+	SalesContract   *SalesContract `gorm:"foreignKey:SalesContractID"`
 
-	PaymentMethodID uint `json:"PaymentMethodID"`
-	PaymentMethod *PaymentMethod `gorm:"foreignKey:PaymentMethodID" json:"PaymentMethod"`
+	PaymentMethodID uint
+	PaymentMethod   *PaymentMethod `gorm:"foreignKey:PaymentMethodID"`
 
-	//ส่งไป receipt
-	Receipt []Receipt `gorm:"foreignKey:PaymentID"`
+	Receipt []*Receipt `gorm:"foreignKey:PaymentID"`
 }
