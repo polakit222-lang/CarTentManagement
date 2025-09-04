@@ -21,4 +21,6 @@ type RentContract struct {
 
 	CustomerID uint      `json:"employeeID"`
 	Customer   *Customer `gorm:"foreignKey:CustomerID" json:"customer"`
+
+	Payment   []Payment   `gorm:"foreignKey:RentContractID"`
 }
