@@ -17,7 +17,7 @@ type Insurance struct {
 
 	// SalesContractID as foreign key
 	SalesContractID *uint
-	SalesContract   SaleContract `gorm:"foreignKey:SaleContractID"`
+	SalesContract   SalesContract `gorm:"foreignKey:SalesContractID"`
 
 	// 1 Insurance can have many PriceInsurance
 	PriceInsurances []PriceInsurance `gorm:"foreignKey:InsuranceID"`

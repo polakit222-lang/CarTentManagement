@@ -403,3 +403,13 @@ body {
   color: var(--black) !important;
   border-color: var(--gold) !important;
 }
+
+
+
+/* =============================================================
+  ✅ FIX: ทำให้เส้นเชื่อม Timeline เป็นสีทอง
+  =============================================================
+*/
+.ant-timeline-item-tail {
+  border-color: var(--gold) !important;
+}

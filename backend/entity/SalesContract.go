@@ -16,4 +16,6 @@ type SalesContract struct {
 	CustomerID uint      `json:"employeeID"`
 	Customer   *Customer `gorm:"foreignKey:CustomerID" json:"customer"`
 
+	InspectionAppointments []InspectionAppointment `gorm:"foreignKey:SalesContractID"`
+
 }

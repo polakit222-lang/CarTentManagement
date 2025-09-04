@@ -23,7 +23,7 @@ type Employee struct {
 
 	PickupDelivery []PickupDelivery `gorm:"foreignKey:EmployeeID"`
 	Car            []Car            `gorm:"foreignKey:EmployeeID"`
-	SaleContracts  []SaleContract   `gorm:"foreignKey:EmployeeID"`
+	
 	SaleList       []SaleList       `gorm:"foreignKey:EmployeeID"`
 	SalesContract  []SalesContract  `gorm:"foreignKey:EmployeeID"`
 	LeaveRequest   []LeaveRequest	`gorm:"foreignKey:EmployeeID"`
