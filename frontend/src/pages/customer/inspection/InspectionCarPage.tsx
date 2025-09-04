@@ -6,7 +6,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
     PlusCircleOutlined, EditOutlined, CalendarOutlined,
-    ClockCircleOutlined, BuildOutlined, CloseCircleOutlined
+    ClockCircleOutlined, BuildOutlined, CloseCircleOutlined,
+    CheckCircleOutlined, LoadingOutlined // เพิ่มไอคอน
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
@@ -17,7 +18,6 @@ dayjs.extend(buddhistEra);
 
 const { Title, Text } = Typography;
 
-// Define an interface for the booking object
 interface InspectionBooking {
     id: number;
     contractNumber: string;
@@ -27,6 +27,7 @@ interface InspectionBooking {
     firstName?: string;
     lastName?: string;
     message?: string;
+    status: string;
 }
 
 const InspectionCarPage: React.FC = () => {
@@ -44,22 +45,23 @@ const InspectionCarPage: React.FC = () => {
         }
     }, []);
 
-    
-
     const handleCreateNewBooking = () => navigate('/inspection-create');
 
-    
-    //ถ้าอีก60นาทีถึงจะสามารถแก้ไขหรือยกเลิกได้
+    // --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
     const isActionDisabled = (booking: InspectionBooking) => {
+        if (booking.status === 'เสร็จสิ้น' || booking.status === 'ยกเลิก') {
+            return true;
+        }
         const appointmentDateTime = dayjs(`${booking.appointmentDate} ${booking.appointmentTime.split(' ')[0]}`, 'DD MMMM YYYY HH:mm', 'th');
         const now = dayjs();
         const diffInMinutes = appointmentDateTime.diff(now, 'minute');
         return diffInMinutes <= 60;
     };
+    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
     const handleEditBooking = (booking: InspectionBooking) => {
         if (isActionDisabled(booking)) {
-            message.error('ไม่สามารถแก้ไขการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาทีได้');
+            message.error('ไม่สามารถแก้ไขการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาที หรือสถานะเป็น เสร็จสิ้น/ยกเลิก ได้');
             return;
         }
         navigate(`/inspection-car/create?id=${booking.id}`);
@@ -67,17 +69,19 @@ const InspectionCarPage: React.FC = () => {
 
     const handleCancelBooking = (booking: InspectionBooking) => {
         if (isActionDisabled(booking)) {
-            message.error('ไม่สามารถยกเลิกการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาทีได้');
+            message.error('ไม่สามารถยกเลิกการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาที หรือสถานะเป็น เสร็จสิ้น/ยกเลิก ได้');
             return;
         }
         setBookingToCancel(booking);
         setIsModalOpen(true);
     };
-    //-------------------------------------------
 
+    // --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
     const handleConfirmCancel = () => {
         if (bookingToCancel) {
-            const updatedBookings = bookingHistory.filter(b => b.id !== bookingToCancel.id);
+            const updatedBookings = bookingHistory.map(b =>
+                b.id === bookingToCancel.id ? { ...b, status: 'ยกเลิก' } : b
+            );
             setBookingHistory(updatedBookings);
             localStorage.setItem('inspectionBookings', JSON.stringify(updatedBookings));
             setIsModalOpen(false);
@@ -85,15 +89,46 @@ const InspectionCarPage: React.FC = () => {
             message.success('ยกเลิกการนัดหมายสำเร็จ!');
         }
     };
+    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
     const handleModalClose = () => {
         setIsModalOpen(false);
         setBookingToCancel(null);
     };
 
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'อนุมัติ':
+            case 'เสร็จสิ้น':
+                return '#389e0d'; // Green
+            case 'ปฏิเสธ':
+            case 'ยกเลิก':
+                return '#cf1322'; // Red
+            case 'รอตรวจสอบ':
+            default:
+                return '#d4b106'; // Yellow
+        }
+    };
+    
+    // --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
+    const getStatusIcon = (status: string) => {
+        const style = { fontSize: '24px', color: getStatusColor(status), marginRight: '16px' };
+        switch (status) {
+            case 'เสร็จสิ้น':
+                return <CheckCircleOutlined style={style} />;
+            case 'ยกเลิก':
+                 return <CloseCircleOutlined style={style} />;
+            case 'รอตรวจสอบ':
+            case 'อนุมัติ':
+            case 'ปฏิเสธ':
+            default:
+                return <LoadingOutlined style={style} />;
+        }
+    };
+    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
+
     return (
         <div style={{ padding: '0 48px' }}>
-
             <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
                 <Row align="middle" justify="space-between">
                     <Col><Title level={2} style={{ color: 'white', marginBottom: 0 }}>ประวัติการนัดตรวจสภาพรถยนต์</Title></Col>
@@ -124,8 +159,15 @@ const InspectionCarPage: React.FC = () => {
                                     <Title level={5} style={{ color: 'white', marginBottom: '24px' }}>
                                         หมายเลขสัญญาซื้อขาย: <Text style={{ color: '#f1d430ff' }}>{booking.contractNumber}</Text>
                                     </Title>
-
+                                    
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '30px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            {getStatusIcon(booking.status)}
+                                            <div>
+                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>สถานะ</Text>
+                                                <Text style={{ color: getStatusColor(booking.status), fontWeight: 'bold' }}>{booking.status || 'รอตรวจสอบ'}</Text>
+                                            </div>
+                                        </div>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <CalendarOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
                                             <div>
@@ -190,4 +232,3 @@ const InspectionCarPage: React.FC = () => {
 };
 
 export default InspectionCarPage;
-

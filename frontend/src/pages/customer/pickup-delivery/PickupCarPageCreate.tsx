@@ -13,170 +13,121 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import "../../../style/global.css";
 import '../../../style/inspecstyle.css';
 import CustomDatePicker from '../../../components/datetimepicker';
-import provinces from '../../../data/thailand-address.json'; 
-
-// --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
-// 1. ลบการ import `empItems` จาก `data.ts`
+import provinces from '../../../data/thailand-address.json';
 import { timeOptions, typeItems } from '../../../data/data';
-// 2. Import `mockEmployees` จาก `users.ts`
-import { mockEmployees } from '../../../data/users'; 
-// --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
+import { mockEmployees } from '../../../data/users';
 
 dayjs.locale('th');
 
 const { Title, Text } = Typography;
 
-// --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
-// 3. แปลงข้อมูล `mockEmployees` ให้อยู่ในรูปแบบที่ <Select> ของ Ant Design ใช้งานได้
 const empItems = mockEmployees.map(employee => ({
     value: employee.name,
     label: employee.name,
 }));
-// --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
 interface PickupBooking {
-  id: number;
-  contractNumber: string;
-  appointmentDate: string;
-  appointmentTime: string;
-  employee: string | undefined;
-  appointmentMethod: string | undefined;
-  address?: string;
-  province?: string | undefined;
-  district?: string | undefined;
-  subdistrict?: string | undefined;
+    id: number;
+    contractNumber: string;
+    appointmentDate: string;
+    appointmentTime: string;
+    employee: string | undefined;
+    appointmentMethod: string | undefined;
+    address?: string;
+    province?: string;
+    district?: string;
+    subdistrict?: string;
+    status?: string;
 }
 
 const PickupCarCreatePage: React.FC = () => {
-
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editingId = searchParams.get('id');
+  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
 
-  // Form State
+  // Form state
   const [contractNumber, setContractNumber] = useState('');
-  const [selectedType, setSelectedType] = useState<string | undefined>();
-  const [selectedEmp, setSelectedEmp] = useState<string | undefined>();
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<string | undefined>(undefined);
+  const [selectedMethod, setSelectedMethod] = useState<string | undefined>(undefined);
   const [address, setAddress] = useState('');
 
-  // Address State
-  const [selectedProvince, setSelectedProvince] = useState<string | undefined>();
-  const [selectedDistrict, setSelectedDistrict] = useState<string | undefined>();
-  const [selectedSubdistrict, setSelectedSubdistrict] = useState<string | undefined>();
+  // Dropdown options
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [selectedSubdistrict, setSelectedSubdistrict] = useState<string | null>(null);
 
-  // State for disabling save button
-  const [isSaveDisabled, setIsSaveDisabled] = useState(true);
-
-  // --- vvvvv --- ส่วนที่เพิ่มเข้ามาใหม่ --- vvvvv ---
-  // State to store booked time slots for the selected date
-  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
-  // --- ^^^^^ --- จบส่วนที่เพิ่มเข้ามาใหม่ --- ^^^^^ ---
-
-
-  // Dynamic options for address dropdowns using the correct property names
   const districtOptions = useMemo(() => {
-    if (!selectedProvince) return [];
     const province = provinces.find(p => p.name_th === selectedProvince);
-    return province ? province.amphure.map(d => ({ value: d.name_th, label: d.name_th })) : [];
+    return province ? province.amphure.map(a => ({ value: a.name_th, label: a.name_th })) : [];
   }, [selectedProvince]);
 
   const subdistrictOptions = useMemo(() => {
-    if (!selectedProvince || !selectedDistrict) return [];
     const province = provinces.find(p => p.name_th === selectedProvince);
-    const district = province?.amphure.find(d => d.name_th === selectedDistrict);
-    return district ? district.tambon.map(s => ({ value: s.name_th, label: s.name_th })) : [];
+    const district = province?.amphure.find(a => a.name_th === selectedDistrict);
+    return district ? district.tambon.map(t => ({ value: t.name_th, label: t.name_th })) : [];
   }, [selectedProvince, selectedDistrict]);
 
-  // Validation Effect to enable/disable save button
+  const isSaveDisabled = !contractNumber || !selectedDate || !selectedTime || !selectedEmployee || !selectedMethod || (selectedMethod === 'จัดส่ง' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
+
   useEffect(() => {
-    const isBasicInfoMissing = !selectedType || !contractNumber || !selectedEmp || !selectedDate || !selectedTime;
+    if (selectedDate) {
+        const storedBookings: PickupBooking[] = JSON.parse(localStorage.getItem('pickupBookings') || '[]');
+        const formattedDate = selectedDate.locale('th').format('DD MMMM YYYY');
 
-    if (isBasicInfoMissing) {
-      setIsSaveDisabled(true);
-      return;
+        const allBookedTimes = storedBookings
+            .filter(booking => booking.appointmentDate === formattedDate && booking.status !== 'ยกเลิก')
+            .map(booking => booking.appointmentTime.split(' ')[0]);
+
+        const timeCounts = allBookedTimes.reduce((acc, time) => {
+            acc[time] = (acc[time] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const fullyBookedTimes = Object.keys(timeCounts).filter(time => timeCounts[time] >= 1);
+
+        setBookedTimes(fullyBookedTimes);
     }
+  }, [selectedDate]);
 
-    if (selectedType === 'จัดส่งรถถึงที่') {
-      const isAddressInfoMissing = !address || !selectedProvince || !selectedDistrict || !selectedSubdistrict;
-      setIsSaveDisabled(isAddressInfoMissing);
-    } else {
-      setIsSaveDisabled(false);
-    }
-  }, [selectedType, contractNumber, selectedEmp, selectedDate, selectedTime, address, selectedProvince, selectedDistrict, selectedSubdistrict]);
-
-
-  // Effect for editing existing booking
   useEffect(() => {
     if (editingId) {
       const storedBookings: PickupBooking[] = JSON.parse(localStorage.getItem('pickupBookings') || '[]');
-      const bookingToEdit = storedBookings.find((b) => b.id === parseInt(editingId));
+      const bookingToEdit = storedBookings.find(b => b.id === parseInt(editingId));
       if (bookingToEdit) {
         setContractNumber(bookingToEdit.contractNumber);
-        setSelectedType(bookingToEdit.appointmentMethod);
-        setSelectedEmp(bookingToEdit.employee);
         setSelectedDate(dayjs(bookingToEdit.appointmentDate, 'DD MMMM YYYY', 'th'));
         setSelectedTime(bookingToEdit.appointmentTime.split(' ')[0]);
+        setSelectedEmployee(bookingToEdit.employee);
+        setSelectedMethod(bookingToEdit.appointmentMethod);
         setAddress(bookingToEdit.address || '');
-        setSelectedProvince(bookingToEdit.province);
-        // Using setTimeout to allow dependent dropdowns to populate before setting the value
-        setTimeout(() => {
-          setSelectedDistrict(bookingToEdit.district);
-          setTimeout(() => {
-            setSelectedSubdistrict(bookingToEdit.subdistrict);
-          }, 0);
-        }, 0);
+        setSelectedProvince(bookingToEdit.province || null);
+        setSelectedDistrict(bookingToEdit.district || null);
+        setSelectedSubdistrict(bookingToEdit.subdistrict || null);
       }
     }
   }, [editingId]);
-
-  // --- vvvvv --- ส่วนที่เพิ่มเข้ามาใหม่ --- vvvvv ---
-  // Effect to check for booked times on the selected date
-  useEffect(() => {
-    if (selectedDate) {
-      const storedBookings: PickupBooking[] = JSON.parse(localStorage.getItem('pickupBookings') || '[]');
-      const formattedDate = selectedDate.locale('th').format('DD MMMM YYYY');
-      
-      const times = storedBookings
-        .filter(booking => booking.appointmentDate === formattedDate)
-        .map(booking => booking.appointmentTime.split(' ')[0]); // Extract "HH:mm"
-      
-      setBookedTimes(times);
-    }
-  }, [selectedDate]);
-  // --- ^^^^^ --- จบส่วนที่เพิ่มเข้ามาใหม่ --- ^^^^^ ---
-
-
-  // Handlers
-  const handleProvinceChange = (value: string) => {
-    setSelectedProvince(value);
-    setSelectedDistrict(undefined);
-    setSelectedSubdistrict(undefined);
-  };
-
-  const handleDistrictChange = (value: string) => {
-    setSelectedDistrict(value);
-    setSelectedSubdistrict(undefined);
-  };
 
   const handleSave = () => {
     const storedBookings: PickupBooking[] = JSON.parse(localStorage.getItem('pickupBookings') || '[]');
     const newBooking: PickupBooking = {
       id: editingId ? parseInt(editingId) : Date.now(),
       contractNumber,
-      appointmentMethod: selectedType,
-      employee: selectedEmp,
-      appointmentDate: selectedDate!.locale('th').format('DD MMMM BBBB'),
-      appointmentTime: `${selectedTime} - ${dayjs(selectedTime!, 'HH:mm').add(1, 'hour').format('HH:mm')} น.`,
-      address: selectedType === 'จัดส่งรถถึงที่' ? address : '',
-      province: selectedType === 'จัดส่งรถถึงที่' ? selectedProvince : undefined,
-      district: selectedType === 'จัดส่งรถถึงที่' ? selectedDistrict : undefined,
-      subdistrict: selectedType === 'จัดส่งรถถึงที่' ? selectedSubdistrict : undefined,
+      appointmentDate: selectedDate ? selectedDate.locale('th').format('DD MMMM YYYY') : '',
+      appointmentTime: selectedTime ? `${selectedTime} - ${dayjs(selectedTime, 'HH:mm').add(1, 'hour').format('HH:mm')} น.` : '',
+      employee: selectedEmployee,
+      appointmentMethod: selectedMethod,
+      address,
+      province: selectedProvince || undefined,
+      district: selectedDistrict || undefined,
+      subdistrict: selectedSubdistrict || undefined,
+      status: 'รอตรวจสอบ',
     };
 
     const updatedBookings = editingId
-      ? storedBookings.map((b) => (b.id === newBooking.id ? newBooking : b))
+      ? storedBookings.map(b => (b.id === newBooking.id ? newBooking : b))
       : [...storedBookings, newBooking];
 
     localStorage.setItem('pickupBookings', JSON.stringify(updatedBookings));
@@ -189,75 +140,79 @@ const PickupCarCreatePage: React.FC = () => {
       <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
         <Row justify="center">
           <Col xs={24} sm={22} md={20} lg={18} xl={16}>
-            <Title level={2} style={{ color: 'white' }}>{editingId ? 'แก้ไข' : 'สร้าง'}การนัดหมายรับรถยนต์</Title>
+            <Title level={2} style={{ color: 'white' }}>{editingId ? 'แก้ไข' : 'สร้าง'}การนัดหมายรับรถ</Title>
             <Divider style={{ borderColor: '#424242' }} />
 
             <Title level={4} style={{ color: '#f1d430ff' }}>ข้อมูลการนัดหมาย</Title>
             <Row align="middle" gutter={[16, 20]} style={{ marginBottom: '40px' }}>
-              <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>เลือกประเภทการรับรถยนต์</Text></Col>
-              <Col xs={24} sm={16}><Select placeholder="เลือกประเภท" value={selectedType} style={{ width: '100%' }} onChange={setSelectedType} options={typeItems} /></Col>
               <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>หมายเลขสัญญาซื้อขาย</Text></Col>
               <Col xs={24} sm={16}><Input placeholder="กรอกหมายเลขสัญญา" value={contractNumber} onChange={e => setContractNumber(e.target.value)} /></Col>
-              <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>พนักงานที่ดูแล</Text></Col>
-              <Col xs={24} sm={16}><Select placeholder="เลือกพนักงาน" value={selectedEmp} style={{ width: '100%' }} onChange={setSelectedEmp} options={empItems} /></Col>
+
+              <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>เลือกพนักงาน</Text></Col>
+              <Col xs={24} sm={16}><Select placeholder="เลือกพนักงาน" value={selectedEmployee} style={{ width: '100%' }} onChange={setSelectedEmployee} options={empItems} /></Col>
+
+              <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>วิธีการรับรถ</Text></Col>
+              <Col xs={24} sm={16}><Select placeholder="เลือกวิธีการรับรถ" value={selectedMethod} style={{ width: '100%' }} onChange={setSelectedMethod} options={typeItems} /></Col>
             </Row>
-            
+
             <Title level={4} style={{ color: 'white' }}>เลือกวันเวลานัดหมาย</Title>
-            <div style={{ background: '#4A4A4A', padding: '0', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', marginBottom: '40px' }}>
-              <CustomDatePicker selectedDate={selectedDate} setSelectedDate={setSelectedDate as (date: Dayjs) => void} />
-              <div style={{ padding: '24px' }}>
-                <Row gutter={[16, 16]}>
-                  {/* --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv --- */}
-                  {timeOptions.map((time, index) => {
-                    const isBooked = bookedTimes.includes(time);
-                    const isSelected = selectedTime === time;
-
-                    return (
-                      <Col xs={12} sm={8} md={6} key={index}>
-                        <Button
-                          disabled={isBooked} // ปิดการใช้งานปุ่มถ้าเวลานั้นถูกจองแล้ว
-                          style={{
-                            width: '100%',
-                            height: '50px',
-                            background: isSelected ? '#f1d430ff' : 'transparent',
-                            color: isSelected ? 'black' : isBooked ? '#888' : 'white', // เปลี่ยนสีตัวอักษรเป็นสีเทาถ้าถูกจอง
-                            borderColor: isSelected ? '#f1d430ff' : isBooked ? '#555' : '#ddd', // เปลี่ยนสีขอบเป็นสีเทาเข้มถ้าถูกจอง
-                            borderRadius: '6px',
-                            cursor: isBooked ? 'not-allowed' : 'pointer', // เปลี่ยน cursor ถ้าถูกจอง
-                          }}
-                          onClick={() => setSelectedTime(time)}
-                        >
-                          {time}
-                        </Button>
-                      </Col>
-                    );
-                  })}
-                  {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
-                </Row>
-              </div>
+            <div style={{ background: '#4A4A4A', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', marginBottom: '40px' }}>
+                <CustomDatePicker selectedDate={selectedDate} setSelectedDate={setSelectedDate as (date: Dayjs) => void} />
+                <div style={{ padding: '24px' }}>
+                    <Row gutter={[16, 16]}>
+                        {timeOptions.map((time, index) => {
+                            const isBooked = bookedTimes.includes(time);
+                            const isSelected = selectedTime === time;
+                            return (
+                                <Col xs={12} sm={8} md={6} key={index}>
+                                    <Button
+                                        disabled={isBooked}
+                                        style={{
+                                            width: '100%',
+                                            height: '50px',
+                                            background: isSelected ? '#f1d430ff' : 'transparent',
+                                            color: isSelected ? 'black' : isBooked ? '#888' : 'white',
+                                            borderColor: isSelected ? '#f1d430ff' : isBooked ? '#555' : '#ddd',
+                                            borderRadius: '6px',
+                                            cursor: isBooked ? 'not-allowed' : 'pointer',
+                                        }}
+                                        onClick={() => setSelectedTime(time)}
+                                    >
+                                        {time}
+                                    </Button>
+                                </Col>
+                            );
+                        })}
+                    </Row>
+                </div>
             </div>
-
-            {selectedType === 'จัดส่งรถถึงที่' && (
+            
+            {/* --- vvvvv --- ส่วนที่แก้ไข --- vvvvv --- */}
+            {selectedMethod === 'จัดส่งรถถึงที่' && (
               <>
-                <Title level={4} style={{ color: 'white' }}>ที่อยู่สำหรับจัดส่ง</Title>
-                <Text style={{ color: '#cccccc', display: 'block', marginBottom: '10px' }}>สำหรับลูกค้าที่เลือกให้เต้นท์ขับรถยนต์นำไปส่งที่บ้านลูกค้า</Text>
-                <Input.TextArea placeholder="กรอกที่อยู่" rows={4} value={address} onChange={e => setAddress(e.target.value)} style={{ marginBottom: '20px' }} />
-                <Row gutter={[16, 16]}>
-                  <Col xs={24} sm={8}>
-                    <Text style={{ color: 'white' }}>จังหวัด</Text>
-                    <Select showSearch placeholder="เลือกจังหวัด" value={selectedProvince} style={{ width: '100%', marginTop: '8px' }} onChange={handleProvinceChange} options={provinces.map(p => ({ value: p.name_th, label: p.name_th }))} />
+                <Title level={4} style={{ color: 'white' }}>ข้อมูลที่อยู่สำหรับจัดส่ง</Title>
+                <Row align="middle" gutter={[16, 20]} style={{ marginBottom: '40px' }}>
+                  <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>ที่อยู่ (บ้านเลขที่, หมู่, ซอย, ถนน)</Text></Col>
+                  <Col xs={24} sm={16}><Input.TextArea placeholder="รายละเอียดที่อยู่" value={address} onChange={e => setAddress(e.target.value)} /></Col>
+
+                  <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>จังหวัด</Text></Col>
+                  <Col xs={24} sm={16}>
+                    <Select showSearch placeholder="เลือกจังหวัด" value={selectedProvince} style={{ width: '100%' }} onChange={setSelectedProvince} options={provinces.map(p => ({ value: p.name_th, label: p.name_th }))} />
                   </Col>
-                  <Col xs={24} sm={8}>
-                    <Text style={{ color: 'white' }}>อำเภอ/เขต</Text>
-                    <Select showSearch placeholder="เลือกอำเภอ/เขต" value={selectedDistrict} style={{ width: '100%', marginTop: '8px' }} onChange={handleDistrictChange} disabled={!selectedProvince} options={districtOptions} />
+
+                  <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>อำเภอ/เขต</Text></Col>
+                  <Col xs={24} sm={16}>
+                    <Select showSearch placeholder="เลือกอำเภอ/เขต" value={selectedDistrict} style={{ width: '100%' }} onChange={setSelectedDistrict} disabled={!selectedProvince} options={districtOptions} />
                   </Col>
-                  <Col xs={24} sm={8}>
-                    <Text style={{ color: 'white' }}>ตำบล/แขวง</Text>
-                    <Select showSearch placeholder="เลือกตำบล/แขวง" value={selectedSubdistrict} style={{ width: '100%', marginTop: '8px' }} onChange={setSelectedSubdistrict} disabled={!selectedDistrict} options={subdistrictOptions} />
+
+                  <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>ตำบล/แขวง</Text></Col>
+                  <Col xs={24} sm={16}>
+                    <Select showSearch placeholder="เลือกตำบล/แขวง" value={selectedSubdistrict} style={{ width: '100%'}} onChange={setSelectedSubdistrict} disabled={!selectedDistrict} options={subdistrictOptions} />
                   </Col>
                 </Row>
               </>
             )}
+            {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
 
             <Row justify="center" style={{ marginTop: '60px' }}>
               <Space size="middle">

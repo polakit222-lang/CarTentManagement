@@ -1,3 +1,5 @@
+// src/pages/customer/pickup-delivery/PickupCarPage.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
     Button, Card, Row, Col, Space, Modal,
@@ -6,13 +8,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
     PlusCircleOutlined, EditOutlined, CalendarOutlined,
-    ClockCircleOutlined, UserOutlined, EnvironmentOutlined, CloseCircleOutlined
+    ClockCircleOutlined, UserOutlined, EnvironmentOutlined, CloseCircleOutlined,
+    CheckCircleOutlined, LoadingOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
-// Define an interface for the pickup booking object
 interface PickupBooking {
     id: number;
     contractNumber: string;
@@ -24,76 +26,29 @@ interface PickupBooking {
     province?: string;
     district?: string;
     subdistrict?: string;
-    status?: string; // สถานะของการนัดหมาย
+    status?: string;
 }
-
-const initialBookingHistory: PickupBooking[] = [
-    {
-        id: 1,
-        contractNumber: 'SA-00123',
-        appointmentDate: '15 กันยายน 2567',
-        appointmentTime: '10:00 - 11:00 น.',
-        employee: 'สมชาย', // ชื่อจาก mockEmployees
-        appointmentMethod: 'รับที่เต็นท์',
-    },
-    {
-        id: 2,
-        contractNumber: 'SA-00456',
-        appointmentDate: '18 กันยายน 2567',
-        appointmentTime: '14:00 - 15:00 น.',
-        employee: 'สมศรี', // ชื่อจาก mockEmployees
-        appointmentMethod: 'จัดส่งรถถึงที่',
-        address: '123/45 หมู่ 6 ต.ในเมือง',
-        province: 'นครราชสีมา',
-        district: 'เมืองนครราชสีมา',
-        subdistrict: 'ในเมือง',
-    },
-    {
-        id: 3,
-        contractNumber: 'SA-00789',
-        appointmentDate: '22 กันยายน 2567',
-        appointmentTime: '09:00 - 10:00 น.',
-        employee: 'John Doe', // ชื่อจาก mockEmployees
-        appointmentMethod: 'รับที่เต็นท์',
-    }
-];
 
 const PickupCarPage: React.FC = () => {
 
     const navigate = useNavigate();
-
     const [bookingHistory, setBookingHistory] = useState<PickupBooking[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState<PickupBooking | null>(null);
 
-    const loadBookings = () => {
+    useEffect(() => {
         const storedBookings = localStorage.getItem('pickupBookings');
         if (storedBookings) {
             setBookingHistory(JSON.parse(storedBookings));
-        } else {
-            localStorage.setItem('pickupBookings', JSON.stringify(initialBookingHistory));
-            setBookingHistory(initialBookingHistory);
         }
-    };
-
-    useEffect(() => {
-        loadBookings();
-        window.addEventListener('focus', loadBookings);
-        return () => {
-            window.removeEventListener('focus', loadBookings);
-        };
     }, []);
 
     const handleCreateNewBooking = () => navigate('/pickup-car/create');
-    // const handleEditBooking = (booking: PickupBooking) => navigate(`/pickup-car/create?id=${booking.id}`);
 
-    // const handleCancelBooking = (booking: PickupBooking) => {
-    //     setBookingToCancel(booking);
-    //     setIsModalOpen(true);
-    // };
-
-    //ถ้าอีก60นาทีถึงจะสามารถแก้ไขหรือยกเลิกได้
     const isActionDisabled = (booking: PickupBooking) => {
+        if (booking.status === 'เสร็จสิ้น' || booking.status === 'ยกเลิก') {
+            return true;
+        }
         const appointmentDateTime = dayjs(`${booking.appointmentDate} ${booking.appointmentTime.split(' ')[0]}`, 'DD MMMM YYYY HH:mm', 'th');
         const now = dayjs();
         const diffInMinutes = appointmentDateTime.diff(now, 'minute');
@@ -102,43 +57,75 @@ const PickupCarPage: React.FC = () => {
 
     const handleEditBooking = (booking: PickupBooking) => {
         if (isActionDisabled(booking)) {
-            message.error('ไม่สามารถแก้ไขการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาทีได้');
+            message.error('ไม่สามารถแก้ไขการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาที หรือสถานะเป็น เสร็จสิ้น/ยกเลิก ได้');
             return;
         }
-        navigate(`/inspection-car/create?id=${booking.id}`);
+        navigate(`/pickup-car/create?id=${booking.id}`);
     };
 
     const handleCancelBooking = (booking: PickupBooking) => {
         if (isActionDisabled(booking)) {
-            message.error('ไม่สามารถยกเลิกการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาทีได้');
+            message.error('ไม่สามารถยกเลิกการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาที หรือสถานะเป็น เสร็จสิ้น/ยกเลิก ได้');
             return;
         }
         setBookingToCancel(booking);
         setIsModalOpen(true);
     };
-    //-------------------------------------------
 
+    // --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
     const handleConfirmCancel = () => {
         if (bookingToCancel) {
-            const updatedBookings = bookingHistory.filter(b => b.id !== bookingToCancel.id);
+            const updatedBookings = bookingHistory.map(b =>
+                b.id === bookingToCancel.id ? { ...b, status: 'ยกเลิก' } : b
+            );
             setBookingHistory(updatedBookings);
             localStorage.setItem('pickupBookings', JSON.stringify(updatedBookings));
             setIsModalOpen(false);
             setBookingToCancel(null);
+            message.success('ยกเลิกการนัดหมายสำเร็จ!');
         }
     };
+    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
     const handleModalClose = () => {
         setIsModalOpen(false);
         setBookingToCancel(null);
     };
 
+    const getStatusColor = (status?: string) => {
+        switch (status) {
+            case 'อนุมัติ':
+            case 'เสร็จสิ้น':
+                return '#389e0d'; // Green
+            case 'ปฏิเสธ':
+            case 'ยกเลิก':
+                return '#cf1322'; // Red
+            case 'รอตรวจสอบ':
+            default:
+                return '#d4b106'; // Yellow
+        }
+    };
+
+    const getStatusIcon = (status?: string) => {
+        const style = { fontSize: '24px', color: getStatusColor(status), marginRight: '16px' };
+        switch (status) {
+            case 'เสร็จสิ้น':
+                return <CheckCircleOutlined style={style} />;
+            case 'ยกเลิก':
+                return <CloseCircleOutlined style={style} />;
+            case 'รอตรวจสอบ':
+            case 'อนุมัติ':
+            case 'ปฏิเสธ':
+            default:
+                return <LoadingOutlined style={style} />;
+        }
+    };
+
     return (
         <div style={{ padding: '0 48px' }}>
-
             <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
                 <Row align="middle" justify="space-between">
-                    <Col><Title level={2} style={{ color: 'white', marginBottom: 0 }}>ประวัติการนัดรับรถยนต์</Title></Col>
+                    <Col><Title level={2} style={{ color: 'white', marginBottom: 0 }}>ประวัติการนัดหมายรับรถ</Title></Col>
                     <Col>
                         <Button type="primary" icon={<PlusCircleOutlined />} style={{ background: 'linear-gradient(45deg, #FFD700, #FFA500)', color: 'black', border: 'none', fontWeight: 'bold' }} onClick={handleCreateNewBooking}>
                             สร้างการนัดหมายใหม่
@@ -166,8 +153,14 @@ const PickupCarPage: React.FC = () => {
                                     <Title level={5} style={{ color: 'white', marginBottom: '24px' }}>
                                         หมายเลขสัญญาซื้อขาย: <Text style={{ color: '#f1d430ff' }}>{booking.contractNumber}</Text>
                                     </Title>
-
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '30px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            {getStatusIcon(booking.status)}
+                                            <div>
+                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>สถานะ</Text>
+                                                <Text style={{ color: getStatusColor(booking.status), fontWeight: 'bold' }}>{booking.status || 'รอตรวจสอบ'}</Text>
+                                            </div>
+                                        </div>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <CalendarOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
                                             <div>
@@ -185,19 +178,18 @@ const PickupCarPage: React.FC = () => {
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <UserOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
                                             <div>
-                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>พนักงานที่ดูแล</Text>
+                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>พนักงาน</Text>
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>{booking.employee}</Text>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <EnvironmentOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
                                             <div>
-                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>วิธีนัดหมาย</Text>
+                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>วิธีการรับรถ</Text>
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>{booking.appointmentMethod}</Text>
                                             </div>
                                         </div>
                                     </div>
-                                    {/* ตรวจสอบสถานะ ถ้าอีก 1 ชั่วโมง จะถึงเวลาจอง ปุ่มจะหายไป */}
                                     {!isActionDisabled(booking) && (
                                         <Space style={{ width: '100%', justifyContent: 'center' }}>
                                             <Button
@@ -230,7 +222,7 @@ const PickupCarPage: React.FC = () => {
             </div>
 
             <Modal title="ยืนยันการยกเลิก" open={isModalOpen} onCancel={handleModalClose} footer={[
-                <Button key="back" type="primary" onClick={handleModalClose}>กลับ</Button>,
+                <Button key="back" onClick={handleModalClose}>กลับ</Button>,
                 <Button key="submit" type="primary" danger onClick={handleConfirmCancel}>ยืนยันการยกเลิก</Button>
             ]}>
                 <p>คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการนัดหมายนี้?</p>

@@ -1,98 +1,66 @@
+/* --- Style Variables --- */
+:root {
+  --gold: #d4af37;
+  --gold-dark: #b38e2f;
+  --black: #121212;
+  --white: #ffffff;
+  --gray: #1e1e1e;
+}
+
 /* =============================================================
-  สไตล์สำหรับ "ตัวเลือก" ใน Dropdown
+  1. FIX: ทำให้ไอคอน DatePicker และ Search มองเห็นชัดขึ้น
   =============================================================
 */
 
-/* สไตล์ทั่วไปของแต่ละ Option */
-.status-select-dropdown .ant-select-item-option {
-  padding: 8px 12px;
-  font-weight: bold;
+/* ไอคอนปฏิทินใน DatePicker */
+.ant-picker-suffix .anticon {
+  color: var(--gold) !important;
+}
+.ant-input-search .ant-input-search-button .anticon-search {
+  color: var(--gold) !important;
 }
 
-/* สีสำหรับ Option 'รอตรวจสอบ' */
-.status-select-dropdown .status-option-pending {
-  background-color: #e6f7ff;
-  color: #1890ff;
-}
-
-/* สีสำหรับ Option 'กำลังดำเนินการ' */
-.status-select-dropdown .status-option-processing {
-  background-color: #e6fffb;
-  color: #13c2c2;
-}
-
-/* สีสำหรับ Option 'เสร็จสิ้น' */
-.status-select-dropdown .status-option-completed {
-  background-color: #f6ffed;
-  color: #52c41a;
-}
-
-/* สีสำหรับ Option 'ยกเลิก' */
-.status-select-dropdown .status-option-cancelled {
-  background-color: #fff1f0;
-  color: #ff4d4f;
-}
-
-/* สไตล์เมื่อ Hover หรือ Selected */
-.status-select-dropdown .ant-select-item-option-active.status-option-pending,
-.status-select-dropdown .ant-select-item-option-selected.status-option-pending {
-  background-color: #bae7ff;
-}
-.status-select-dropdown .ant-select-item-option-active.status-option-processing,
-.status-select-dropdown .ant-select-item-option-selected.status-option-processing {
-  background-color: #b5f5ec;
-}
-.status-select-dropdown .ant-select-item-option-active.status-option-completed,
-.status-select-dropdown .ant-select-item-option-selected.status-option-completed {
-  background-color: #d9f7be;
-}
-.status-select-dropdown .ant-select-item-option-active.status-option-cancelled,
-.status-select-dropdown .ant-select-item-option-selected.status-option-cancelled {
-  background-color: #ffccc7;
+/* ไอคอนแว่นขยายในช่อง Search */
+.ant-input-search-icon .anticon {
+  color: var(--gold) !important;
 }
 
 
 /* =============================================================
-  สไตล์สำหรับ "กล่อง Select" ที่แสดงสถานะปัจจุบัน
+  2. FIX: สไตล์สำหรับ Dropdown "อัปเดตสถานะ" (ธีมสีเข้ม)
   =============================================================
 */
 
-/* สไตล์ทั่วไปสำหรับ Select box ของเรา */
-.ant-select-custom.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  border-width: 1.5px !important;
-  font-weight: 500;
-  border-radius: 6px !important;
+/* กล่อง Select ที่แสดงสถานะปัจจุบัน */
+.status-select-custom .ant-select-selector {
+  background-color: var(--black) !important;
+  border: 1px solid var(--gold) !important;
+  color: var(--white) !important;
 }
 
-/* สีสำหรับสถานะ 'รอตรวจสอบ' */
-.ant-select-custom.status-select-pending .ant-select-selector {
-  background-color: #e6f7ff !important;
-  border-color: #91d5ff !important;
-  color: #1890ff !important;
+.status-select-custom .ant-select-arrow {
+  color: var(--gold) !important;
 }
 
-/* สีสำหรับสถานะ 'กำลังดำเนินการ' */
-.ant-select-custom.status-select-processing .ant-select-selector {
-  background-color: #e6fffb !important;
-  border-color: #87e8de !important;
-  color: #13c2c2 !important;
+/* พื้นหลังของ Dropdown ทั้งหมด */
+.status-select-dropdown {
+  background-color: var(--gray) !important;
+  border: 1px solid var(--gold) !important;
 }
 
-/* สีสำหรับสถานะ 'เสร็จสิ้น' */
-.ant-select-custom.status-select-completed .ant-select-selector {
-  background-color: #f6ffed !important;
-  border-color: #b7eb8f !important;
-  color: #52c41a !important;
+/* ตัวเลือก (Option) แต่ละอันในสถานะปกติ */
+.status-select-dropdown .ant-select-item {
+  color: var(--white) !important;
 }
 
-/* สีสำหรับสถานะ 'ยกเลิก' */
-.ant-select-custom.status-select-cancelled .ant-select-selector {
-  background-color: #fff1f0 !important;
-  border-color: #ffccc7 !important;
-  color: #ff4d4f !important;
+/* ตัวเลือก (Option) เมื่อผู้ใช้เอาเมาส์ไปชี้ (Hover) */
+.status-select-dropdown .ant-select-item-option:hover {
+  background-color: var(--gold-dark) !important;
+  color: var(--black) !important;
 }
 
-/* ทำให้ลูกศร Dropdown มีสีเข้มขึ้นเพื่อให้มองเห็นชัด */
-.ant-select-custom .ant-select-arrow {
-  color: rgba(0, 0, 0, 0.8) !important;
+/* ตัวเลือก (Option) ที่ถูกเลือกอยู่ */
+.status-select-dropdown .ant-select-item-option-selected {
+  background-color: var(--gold) !important;
+  color: var(--black) !important;
 }

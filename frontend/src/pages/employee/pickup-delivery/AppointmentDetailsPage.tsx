@@ -1,10 +1,19 @@
 // src/pages/employee/AppointmentDetailsPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Col,Typography, Button, message, Descriptions, Tag, Divider, Spin } from 'antd';
+import { Card, Col, Row, Typography, Button, message, Descriptions, Tag, Divider, Spin, ConfigProvider } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+
+// --- Style Variables from Employeestyle.css ---
+const colors = {
+  gold: '#d4af37',
+  goldDark: '#b38e2f',
+  black: '#121212',
+  white: '#ffffff',
+  gray: '#1e1e1e',
+};
 
 interface PickupBooking {
   id: number;
@@ -56,73 +65,107 @@ const AppointmentDetailsPage: React.FC = () => {
   };
 
   if (loading) {
-    return <Spin size="large" style={{ display: 'block', marginTop: '50px' }} />;
+    return (
+      <div style={{ background: colors.black, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Spin size="large" />
+      </div>
+    );
   }
 
   if (!appointment) {
-    return <Title level={3} style={{ textAlign: 'center', marginTop: '50px', color: 'black' }}>ไม่พบข้อมูลการนัดหมาย</Title>;
+    return <Title level={3} style={{ textAlign: 'center', marginTop: '50px', color: colors.white }}>ไม่พบข้อมูลการนัดหมาย</Title>;
   }
 
   return (
-    <div style={{ padding: '24px', background: '#828385ff', minHeight: '100vh',marginTop:'80px' }}>
-      
-      <Card 
-        title={<Title level={4} style={{ color: '#FFD700', margin: 0 }}>{`รายละเอียดนัดหมาย: ${appointment.contractNumber}`}</Title>} 
-        bordered={false}
-        style={{ background: 'grey', borderRadius: '8px' }}
-      >
-        <Descriptions 
-          bordered 
-          column={1} 
-          labelStyle={{ color: 'rgba(0, 0, 0, 0.88)', fontWeight: 'bold' }} 
-          contentStyle={{ color: 'rgba(0, 0, 0, 0.88)' }}
-        >
-          <Descriptions.Item label="หมายเลขสัญญา" style={{background:'grey'}}>{appointment.contractNumber}</Descriptions.Item>
-          <Descriptions.Item label="วันที่นัดหมาย"style={{background:'grey'}}>{appointment.appointmentDate}</Descriptions.Item>
-          <Descriptions.Item label="เวลา"style={{background:'grey'}}>{appointment.appointmentTime}</Descriptions.Item>
-          <Descriptions.Item label="พนักงานดูแล"style={{background:'grey',borderBlock:'black'}}>{appointment.employee}</Descriptions.Item>
-          <Descriptions.Item label="วิธีการรับรถ"style={{background:'grey'}}>{appointment.appointmentMethod}</Descriptions.Item>
-          {appointment.appointmentMethod === 'จัดส่งรถถึงที่' && (
-            <Descriptions.Item label="ที่อยู่จัดส่ง">
-              {`${appointment.address || ''} ${appointment.subdistrict || ''} ${appointment.district || ''} ${appointment.province || ''}`}
-            </Descriptions.Item>
-          )}
-          <Descriptions.Item label="สถานะ" style={{background:'grey'}}>
-            <Tag style={{background:'#517a49'}} color={appointment.status === 'จัดส่งสำเร็จ' ? 'success' : 'processing'}>
-              {appointment.status || 'รอดำเนินการ'}
-            </Tag>
-          </Descriptions.Item>
-        </Descriptions>
-        <Divider />
-        
-        <Button 
-          type="primary" 
-          onClick={handleUpdateStatus}
-          disabled={appointment.status === 'จัดส่งสำเร็จ'}
-          style={{ 
-            background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-            color: 'black',
-            borderColor: 'transparent',
-            fontWeight: 'bold'
-          }}
-        >
-          อัปเดตสถานะเป็น "จัดส่งสำเร็จ"
-        </Button>
-        <Col xs={24} lg={12} style={{ marginTop: '20px' }}>
-        <Button 
-        type="text" 
-        icon={<ArrowLeftOutlined />} 
-        onClick={() => navigate('/AppointmentAll')} 
-        style={{ marginBottom: '16px',background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-            color: 'black',
-            borderColor: 'transparent',
-            fontWeight: 'bold' }}
-      >
-        กลับไปหน้าแดชบอร์ด
-      </Button>
-      </Col>
-      </Card>
-    </div>
+    <ConfigProvider
+      theme={{
+        components: {
+          Card: {
+            colorBgContainer: colors.gray,
+            headerBg: colors.gray,
+            colorBorderSecondary: colors.gold,
+          },
+          // ✅ FIX: Updated Descriptions theme
+          Descriptions: {
+            colorText: colors.white,          // ทำให้เนื้อหาทั้งหมดเป็น "สีขาว"
+            colorTextLabel: colors.gold,      // ทำให้หัวข้อ Label เป็น "สีทอง"
+            colorSplit: colors.gold,          // ทำให้เส้นขอบเป็น "สีทอง"
+            // We let the Card component handle the background for better compatibility
+          },
+          Button: {
+            colorPrimary: colors.gold,
+            colorPrimaryHover: colors.goldDark,
+            colorPrimaryText: colors.black,
+            defaultBg: colors.gray,
+            defaultColor: colors.white,
+            defaultBorderColor: colors.gold,
+            defaultHoverBg: colors.goldDark,
+            defaultHoverColor: colors.black,
+            defaultHoverBorderColor: colors.gold,
+          },
+          Divider: {
+            colorSplit: colors.gold,
+          },
+          Spin: {
+            colorPrimary: colors.gold,
+          }
+        },
+      }}
+    >
+      <div style={{ padding: '24px', background: colors.black, minHeight: '100vh', marginTop: '60px' }}>
+        <Row justify="center">
+          <Col xs={24} md={20} lg={16} xl={12}>
+            <Card 
+              title={<Title level={4} style={{ color: colors.gold, margin: 0 }}>{`รายละเอียดนัดหมาย: ${appointment.contractNumber}`}</Title>} 
+              bordered={true}
+            >
+              <Descriptions bordered column={1}>
+                <Descriptions.Item label="หมายเลขสัญญา">{appointment.contractNumber}</Descriptions.Item>
+                <Descriptions.Item label="วันที่นัดหมาย">{appointment.appointmentDate}</Descriptions.Item>
+                <Descriptions.Item label="เวลา">{appointment.appointmentTime}</Descriptions.Item>
+                <Descriptions.Item label="พนักงานดูแล">{appointment.employee}</Descriptions.Item>
+                <Descriptions.Item label="วิธีการรับรถ">{appointment.appointmentMethod}</Descriptions.Item>
+                {appointment.appointmentMethod === 'จัดส่งรถถึงที่' && (
+                  <Descriptions.Item label="ที่อยู่จัดส่ง">
+                    <Text>
+                      {`${appointment.address || ''} ต.${appointment.subdistrict || ''} อ.${appointment.district || ''} จ.${appointment.province || ''}`}
+                    </Text>
+                  </Descriptions.Item>
+                )}
+                <Descriptions.Item label="สถานะ">
+                  <Tag color={appointment.status === 'จัดส่งสำเร็จ' ? 'success' : 'processing'}>
+                    {(appointment.status || 'รอดำเนินการ').toUpperCase()}
+                  </Tag>
+                </Descriptions.Item>
+              </Descriptions>
+              
+              <Divider />
+              
+              <Row justify="space-between" align="middle">
+                <Col>
+                  <Button 
+                    type="primary" 
+                    onClick={handleUpdateStatus}
+                    disabled={appointment.status === 'จัดส่งสำเร็จ'}
+                  >
+                    อัปเดตสถานะเป็น "จัดส่งสำเร็จ"
+                  </Button>
+                </Col>
+                <Col>
+                  <Button 
+                    type="default"
+                    icon={<ArrowLeftOutlined />} 
+                    onClick={() => navigate('/AppointmentAll')} 
+                  >
+                    กลับ
+                  </Button>
+                </Col>
+              </Row>
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    </ConfigProvider>
   );
 };
 
