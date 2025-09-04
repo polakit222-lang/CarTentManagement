@@ -1,23 +1,23 @@
 package entity
 
 import (
-"gorm.io/gorm"
+	"gorm.io/gorm"
 )
 
 type SalesContract struct {
 	gorm.Model
 
-	SaleListID uint `json:"sale_listID"`
-	SaleList *SaleList `gorm: "foreignKey:SaleListID" json:"sales_list"`
+	SaleListID uint
+	SaleList   *SaleList `gorm:"foreignKey:SaleListID"`
 
-	EmployeeID uint      `json:"employeeID"`
-	Employee   *Employee `gorm:"foreignKey:EmployeeID" json:"employee"`
+	EmployeeID uint
+	Employee   *Employee `gorm:"foreignKey:EmployeeID"`
 
-	CustomerID uint      `json:"employeeID"`
-	Customer   *Customer `gorm:"foreignKey:CustomerID" json:"customer"`
+	CustomerID uint
+	Customer   *Customer `gorm:"foreignKey:CustomerID"`
 
-	InspectionAppointments []InspectionAppointment `gorm:"foreignKey:SalesContractID"`
+	// เปลี่ยนเป็น pointer slice และระบุ foreignKey
+	InspectionAppointments []*InspectionAppointment `gorm:"foreignKey:SalesContractID"`
 
-	Payment   []Payment   `gorm:"foreignKey:SalesContractID"`
-
+	Payment []*Payment `gorm:"foreignKey:SalesContractID"`
 }

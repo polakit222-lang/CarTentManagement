@@ -20,12 +20,13 @@ type Employee struct {
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
 	Jobtype      time.Time `json:"jobtype"`
-	TotalSales   Status    `json:"total_sales"`
+
+	TotalSales Status `json:"total_sales" gorm:"-"` // <- ไม่ map ลง DB
 
 	PickupDelivery []PickupDelivery `gorm:"foreignKey:EmployeeID"`
 	Car            []Car            `gorm:"foreignKey:EmployeeID"`
-	
-	SaleList       []SaleList       `gorm:"foreignKey:EmployeeID"`
-	SalesContract  []SalesContract  `gorm:"foreignKey:EmployeeID"`
-	LeaveRequest   []LeaveRequest   `gorm:"foreignKey:EmployeeID"`
+
+	SaleList      []SaleList      `gorm:"foreignKey:EmployeeID"`
+	SalesContract []SalesContract `gorm:"foreignKey:EmployeeID"`
+	LeaveRequest  []LeaveRequest  `gorm:"foreignKey:EmployeeID"`
 }
