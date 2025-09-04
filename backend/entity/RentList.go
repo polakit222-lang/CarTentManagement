@@ -15,4 +15,6 @@ type RentList struct {
 
 	ManagerID uint     `json:"managerID"`
 	Manager   *Manager `gorm:"foreignKey:ManagerID" json:"manager"`
+
+	RentContract []RentContract `gorm: "foreignKey:RentListID" json:"rent_contract"`
 }

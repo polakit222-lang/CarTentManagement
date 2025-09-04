@@ -23,4 +23,6 @@ type Customer struct {
 
 	//for Appointment
 	InspectionAppointments []InspectionAppointment `gorm:"foreignKey:CustomerID"` // แก้ไข: foreignKey เป็น CustomerID
+
+	SalesContract   []SalesContract  `gorm:"foreignKey:CustomerID"`
 }
