@@ -17,4 +17,6 @@ type SaleList struct {
 
 	EmployeeID uint      `json:"employeeID"`
 	Employee   *Employee `gorm:"foreignKey:EmployeeID" json:"employee"`
+
+	SaleContract []SaleContract `gorm: "foreignKey:SaleListID" json:"sale_contract"`
 }

@@ -9,7 +9,7 @@ const BuyCarPage: React.FC = () => {
    return (
     <div style={{  minHeight: '100vh' }}>
 
-        <Title level={2} style={{ color: 'white' }}>เอหน้าอยู่หนายยยย</Title>
+        <Title level={2} style={{ color: 'white' }}>5555555555555</Title>
         
      
     </div>
