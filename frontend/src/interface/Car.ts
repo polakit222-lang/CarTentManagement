@@ -3,8 +3,6 @@ import dayjs, { Dayjs } from 'dayjs';
 dayjs.locale('th');
 
 export interface CarInfo {
-  [x: string]: string;
-  purchaseDate: any;
   id: number;
   brand: string;
   model: string;
