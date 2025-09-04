@@ -2,26 +2,29 @@ package entity
 
 import (
 	"time"
-
 	"gorm.io/gorm"
 )
 
 type Employee struct {
 	gorm.Model
 
-	FirstName   string    `json:"first_name"`
-	LastName    string    `json:"last_name"`
-	Password    string    `json:"password"`
-	Email       string    `json:"email" gorm:"uniqueIndex"`
-	Position    string    `json:"position"`
-	PhoneNumber string    `json:"phone_number"`
-	StartDate   time.Time `json:"start_date"`
-	TotalSales  float64   `json:"total_sales"`
-	Status      string    `json: "status"`
+	ProfileImage string    `json:"profileimage"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	Password     string    `json:"password"`
+	Email        string    `json:"email" gorm:"uniqueIndex"`
+	PhoneNumber  string    `json:"phone_number"`
+	Address      string    `json:"address"`
+	Birthday     time.Time `json:"birthday"`
+	Sex          string    `json:"sex"`
+	Position     string    `json:"position"`
+	Joptype      time.Time `json:"start_date"`
+	TotalSales   string    `json:"total_sales"`
 
 	PickupDelivery []PickupDelivery `gorm:"foreignKey:EmployeeID"`
 	Car            []Car            `gorm:"foreignKey:EmployeeID"`
 	SaleContracts  []SaleContract   `gorm:"foreignKey:EmployeeID"`
 	SaleList       []SaleList       `gorm:"foreignKey:EmployeeID"`
-	SalesContract   []SalesContract  `gorm:"foreignKey:EmployeeID"`
+	SalesContract  []SalesContract  `gorm:"foreignKey:EmployeeID"`
+	LeaveRequest   []LeaveRequest	`gorm:"foreignKey:EmployeeID"`
 }
