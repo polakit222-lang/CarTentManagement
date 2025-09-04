@@ -10,6 +10,7 @@ import { fetchEmployee, updateEmployee } from "../../../services/employeeService
 import { validateAll } from "../../../utils/validation";
 import type { Employee } from "../../../types/employee";
 import type { Leave, LeaveType } from "../../../types/leave";
+import { useAuth } from '../../../hooks/useAuth';
 
 const EmployeeDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -20,6 +21,7 @@ const EmployeeDashboard: React.FC = () => {
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [showLeaveForm, setShowLeaveForm] = useState(false);
   const [leaveHistory, setLeaveHistory] = useState<Leave[]>([]);
+  const { user } = useAuth(); // ดึง user มาด้วย
 
   useEffect(() => {
     setLoading(true);
@@ -88,7 +90,7 @@ const EmployeeDashboard: React.FC = () => {
         {notification && <Notification type={notification.type} message={notification.message} />}
 
         <header className="dashboard-header">
-          <h1>สวัสดี, {formData?.firstName || "ผู้ใช้งาน"}</h1>
+          <h1>สวัสดี, {user?.name}</h1>
           {loading && <span>กำลังโหลด...</span>}
         </header>
 

@@ -7,7 +7,7 @@ import '../style/navbar.css';
 const NavBarEmployee: React.FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   // --- vvv แก้ไข vvv ---
-  const { user, logout } = useAuth(); // ดึง user มาด้วย
+  const { logout } = useAuth(); // ดึง user มาด้วย
   // --- ^^^ แก้ไข ^^^ ---
   const navigate = useNavigate();
 
@@ -32,7 +32,7 @@ const NavBarEmployee: React.FC = () => {
 
       <div className="NavRight">
          {/* แสดงชื่อของ user ที่ login เข้ามา */}
-        <div className="ProfileName">สวัสดี, {user?.name}</div>
+        
         <div className="Profile" onClick={toggleProfileMenu}>
           Log out ▼
         </div>

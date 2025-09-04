@@ -44,7 +44,7 @@
 }
 
 /* ปรับสีของปุ่ม "บันทึก" และ "ยกเลิก" */
-.ant-space-item .ant-btn:first-child {
+/* .ant-space-item .ant-btn:first-child {
     background-color: #292727ff !important;
     color: black !important;
 }
@@ -55,4 +55,4 @@
 }
 .ant-space-item .ant-btn:nth-child(2):hover {
     background-color: #888888 !important;
-}
+} */

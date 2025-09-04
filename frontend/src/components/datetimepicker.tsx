@@ -1,14 +1,13 @@
-// src/components/datetimepicker.tsx
 import React, { useState } from 'react';
 import { Button, Row, Col } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { generateDateOptions } from '../data/data';
-import 'dayjs/locale/th'; // Ensure Thai locale is loaded
-import buddhistEra from 'dayjs/plugin/buddhistEra'; // Import plugin for Buddhist Era
+import 'dayjs/locale/th';
+import buddhistEra from 'dayjs/plugin/buddhistEra';
 
-dayjs.locale('th'); // Set locale to Thai
-dayjs.extend(buddhistEra); // Extend dayjs with Buddhist Era plugin
+dayjs.locale('th');
+dayjs.extend(buddhistEra);
 
 interface CustomDatePickerProps {
   selectedDate: Dayjs | null;
@@ -17,63 +16,77 @@ interface CustomDatePickerProps {
 
 const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selectedDate, setSelectedDate }) => {
   const [weekStartDate, setWeekStartDate] = useState(dayjs());
+  const today = dayjs().startOf('day');
 
   const handlePrevWeek = () => {
-    setWeekStartDate(weekStartDate.subtract(6, 'day'));
+    const prevWeekStart = weekStartDate.subtract(7, 'day');
+    if (prevWeekStart.endOf('week').isBefore(today)) {
+      return;
+    }
+    setWeekStartDate(prevWeekStart);
   };
 
   const handleNextWeek = () => {
-    setWeekStartDate(weekStartDate.add(6, 'day'));
+    setWeekStartDate(weekStartDate.add(7, 'day'));
   };
 
-  const dateOptions = generateDateOptions(6, weekStartDate);
+  const dateOptions = generateDateOptions(7, weekStartDate);
+
+  // Check if the previous week is entirely in the past
+  const isPrevWeekDisabled = weekStartDate.subtract(7, 'day').endOf('week').isBefore(today);
 
   return (
     <div style={{ background: '#333333', padding: '10px 0', borderRadius: '10px 10px 0 0' }}>
-      <Row gutter={[8, 8]} justify="center" align="middle" style={{ width: '100%' }}>
+      <Row align="middle" justify="center">
         <Col xs={4} sm={2} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Button
             style={{
               width: '35px',
               height: '35px',
-              borderColor: 'gray',
+              borderColor: isPrevWeekDisabled ? '#555' : 'gray',
               background: 'transparent',
-              color: 'white',
+              color: isPrevWeekDisabled ? '#888' : 'white',
               borderRadius: '50%',
-              border: '1px solid #666666'
+              border: '1px solid #666666',
+              cursor: isPrevWeekDisabled ? 'not-allowed' : 'pointer',
             }}
             icon={<LeftOutlined />}
             onClick={handlePrevWeek}
+            disabled={isPrevWeekDisabled}
           />
         </Col>
-        <Col xs={16} sm={20} style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', justifyContent: 'center' }}>
-          <Row gutter={[8, 8]} style={{ flexWrap: 'nowrap' }}>
-            {dateOptions.map((option, index) => (
-              <Col key={index} flex="1" style={{ textAlign: 'center', minWidth: '100px' }}> {/* Adjusted minWidth */}
-              <Button
-                style={{
-                width: '100%',
-                height: '70px',
-                background: selectedDate && selectedDate.isSame(option.date, 'day') ? '#362e2eff' : '#4a4a4a',
-                color: selectedDate && selectedDate.isSame(option.date, 'day') ? '#d1ab00ff' : 'white',
-                borderColor: selectedDate && selectedDate.isSame(option.date, 'day') ? '#d1ab00ff' : '#666666',
-                borderRadius: '6px',
-                whiteSpace: 'normal',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                textAlign: 'center',
-                padding: '4px'
-                }}
-                onClick={() => setSelectedDate(option.date)}
-              >
-                <span>{option.label}</span>
-                {/* Updated format to include Buddhist year */}
-                <span style={{ fontSize: '12px' }}>{option.date.format('DD MMMM BBBB')}</span>
-              </Button>
-              </Col>
-            ))}
+        <Col xs={16} sm={20}>
+          <Row justify="center" gutter={[8, 8]}>
+            {dateOptions.map((option, index) => {
+              const isDisabled = option.date.isBefore(today);
+              return (
+                <Col key={index} span={3}>
+                  <Button
+                    disabled={isDisabled}
+                    style={{
+                      width: '100%',
+                      minHeight: '60px',
+                      background: selectedDate && selectedDate.isSame(option.date, 'day') ? '#f1d430ff' : 'transparent',
+                      color: selectedDate && selectedDate.isSame(option.date, 'day') ? 'black' : isDisabled ? '#888' : 'white',
+                      borderColor: selectedDate && selectedDate.isSame(option.date, 'day') ? '#f1d430ff' : isDisabled ? '#555' : '#666666',
+                      borderRadius: '6px',
+                      whiteSpace: 'normal',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      padding: '4px',
+                      cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    }}
+                    onClick={() => !isDisabled && setSelectedDate(option.date)}
+                  >
+                    <span>{option.label}</span>
+                    <span style={{ fontSize: '12px' }}>{option.date.format('DD MMMM BBBB')}</span>
+                  </Button>
+                </Col>
+              );
+            })}
           </Row>
         </Col>
         <Col xs={4} sm={2} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

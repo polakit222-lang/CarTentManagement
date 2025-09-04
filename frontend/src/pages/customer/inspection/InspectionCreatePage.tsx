@@ -44,7 +44,6 @@ const InspectionCreatePage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const editingId = searchParams.get('id');
-    // --- บรรทัดที่เพิ่มเข้ามา ---
     const [bookedTimes, setBookedTimes] = useState<string[]>([]);
 
     // Form state
@@ -68,13 +67,14 @@ const InspectionCreatePage: React.FC = () => {
             setIsSaveDisabled(false);
         }
     }, [firstName, lastName, contractNumber, selectedDate, selectedTime, selectedSystems]);
+    
+    // --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
     // Effect to check for booked times on the selected date
     useEffect(() => {
         if (selectedDate) {
             const storedBookings: InspectionBooking[] = JSON.parse(localStorage.getItem('inspectionBookings') || '[]');
             const formattedDate = selectedDate.locale('th').format('DD MMMM YYYY');
 
-            // --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
             // ดึงเวลาการจองทั้งหมดในวันที่เลือก
             const allBookedTimes = storedBookings
                 .filter(booking => booking.appointmentDate === formattedDate)
@@ -90,9 +90,9 @@ const InspectionCreatePage: React.FC = () => {
             const fullyBookedTimes = Object.keys(timeCounts).filter(time => timeCounts[time] >= 3);
 
             setBookedTimes(fullyBookedTimes);
-            // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
         }
     }, [selectedDate]);
+    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
     // Effect for editing existing booking
     useEffect(() => {
@@ -125,7 +125,7 @@ const InspectionCreatePage: React.FC = () => {
             lastName,
             contractNumber,
             message: messageText,
-            appointmentDate: selectedDate ? selectedDate.locale('th').format('DD MMMM YYYY') : '',
+            appointmentDate: selectedDate ? selectedDate.locale('th').format('DD MMMM BBBB') : '',
             appointmentTime: selectedTime ? `${selectedTime} - ${dayjs(selectedTime, 'HH:mm').add(1, 'hour').format('HH:mm')} น.` : '',
             system: selectedSystems.join(' '),
         };
@@ -172,23 +172,22 @@ const InspectionCreatePage: React.FC = () => {
                             <div style={{ padding: '24px' }}>
                                 <Row gutter={[16, 16]}>
                                     {timeOptions.map((time, index) => {
-                                        // --- บรรทัดที่เพิ่มเข้ามา ---
+                                        // --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
                                         const isBooked = bookedTimes.includes(time);
                                         const isSelected = selectedTime === time;
 
                                         return (
                                             <Col xs={12} sm={8} md={6} key={index}>
                                                 <Button
-                                                    // --- บรรทัดที่เพิ่มเข้ามา ---
-                                                    disabled={isBooked}
+                                                    disabled={isBooked} // ปิดการใช้งานปุ่มถ้าเวลานั้นถูกจองแล้ว
                                                     style={{
                                                         width: '100%',
                                                         height: '50px',
                                                         background: isSelected ? '#f1d430ff' : 'transparent',
-                                                        color: isSelected ? 'black' : isBooked ? '#888' : 'white',
-                                                        borderColor: isSelected ? '#f1d430ff' : isBooked ? '#555' : '#ddd',
+                                                        color: isSelected ? 'black' : isBooked ? '#888' : 'white', // เปลี่ยนสีตัวอักษรเป็นสีเทาถ้าถูกจอง
+                                                        borderColor: isSelected ? '#f1d430ff' : isBooked ? '#555' : '#ddd', // เปลี่ยนสีขอบเป็นสีเทาเข้มถ้าถูกจอง
                                                         borderRadius: '6px',
-                                                        cursor: isBooked ? 'not-allowed' : 'pointer',
+                                                        cursor: isBooked ? 'not-allowed' : 'pointer', // เปลี่ยน cursor ถ้าถูกจอง
                                                     }}
                                                     onClick={() => setSelectedTime(time)}
                                                 >
@@ -196,6 +195,7 @@ const InspectionCreatePage: React.FC = () => {
                                                 </Button>
                                             </Col>
                                         );
+                                        // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
                                     })}
                                 </Row>
                             </div>

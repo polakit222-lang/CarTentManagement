@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
-     Button, Card, Row, Col, Space, Modal,
-    Typography, Divider, Empty
+    Button, Card, Row, Col, Space, Modal,
+    Typography, Divider, Empty, message
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
     PlusCircleOutlined, EditOutlined, CalendarOutlined,
     ClockCircleOutlined, BuildOutlined, CloseCircleOutlined
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import 'dayjs/locale/th';
+import buddhistEra from 'dayjs/plugin/buddhistEra';
+
+dayjs.locale('th');
+dayjs.extend(buddhistEra);
 
 const { Title, Text } = Typography;
 
@@ -23,25 +29,8 @@ interface InspectionBooking {
     message?: string;
 }
 
-const initialBookingHistory: InspectionBooking[] = [
-    {
-        id: 1,
-        contractNumber: 'D42-20250821',
-        appointmentDate: '21 สิงหาคม 2568',
-        appointmentTime: '14:00 - 15:00 น.',
-        system: 'ยางและระบบช่วงล่างรถยนต์ ระบบเบรก ระบบแอร์และหม้อน้ำ',
-    },
-    {
-        id: 2,
-        contractNumber: 'D42-20250818',
-        appointmentDate: '18 สิงหาคม 2568',
-        appointmentTime: '10:00 - 11:00 น.',
-        system: 'น้ำมันเครื่องและไส้กรอง แบตเตอรี่',
-    },
-];
-
 const InspectionCarPage: React.FC = () => {
-    
+
     const navigate = useNavigate();
 
     const [bookingHistory, setBookingHistory] = useState<InspectionBooking[]>([]);
@@ -52,19 +41,39 @@ const InspectionCarPage: React.FC = () => {
         const storedBookings = localStorage.getItem('inspectionBookings');
         if (storedBookings) {
             setBookingHistory(JSON.parse(storedBookings));
-        } else {
-            localStorage.setItem('inspectionBookings', JSON.stringify(initialBookingHistory));
-            setBookingHistory(initialBookingHistory);
         }
     }, []);
 
+    
+
     const handleCreateNewBooking = () => navigate('/inspection-create');
-    const handleEditBooking = (booking: InspectionBooking) => navigate(`/inspection-create?id=${booking.id}`);
+
+    
+    //ถ้าอีก60นาทีถึงจะสามารถแก้ไขหรือยกเลิกได้
+    const isActionDisabled = (booking: InspectionBooking) => {
+        const appointmentDateTime = dayjs(`${booking.appointmentDate} ${booking.appointmentTime.split(' ')[0]}`, 'DD MMMM YYYY HH:mm', 'th');
+        const now = dayjs();
+        const diffInMinutes = appointmentDateTime.diff(now, 'minute');
+        return diffInMinutes <= 60;
+    };
+
+    const handleEditBooking = (booking: InspectionBooking) => {
+        if (isActionDisabled(booking)) {
+            message.error('ไม่สามารถแก้ไขการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาทีได้');
+            return;
+        }
+        navigate(`/inspection-car/create?id=${booking.id}`);
+    };
 
     const handleCancelBooking = (booking: InspectionBooking) => {
+        if (isActionDisabled(booking)) {
+            message.error('ไม่สามารถยกเลิกการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาทีได้');
+            return;
+        }
         setBookingToCancel(booking);
         setIsModalOpen(true);
     };
+    //-------------------------------------------
 
     const handleConfirmCancel = () => {
         if (bookingToCancel) {
@@ -73,6 +82,7 @@ const InspectionCarPage: React.FC = () => {
             localStorage.setItem('inspectionBookings', JSON.stringify(updatedBookings));
             setIsModalOpen(false);
             setBookingToCancel(null);
+            message.success('ยกเลิกการนัดหมายสำเร็จ!');
         }
     };
 
@@ -83,8 +93,8 @@ const InspectionCarPage: React.FC = () => {
 
     return (
         <div style={{ padding: '0 48px' }}>
-           
-            <div style={{  minHeight: 'calc(100vh - 180px)', padding: 24 }}>
+
+            <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
                 <Row align="middle" justify="space-between">
                     <Col><Title level={2} style={{ color: 'white', marginBottom: 0 }}>ประวัติการนัดตรวจสภาพรถยนต์</Title></Col>
                     <Col>
@@ -114,7 +124,7 @@ const InspectionCarPage: React.FC = () => {
                                     <Title level={5} style={{ color: 'white', marginBottom: '24px' }}>
                                         หมายเลขสัญญาซื้อขาย: <Text style={{ color: '#f1d430ff' }}>{booking.contractNumber}</Text>
                                     </Title>
-                                    
+
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '30px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <CalendarOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
@@ -138,11 +148,24 @@ const InspectionCarPage: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-
-                                    <Space style={{ width: '100%', justifyContent: 'center' }}>
-                                        <Button icon={<EditOutlined />} style={{ backgroundColor: '#f1d430ff', color: 'black', border: 'none' }} onClick={() => handleEditBooking(booking)}>แก้ไข</Button>
-                                        <Button icon={<CloseCircleOutlined />} danger onClick={() => handleCancelBooking(booking)}>ยกเลิก</Button>
-                                    </Space>
+                                    {!isActionDisabled(booking) && (
+                                        <Space style={{ width: '100%', justifyContent: 'center' }}>
+                                            <Button
+                                                icon={<EditOutlined />}
+                                                style={{ backgroundColor: '#f1d430ff', color: 'black', border: 'none' }}
+                                                onClick={() => handleEditBooking(booking)}
+                                            >
+                                                แก้ไข
+                                            </Button>
+                                            <Button
+                                                icon={<CloseCircleOutlined />}
+                                                danger
+                                                onClick={() => handleCancelBooking(booking)}
+                                            >
+                                                ยกเลิก
+                                            </Button>
+                                        </Space>
+                                    )}
                                 </Card>
                             ))}
                         </Col>
@@ -157,7 +180,7 @@ const InspectionCarPage: React.FC = () => {
             </div>
 
             <Modal title="ยืนยันการยกเลิก" open={isModalOpen} onCancel={handleModalClose} footer={[
-                <Button key="back"  type="primary" onClick={handleModalClose}>กลับ</Button>,
+                <Button key="back" onClick={handleModalClose}>กลับ</Button>,
                 <Button key="submit" type="primary" danger onClick={handleConfirmCancel}>ยืนยันการยกเลิก</Button>
             ]}>
                 <p>คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการนัดหมายนี้?</p>
@@ -167,3 +190,4 @@ const InspectionCarPage: React.FC = () => {
 };
 
 export default InspectionCarPage;
+

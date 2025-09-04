@@ -167,7 +167,7 @@ const PickupCarCreatePage: React.FC = () => {
       contractNumber,
       appointmentMethod: selectedType,
       employee: selectedEmp,
-      appointmentDate: selectedDate!.locale('th').format('DD MMMM YYYY'),
+      appointmentDate: selectedDate!.locale('th').format('DD MMMM BBBB'),
       appointmentTime: `${selectedTime} - ${dayjs(selectedTime!, 'HH:mm').add(1, 'hour').format('HH:mm')} น.`,
       address: selectedType === 'จัดส่งรถถึงที่' ? address : '',
       province: selectedType === 'จัดส่งรถถึงที่' ? selectedProvince : undefined,

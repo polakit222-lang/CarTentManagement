@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import {
     Button, Card, Row, Col, Space, Modal,
-    Typography, Divider, Empty
+    Typography, Divider, message, Empty
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
     PlusCircleOutlined, EditOutlined, CalendarOutlined,
     ClockCircleOutlined, UserOutlined, EnvironmentOutlined, CloseCircleOutlined
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
 // Define an interface for the pickup booking object
 interface PickupBooking {
-  id: number;
-  contractNumber: string;
-  appointmentDate: string;
-  appointmentTime: string;
-  employee: string | undefined;
-  appointmentMethod: string | undefined;
-  address?: string;
-  province?: string;
-  district?: string;
-  subdistrict?: string;
-  status?: string; // สถานะของการนัดหมาย
+    id: number;
+    contractNumber: string;
+    appointmentDate: string;
+    appointmentTime: string;
+    employee: string | undefined;
+    appointmentMethod: string | undefined;
+    address?: string;
+    province?: string;
+    district?: string;
+    subdistrict?: string;
+    status?: string; // สถานะของการนัดหมาย
 }
 
 const initialBookingHistory: PickupBooking[] = [
@@ -84,12 +85,38 @@ const PickupCarPage: React.FC = () => {
     }, []);
 
     const handleCreateNewBooking = () => navigate('/pickup-car/create');
-    const handleEditBooking = (booking: PickupBooking) => navigate(`/pickup-car/create?id=${booking.id}`);
+    // const handleEditBooking = (booking: PickupBooking) => navigate(`/pickup-car/create?id=${booking.id}`);
+
+    // const handleCancelBooking = (booking: PickupBooking) => {
+    //     setBookingToCancel(booking);
+    //     setIsModalOpen(true);
+    // };
+
+    //ถ้าอีก60นาทีถึงจะสามารถแก้ไขหรือยกเลิกได้
+    const isActionDisabled = (booking: PickupBooking) => {
+        const appointmentDateTime = dayjs(`${booking.appointmentDate} ${booking.appointmentTime.split(' ')[0]}`, 'DD MMMM YYYY HH:mm', 'th');
+        const now = dayjs();
+        const diffInMinutes = appointmentDateTime.diff(now, 'minute');
+        return diffInMinutes <= 60;
+    };
+
+    const handleEditBooking = (booking: PickupBooking) => {
+        if (isActionDisabled(booking)) {
+            message.error('ไม่สามารถแก้ไขการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาทีได้');
+            return;
+        }
+        navigate(`/inspection-car/create?id=${booking.id}`);
+    };
 
     const handleCancelBooking = (booking: PickupBooking) => {
+        if (isActionDisabled(booking)) {
+            message.error('ไม่สามารถยกเลิกการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาทีได้');
+            return;
+        }
         setBookingToCancel(booking);
         setIsModalOpen(true);
     };
+    //-------------------------------------------
 
     const handleConfirmCancel = () => {
         if (bookingToCancel) {
@@ -108,8 +135,8 @@ const PickupCarPage: React.FC = () => {
 
     return (
         <div style={{ padding: '0 48px' }}>
-         
-            <div style={{  minHeight: 'calc(100vh - 180px)', padding: 24}}>
+
+            <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
                 <Row align="middle" justify="space-between">
                     <Col><Title level={2} style={{ color: 'white', marginBottom: 0 }}>ประวัติการนัดรับรถยนต์</Title></Col>
                     <Col>
@@ -170,11 +197,25 @@ const PickupCarPage: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-
-                                    <Space style={{ width: '100%', justifyContent: 'center' }}>
-                                        <Button icon={<EditOutlined />} style={{ backgroundColor: '#f1d430ff', color: 'black', border: 'none' }} onClick={() => handleEditBooking(booking)}>แก้ไข</Button>
-                                        <Button icon={<CloseCircleOutlined />} danger onClick={() => handleCancelBooking(booking)}>ยกเลิก</Button>
-                                    </Space>
+                                    {/* ตรวจสอบสถานะ ถ้าอีก 1 ชั่วโมง จะถึงเวลาจอง ปุ่มจะหายไป */}
+                                    {!isActionDisabled(booking) && (
+                                        <Space style={{ width: '100%', justifyContent: 'center' }}>
+                                            <Button
+                                                icon={<EditOutlined />}
+                                                style={{ backgroundColor: '#f1d430ff', color: 'black', border: 'none' }}
+                                                onClick={() => handleEditBooking(booking)}
+                                            >
+                                                แก้ไข
+                                            </Button>
+                                            <Button
+                                                icon={<CloseCircleOutlined />}
+                                                danger
+                                                onClick={() => handleCancelBooking(booking)}
+                                            >
+                                                ยกเลิก
+                                            </Button>
+                                        </Space>
+                                    )}
                                 </Card>
                             ))}
                         </Col>

@@ -112,7 +112,7 @@ const AppointmentDetailsPage: React.FC = () => {
         <Button 
         type="text" 
         icon={<ArrowLeftOutlined />} 
-        onClick={() => navigate('/homepage-employee')} 
+        onClick={() => navigate('/AppointmentAll')} 
         style={{ marginBottom: '16px',background: 'linear-gradient(45deg, #FFD700, #FFA500)',
             color: 'black',
             borderColor: 'transparent',
