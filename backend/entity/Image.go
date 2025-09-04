@@ -6,10 +6,10 @@ import (
 
 type Image struct {
 	gorm.Model
-	Image         []byte //`gorm:"type:blob"`
+	Path          string `json:"path"` // ใช้ string สำหรับเก็บ path ของไฟล์รูป
+	ImageMimeType string `json:"image_mime_type"`
 
 	// CarID as foreign key
-	CarID *uint
-	Car   Car `gorm:"foreignKey:CarID"`
-
+	CarID *uint `json:"carID"`
+	Car   Car   `gorm:"foreignKey:CarID"`
 }
