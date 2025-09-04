@@ -18,4 +18,6 @@ type SalesContract struct {
 
 	InspectionAppointments []InspectionAppointment `gorm:"foreignKey:SalesContractID"`
 
+	Payment   []Payment   `gorm:"foreignKey:SalesContractID"`
+
 }
