@@ -22,8 +22,8 @@ type Payment struct {
 	RentContractID uint          `json:"rentcontractID"`
 	RentContract   *RentContract `gorm:"foreignKey:RentContractID" json:"RentContract"`
 
-	SaleContractID uint          `json:"SaleContractID"`
-	SaleContract   *SaleContract `gorm:"foreignKey:SaleContractID" json:"SaleContract"`
+	SalesContractID uint          `json:"SalesContractID"`
+	SalesContract   *SalesContract `gorm:"foreignKey:SalesContractID" json:"SalesContract"`
 
 	PaymentMethodID uint `json:"PaymentMethodID"`
 	PaymentMethod *PaymentMethod `gorm:"foreignKey:PaymentMethodID" json:"PaymentMethod"`

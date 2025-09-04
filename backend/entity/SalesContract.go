@@ -17,6 +17,6 @@ type SalesContract struct {
 	Customer   *Customer `gorm:"foreignKey:CustomerID" json:"customer"`
 
 	//ส่งให้ payment
-	Payment []Payment `gorm:"foreignKey:SaleContractID"`
+	Payment []Payment `gorm:"foreignKey:SalesContractID"`
 
 }
