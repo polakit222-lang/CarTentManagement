@@ -6,7 +6,7 @@ import (
 
 type CarSystem struct {
 	gorm.Model
-	SystemName string
+	SystemName string `json:"system_name"`
 
 	// 1 type เป็นเจ้าของได้หลาย pickupdelivery
 	InspectionSystem []InspectionSystem `gorm:"foreignKey:CarSystemID"`

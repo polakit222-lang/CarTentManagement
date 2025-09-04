@@ -16,10 +16,9 @@ type Customer struct {
 	LastName  string
 	Birthday  time.Time
 
-	// 1 costomer เป็นเจ้าของได้หลาย saleContract
-	SaleContracts []SaleContract `gorm:"foreignKey:CustomerID"`
+	
 
-	VehiclePickupDeliveries []PickupDelivery `gorm:"foreignKey:CustomerID"` // แก้ไข: foreignKey เป็น CustomerID
+	PickupDelivery []PickupDelivery `gorm:"foreignKey:CustomerID"` // แก้ไข: foreignKey เป็น CustomerID
 
 	//for Appointment
 	InspectionAppointments []InspectionAppointment `gorm:"foreignKey:CustomerID"` // แก้ไข: foreignKey เป็น CustomerID
