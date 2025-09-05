@@ -82,3 +82,23 @@ func InsertCarsFromCSV(db *gorm.DB, filepath string) {
 
 	fmt.Println("Inserted CSV Car data successfully!")
 }
+func InsertMockPictures(db *gorm.DB) {
+	// ดึงรถทั้งหมด
+	var cars []entity.Car
+	db.Find(&cars)
+
+	for _, car := range cars {
+		// สร้างรูป mock 3 รูปสำหรับแต่ละคัน
+		pictures := []entity.CarPicture{
+			{Title: "Front view", Path: "/mockimages/car_front.jpg", CarID: car.ID},
+			{Title: "Side view", Path: "/mockimages/car_side.jpg", CarID: car.ID},
+			{Title: "Interior", Path: "/mockimages/car_interior.jpg", CarID: car.ID},
+		}
+
+		for _, pic := range pictures {
+			db.Create(&pic)
+		}
+	}
+
+	fmt.Println("Inserted mock pictures for all cars successfully!")
+}

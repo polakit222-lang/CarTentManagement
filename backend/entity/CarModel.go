@@ -7,5 +7,5 @@ type CarModel struct {
 	ModelName string
 	BrandID   uint       `json:"brandId"`
 	Brand     *Brand     `json:"brand" gorm:"references:ID"`
-	SubModels []SubModel `gorm:"foreignKey:CarModelID"` // CarModelID ใน SubModel
+	SubModels []SubModel `gorm:"foreignKey:CarModelID" json:"sub_model"` // CarModelID ใน SubModel
 }
