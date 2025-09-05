@@ -1,9 +1,6 @@
 package controllers
 
 import (
-	"c:\\Users\\lylot\\Documents\\GitHub\\CarTentManagement\\backend\\configs"
-	"c:\\Users\\lylot\\Documents\\GitHub\\CarTentManagement\\backend\\entity"
-
 	"github.com/dgrijalva/jwt-go"
 )
 

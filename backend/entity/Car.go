@@ -8,17 +8,20 @@ import (
 
 type Car struct {
 	gorm.Model
-	YearManufacture int       `json:"year"`
+	CarName         string    `json:"car_name"`
+	YearManufacture int       `json:"year_manufacture"`
+	PurchasePrice   float64   `json:"purchase_price"`
 	PurchaseDate    time.Time `json:"purchase_date"`
-	PurchasePrice   float64   `json:"buy_price"`
 	Color           string    `json:"color"`
 
-	ProvinceID uint      `json:"provinceID"`
-	Province   *Province `gorm:"foreignKey:ProvinceID" json:"province"`
+	Pictures []CarPicture `gorm:"foreignKey:CarID" json:"pictures"`
 
-	DetailID uint    `json:"detailID"`
-	Detail   *Detail `gorm:"foreignKey:DetailID" json:"detail"`
+	ProvinceID uint      `json:"province_id"`
+	Province   *Province `gorm:"foreignKey:ProvinceID" ่json:"province"`
 
-	EmployeeID uint      `json:"employeeID"`
-	Employee   *Employee `gorm:"foreignKey:EmployeeID" json:"employee"`
+	EmployeeID uint
+	Employee   *Employee `gorm:"foreignKey:EmployeeID" ่json:"employee"`
+
+	DetailID uint    `json:"detail_id"`
+	Detail   *Detail `gorm:"foreignKey:DetailID" ่json:"detail"`
 }

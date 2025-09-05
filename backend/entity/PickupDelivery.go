@@ -17,7 +17,7 @@ type PickupDelivery struct {
 	TypeInformation   *TypeInformation `gorm:"foreignKey:TypeInformationID" json:"TypeInformation"`
 
 	// Corrected to use SaleContractID
-	SalesContractID uint          `json:"SalesContractID"`
+	SalesContractID uint           `json:"SalesContractID"`
 	SalesContract   *SalesContract `gorm:"foreignKey:SalesContractID" json:"SalesContract"`
 
 	DateTime time.Time `json:"DateTime"`

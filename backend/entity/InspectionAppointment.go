@@ -16,11 +16,10 @@ type InspectionAppointment struct {
 
 	DateTime time.Time `json:"date_time"`
 
-	SaleContractID uint          `json:"SaleContractID"`
-	SaleContract   *SalesContract `gorm:"foreignKey:SalesContractID" json:"SalesContract"`
+	SalesContractID uint
+	SalesContract   *SalesContract `gorm:"foreignKey:SalesContractID"`
 
 	InspectionStatus string `json:"inspection_status"`
-
 
 	InspectionSystem []InspectionSystem `gorm:"foreignKey:InspectionAppointmentID"`
 }

@@ -18,13 +18,13 @@ type Employee struct {
 	Birthday     time.Time `json:"birthday"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
-	Joptype      time.Time `json:"start_date"`
-	TotalSales   string    `json:"total_sales"`
+	Jobtype      time.Time `json:"jobtype"`
+	TotalSales   Status    `json:"total_sales"`
 
 	PickupDelivery []PickupDelivery `gorm:"foreignKey:EmployeeID"`
 	Car            []Car            `gorm:"foreignKey:EmployeeID"`
 	
 	SaleList       []SaleList       `gorm:"foreignKey:EmployeeID"`
 	SalesContract  []SalesContract  `gorm:"foreignKey:EmployeeID"`
-	LeaveRequest   []LeaveRequest	`gorm:"foreignKey:EmployeeID"`
+	LeaveRequest   []LeaveRequest   `gorm:"foreignKey:EmployeeID"`
 }
