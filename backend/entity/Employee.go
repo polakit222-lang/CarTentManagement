@@ -18,7 +18,7 @@ type Employee struct {
 	Birthday     time.Time `json:"birthday"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
-	Jobtype      time.Time `json:"jobtype"`
+	Jobtype      string `json:"jobtype"`
 	TotalSales   Status    `json:"total_sales"`
 
 	PickupDelivery []PickupDelivery `gorm:"foreignKey:EmployeeID"`
