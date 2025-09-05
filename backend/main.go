@@ -21,6 +21,8 @@ func main() {
 	setupdata.InsertMockPictures(configs.DB)
 	setupdata.InsertMockSaleList(configs.DB)
 	setupdata.InsertMockRentListWithDates(configs.DB)
+	setupdata.InsertCarSystems(configs.DB)
+	setupdata.InsertMockInspections(configs.DB)
 
 	// 3. Create router
 	r := gin.Default()
@@ -36,6 +38,29 @@ func main() {
 		carRoutes.POST("", carController.CreateCar)       // POST /cars
 		carRoutes.PUT("/:id", carController.UpdateCar)    // PUT /cars/1
 		carRoutes.DELETE("/:id", carController.DeleteCar) // DELETE /cars/1
+	}
+	// 6. Inspection Appointment Controller
+	inspectionAppointmentController := controllers.NewInspectionAppointmentController(configs.DB)
+
+	// 7. Inspection Appointment routes
+	inspectionRoutes := r.Group("/inspection-appointments")
+	{
+		inspectionRoutes.GET("", inspectionAppointmentController.GetInspectionAppointments)
+		inspectionRoutes.GET("/:id", inspectionAppointmentController.GetInspectionAppointmentByID)
+		inspectionRoutes.GET("/customer/:customerID", inspectionAppointmentController.GetInspectionAppointmentsByCustomerID)
+		inspectionRoutes.POST("", inspectionAppointmentController.CreateInspectionAppointment)
+		inspectionRoutes.PUT("/:id", inspectionAppointmentController.UpdateInspectionAppointment)
+		inspectionRoutes.PATCH("/:id/status", inspectionAppointmentController.UpdateInspectionAppointmentStatus)
+		inspectionRoutes.DELETE("/:id", inspectionAppointmentController.DeleteInspectionAppointment)
+	}
+	
+	// 8. Car System Controller
+	carSystemController := controllers.NewCarSystemController(configs.DB)
+
+	// 9. Car System routes
+	carSystemRoutes := r.Group("/car-systems")
+	{
+		carSystemRoutes.GET("", carSystemController.GetCarSystems)
 	}
 
 	// 6. Start server

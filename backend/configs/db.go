@@ -31,6 +31,11 @@ func ConnectDatabase(dbName string) {
 		&entity.RentList{},
 		&entity.DateforRent{},
 		&entity.RentAbleDate{},
+		&entity.Customer{},
+		&entity.CarSystem{},
+		&entity.SalesContract{},
+		&entity.InspectionAppointment{},
+		&entity.InspectionSystem{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
