@@ -4,6 +4,6 @@ import "gorm.io/gorm"
 
 type Brand struct {
 	gorm.Model
-	BrandName string
-	CarModels []CarModel `gorm:"foreignKey:BrandID"` // BrandID ใน CarModel
+	BrandName string     `json:"brand_name"`
+	CarModels []CarModel `gorm:"foreignKey:BrandID" json:"car_model"` // BrandID ใน CarModel
 }
