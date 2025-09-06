@@ -9,6 +9,7 @@ interface CarGridProps {
   deleteBasePath?: string;
   rentBasePath?: string;
   sellBasePath?: string;
+
   detailBasePath?: string;
 }
 
@@ -19,6 +20,7 @@ const CarGrid: React.FC<CarGridProps> = ({
   deleteBasePath,
   rentBasePath,
   sellBasePath,
+
   detailBasePath,
 }) => {
   return (
@@ -26,8 +28,8 @@ const CarGrid: React.FC<CarGridProps> = ({
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
-        gap: '1px',
-        padding: '10px',
+        gap: '30px',
+        padding: '20px',
         width: '100%',
       }}
     >
@@ -40,6 +42,7 @@ const CarGrid: React.FC<CarGridProps> = ({
           deletePath={deleteBasePath ? `${deleteBasePath}/${car.id}` : undefined}
           rentPath={rentBasePath ? `${rentBasePath}/${car.id}` : undefined}
           sellPath={sellBasePath ? `${sellBasePath}/${car.id}` : undefined}
+
           detailPath={detailBasePath ? `${detailBasePath}/${car.id}` : undefined}
         />
       ))}

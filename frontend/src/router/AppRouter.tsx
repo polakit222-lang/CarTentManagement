@@ -12,7 +12,9 @@ import EmployeeLayout from '../layout/EmployeeLayout';
 import LoginPage from '../pages/login/LoginPage';
 import RegisterPage from '../pages/customer/register/RegisterPage';
 import BuyCar from '../pages/customer/buycar/BuyCar';
+import BuyCarDetailPage from '../pages/customer/buycar/BuyCarDetail';
 import RentCarPage from '../pages/customer/rentcar/RentCarPage';
+import RentCarDetailPage from '../pages/customer/rentcar/RentCarDetailPage';
 import CusProfilePage from '../pages/customer/profile/ProfilePage';
 import PaymentPage from '../pages/customer/payment/PaymentPage';
 import BuyInsurancePage from '../pages/customer/insurance/BuyInsurancePage';
@@ -118,7 +120,9 @@ const AppRouter: React.FC = () => {
             <Route element={<CustomerLayout />}>
                 <Route path="/" element={<Navigate to="/buycar" />} />
                 <Route path="/buycar" element={<BuyCar />} />
+                    <Route path="/buycar-details/:id" element={<BuyCarDetailPage />} />
                 <Route path="/rentcar" element={<RentCarPage />} />
+                    <Route path="/rentcar-details/:id" element={<RentCarDetailPage />} />
                 <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
                     <Route path="/Cus-profile" element={<CusProfilePage />} />
                     <Route path="/payment" element={<PaymentPage />} />

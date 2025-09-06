@@ -9,6 +9,7 @@ interface CarCardProps {
   deletePath?: string;
   rentPath?: string;
   sellPath?: string;
+  
   detailPath?: string; // 👈 เพิ่ม path สำหรับปุ่มรายละเอียด
 }
 
@@ -19,6 +20,7 @@ const CarCard: React.FC<CarCardProps> = ({
   deletePath,
   rentPath,
   sellPath,
+
   detailPath, // 👈 รับ prop
 }) => {
   const [currentPicIndex, setCurrentPicIndex] = useState(0);
@@ -39,39 +41,54 @@ const CarCard: React.FC<CarCardProps> = ({
   const usageAge = currentYear - (car.yearUsed ?? currentYear);
 
   return (
-    <div
+      <div
       style={{
-        border: '1px solid #ccc',
-        borderRadius: 8,
-        padding: 10,
+        backgroundColor: "#1a1a1a",
+        border: "2px solid gold",
+        borderRadius: 12,
+        padding: 12,
         width: 450,
+        transition: "box-shadow 0.3s ease-in-out",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = "0 4px 15px rgba(255, 215, 0, 0.4)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
       {/* รูปเลื่อน */}
       {car.pic.length > 0 && (
-        <div style={{ position: 'relative', textAlign: 'center' }}>
+        <div style={{ position: "relative", textAlign: "center" }}>
           <img
             src={car.pic[currentPicIndex]}
             alt={`${car.brand} ${car.model}`}
             style={{
-              width: '100%',
+              width: "100%",
               height: 300,
-              objectFit: 'cover',
-              borderRadius: 8,
+              objectFit: "cover",
+              // borderRadius: 12,
+              // border: "2px solid gold",
+              // transition: "box-shadow 0.3s ease-in-out",
             }}
+            // onMouseEnter={(e) =>
+            //   (e.currentTarget.style.boxShadow = "0 4px 12px rgba(255, 215, 0, 0.4)")
+            // }
+            // onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
           />
+
           <button
             onClick={handlePrev}
             style={{
-              position: 'absolute',
-              top: '50%',
+              position: "absolute",
+              top: "50%",
               left: 0,
-              transform: 'translateY(-50%)',
-              background: 'rgba(0,0,0,0.5)',
-              color: 'white',
-              border: 'none',
-              padding: '5px 10px',
-              cursor: 'pointer',
+              transform: "translateY(-50%)",
+              background: "rgba(0, 0, 0, 0.5)",
+              color: "gold",
+              border: "none",
+              padding: "5px 10px",
+              cursor: "pointer",
             }}
           >
             ‹
@@ -79,15 +96,15 @@ const CarCard: React.FC<CarCardProps> = ({
           <button
             onClick={handleNext}
             style={{
-              position: 'absolute',
-              top: '50%',
+              position: "absolute",
+              top: "50%",
               right: 0,
-              transform: 'translateY(-50%)',
-              background: 'rgba(0,0,0,0.5)',
-              color: 'white',
-              border: 'none',
-              padding: '5px 10px',
-              cursor: 'pointer',
+              transform: "translateY(-50%)",
+              background: "rgba(0,0,0,0.5)",
+              color: "gold",
+              border: "none",
+              padding: "5px 10px",
+              cursor: "pointer",
             }}
           >
             ›
@@ -95,47 +112,176 @@ const CarCard: React.FC<CarCardProps> = ({
         </div>
       )}
 
-      <h3>
+      {/* ข้อมูลรถ */}
+      <h3 style={{ color: "gold", marginTop: 12 }}>
         {car.brand} {car.model} {car.subModel} ปี {car.yearManufactured}
       </h3>
-      <p>ราคาซื้อ: {car.price.toLocaleString()} บาท</p>
-      <p>สภาพ: {car.condition}</p>
-      <p>เลขไมล์: {car.mileage.toLocaleString()} กิโลเมตร</p>
-      <p>อายุการใช้งาน: {usageAge} ปี</p>
+      <p style={{ color: "#fff" }}>ราคาซื้อ: {car.price.toLocaleString()} บาท</p>
+      <p style={{ color: "#fff" }}>สภาพ: {car.condition}</p>
+      <p style={{ color: "#fff" }}>เลขไมล์: {car.mileage.toLocaleString()} กิโลเมตร</p>
+      <p style={{ color: "#fff" }}>อายุการใช้งาน: {usageAge} ปี</p>
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+      {/* ปุ่ม */}
+      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
         {editPath && (
           <Link to={editPath}>
-            <button>แก้ไข</button>
+            <button
+              style={{
+                backgroundColor: "gold",
+                color: "black",
+                fontWeight: "bold",
+                border: "2px solid gold",
+                borderRadius: 8,
+                padding: "5px 12px",
+                transition: "all 0.3s ease-in-out",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "black";
+                e.currentTarget.style.color = "gold";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "gold";
+                e.currentTarget.style.color = "black";
+              }}
+            >
+              แก้ไข
+            </button>
           </Link>
         )}
+
         {selectPath && (
           <Link to={selectPath}>
-            <button>เลือก</button>
+            <button
+              style={{
+                backgroundColor: "gold",
+                color: "black",
+                fontWeight: "bold",
+                border: "2px solid gold",
+                borderRadius: 8,
+                padding: "5px 12px",
+                transition: "all 0.3s ease-in-out",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "black";
+                e.currentTarget.style.color = "gold";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "gold";
+                e.currentTarget.style.color = "black";
+              }}
+            >
+              เลือก
+            </button>
           </Link>
         )}
+
         {deletePath && (
           <Link to={deletePath}>
-            <button>ลบ</button>
+            <button
+              style={{
+                backgroundColor: "black",
+                color: "gold",
+                fontWeight: "bold",
+                border: "2px solid gold",
+                borderRadius: 8,
+                padding: "5px 12px",
+                transition: "all 0.3s ease-in-out",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "gold";
+                e.currentTarget.style.color = "black";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "black";
+                e.currentTarget.style.color = "gold";
+              }}
+            >
+              ลบ
+            </button>
           </Link>
         )}
-        {rentPath && (
+
+        {rentPath&& (
           <Link to={rentPath}>
-            <button>ให้เช่า</button>
+            <button
+              style={{
+                backgroundColor: "gold",
+                color: "black",
+                fontWeight: "bold",
+                border: "2px solid gold",
+                borderRadius: 8,
+                padding: "5px 12px",
+                transition: "all 0.3s ease-in-out",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "black";
+                e.currentTarget.style.color = "gold";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "gold";
+                e.currentTarget.style.color = "black";
+              }}
+            >
+              ให้เช่า
+            </button>
           </Link>
         )}
+
         {sellPath && (
           <Link to={sellPath}>
-            <button>ขาย</button>
+            <button
+              style={{
+                backgroundColor: "gold",
+                color: "black",
+                fontWeight: "bold",
+                border: "2px solid gold",
+                borderRadius: 8,
+                padding: "5px 12px",
+                transition: "all 0.3s ease-in-out",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "black";
+                e.currentTarget.style.color = "gold";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "gold";
+                e.currentTarget.style.color = "black";
+              }}
+            >
+              ขาย
+            </button>
           </Link>
         )}
+
+        {/* ปุ่มรายละเอียด */}
         {detailPath && (
           <Link to={detailPath}>
-            <button>แสดงรายละเอียด</button>
+            <button
+              style={{
+                backgroundColor: "gold",
+                color: "black",
+                fontWeight: "bold",
+                border: "2px solid gold",
+                borderRadius: 8,
+                padding: "5px 12px",
+                transition: "all 0.3s ease-in-out",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "black";
+                e.currentTarget.style.color = "gold";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "gold";
+                e.currentTarget.style.color = "black";
+              }}
+            >
+              แสดงรายละเอียด
+            </button>
           </Link>
         )}
       </div>
     </div>
+
   );
 };
 
