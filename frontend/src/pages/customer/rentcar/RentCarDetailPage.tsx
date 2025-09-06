@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Row,
   Col,
@@ -9,15 +9,13 @@ import {
   Button,
   Divider,
   Form,
-  DatePicker,
   Modal,
-  Alert,
   message,
 } from "antd";
-import { ShoppingCartOutlined, PushpinOutlined, CalendarOutlined } from "@ant-design/icons";
+import { PushpinOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
-
 import { carList } from "../../../data/carList";
+import RentDateRange from "../../../components/CusRentDateRange";
 
 import mainCar from "../../../assets/rentCar1/carMain.jpg";
 import thumb1 from "../../../assets/rentCar1/thumb1.jpg";
@@ -26,36 +24,36 @@ import thumb3 from "../../../assets/rentCar1/thumb3.jpg";
 import thumb4 from "../../../assets/rentCar1/thumb4.jpg";
 
 const { Title } = Typography;
-const { RangePicker } = DatePicker;
 
 const RentCarDetailPage: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [rentModalVisible, setRentModalVisible] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // state สำหรับแสดง error
+
+  const [selectedRentRange, setSelectedRentRange] = useState<[Dayjs, Dayjs] | null>(null);
 
   const car = carList.find((c) => c.id === Number(id));
   if (!car) return <div>ไม่พบรถที่ต้องการ</div>;
 
-    useEffect(() => {
-      window.scrollTo({ top: 0 });
-    }, []);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
 
-  const handleFormSubmit = () => {
-    if (!dateRange) {
-      setErrorMessage("โปรดเลือกช่วงระยะเวลาที่ต้องการเช่า"); // แสดงข้อความเตือน
+  const handleFormSubmit = (values: any) => {
+    if (!values.rentRange) {
+      message.error("โปรดเลือกช่วงเวลาที่ต้องการเชิม");
       return;
     }
-    setErrorMessage(""); // ล้างข้อความเตือนถ้ามีการเลือกวันที่แล้ว
+    setSelectedRentRange(values.rentRange);
     setRentModalVisible(true);
   };
 
   const handleConfirmRent = () => {
-  message.success("ทำการจองเรียบร้อยแล้ว!");
-  setDateRange(null); // รีเซตปฏิทินให้กลับไปเป็นค่าเริ่มต้น
-  setRentModalVisible(false);
-};
+    message.success("ทำการจองเรียบร้อยแล้ว!");
+    setRentModalVisible(false);
+    navigate('/rent');
+  };
 
   return (
     <div style={{ backgroundColor: "#000", minHeight: "100vh", padding: "20px" }}>
@@ -123,9 +121,6 @@ const RentCarDetailPage: React.FC = () => {
               <p>เลขไมล์: {car.mileage?.toLocaleString()} กม.</p>
               <p>เกียร์: </p>
               <p>สี: </p>
-
-              {/* <p>เกียร์: {car.gear}</p>
-              <p>สี: {car.color}</p> */}
             </div>
 
             <Divider style={{ borderColor: "rgba(255, 215, 0, 0.3)" }} />
@@ -133,28 +128,11 @@ const RentCarDetailPage: React.FC = () => {
             {/* ปฏิทินเลือกวันที่ */}
             <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
               <Form.Item
+                name="rentRange"
                 label={<span style={{ color: "white", fontWeight: "bold" }}>เลือกช่วงเช่า</span>}
+                rules={[{ required: true, message: "โปรดเลือกช่วงเวลาที่ต้องการเช่า" }]}
               >
-                <RangePicker
-                  value={dateRange}
-                  onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs])}
-                  disabledDate={(current) => current && current < dayjs().startOf("day")}
-                  format="DD/MM/YYYY"
-                  style={{
-                    width: "100%",
-                    borderRadius: 10,
-                    border: "2px solid gold",
-                    backgroundColor: "#1a1a1a",
-                    color: "white",
-                  }}
-                  suffixIcon={<CalendarOutlined style={{ color: "gold" }} />}
-                />
-                {/* ✅ แสดงข้อความเตือนถ้ายังไม่ได้เลือก */}
-                {errorMessage && (
-                  <div style={{ color: "red", marginTop: "5px", fontSize: "12px" }}>
-                    {errorMessage}
-                  </div>
-                )}
+                <RentDateRange />
               </Form.Item>
 
               <Button
@@ -181,22 +159,54 @@ const RentCarDetailPage: React.FC = () => {
                 สั่งเช่า
               </Button>
 
-              {/* Modal ยืนยันเช่า */}
+              {/* Modal ที่ถูกลบเนื้อหาตรงกลางออก */}
               <Modal
-                title={<span style={{ color: "#000000ff", fontWeight: "bold" }}>ยืนยันการเช่า</span>}
+                title={<span style={{ color: "black", fontWeight: "bold" }}>ยืนยันการเช่า</span>}
                 open={rentModalVisible}
                 onOk={handleConfirmRent}
                 onCancel={() => setRentModalVisible(false)}
                 okText="ยืนยัน"
                 cancelText="ยกเลิก"
-                bodyStyle={{ backgroundColor: "#ffffffff", color: "#000000ff" }}
+                className="custom-rent-modal"
+                okButtonProps={{ 
+                  style: { 
+                    backgroundColor: "gold", 
+                    color: "black", 
+                    borderColor: "gold", 
+                    borderRadius: "8px",
+                    fontWeight: "bold",
+                  },
+                  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+                    (e.target as HTMLElement).style.backgroundColor = "#ccac00";
+                    (e.target as HTMLElement).style.color = "black";
+                  },
+                  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+                    (e.target as HTMLElement).style.backgroundColor = "gold";
+                    (e.target as HTMLElement).style.color = "black";
+                  },
+                }}
+                cancelButtonProps={{ 
+                  style: { 
+                    backgroundColor: "#e0e0e0",
+                    color: "black", 
+                    borderColor: "#d0d0d0", 
+                    borderRadius: "8px",
+                    fontWeight: "bold",
+                  },
+                  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+                    (e.target as HTMLElement).style.backgroundColor = "#c0c0c0";
+                  },
+                  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+                    (e.target as HTMLElement).style.backgroundColor = "#e0e0e0";
+                  },
+                }}
+                bodyStyle={{ 
+                  backgroundColor: "white",
+                  padding: "20px",
+                  borderRadius: "0 0 8px 8px", 
+                }}
               >
-                {dateRange && (
-                  <div style={{ color: "#000000ff" }}>
-                    <p>วันเริ่ม: {dateRange[0].format("DD/MM/YYYY")}</p>
-                    <p>วันสิ้นสุด: {dateRange[1].format("DD/MM/YYYY")}</p>
-                  </div>
-                )}
+                {/* เนื้อหาส่วนนี้ถูกลบออกไปแล้ว */}
               </Modal>
             </Form>
           </Card>

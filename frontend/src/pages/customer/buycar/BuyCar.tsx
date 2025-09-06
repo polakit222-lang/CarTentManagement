@@ -13,6 +13,8 @@ import Sorter, { type SortOption } from '../../../components/Sorter';
 
 const conditionOrder = ['ดี', 'ปานกลาง', 'แย่'];
 
+
+
 const { Title } = Typography;
 
 const BuyCarPage: React.FC = () => {

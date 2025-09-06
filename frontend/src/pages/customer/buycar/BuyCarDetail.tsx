@@ -12,6 +12,7 @@ import thumb2 from "../../../assets/burCar1/thumb2.jpg";
 import thumb3 from "../../../assets/burCar1/thumb3.jpg";
 import thumb4 from "../../../assets/burCar1/thumb4.jpg";
 
+
 const { Title, Paragraph } = Typography;
 
 const BuyCarDetailPage: React.FC = () => {

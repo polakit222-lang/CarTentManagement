@@ -1,4 +1,3 @@
-//src/components/Filter.tsx
 import React, { useMemo, useState } from 'react';
 import {
   Select,
@@ -9,14 +8,12 @@ import {
   Checkbox,
   Typography,
 } from 'antd';
+import type { CarInfo } from '../interface/Car';
+import { carList as defaultCarList } from '../data/carList';
 
 const { Title } = Typography;
 
 type CheckboxValueType = string | number;
-
-import type { CarInfo } from '../interface/Car';
-import { carList as defaultCarList } from '../data/carList';
-import "../style/sidebar.css";
 
 export type FilterValues = {
   brand?: string | null;
@@ -56,7 +53,8 @@ const safeMin = (arr: number[], fallback = 0) =>
   arr.length > 0 ? Math.min(...arr) : fallback;
 const safeMax = (arr: number[], fallback = 1000000) =>
   arr.length > 0 ? Math.max(...arr) : fallback;
-const Filter: React.FC<Props> = ({
+
+const BuyRentFillter: React.FC<Props> = ({
   carList = defaultCarList,
   width = 300,
   defaultValues,
@@ -73,7 +71,7 @@ const Filter: React.FC<Props> = ({
     'extras',
     'status',
     'usage',
-  ], // 👈 ถ้าไม่ส่งมา แสดงทั้งหมด
+  ],
 }) => {
   const brandList = useMemo(
     () => Array.from(new Set(carList.map((c) => c.brand))).filter(Boolean),
@@ -162,27 +160,75 @@ const Filter: React.FC<Props> = ({
 
   return (
   <div
-    className="sidebar"
     style={{
+      // ลบ position: 'fixed', marginLeft: -20, height: '80%', และ marginTop: 40 เพื่อให้ไม่เลื่อนตามหน้าจอ
+      boxSizing: 'border-box',
+      padding: '5px 30px',
+      background: '#000000',
+      color: '#f3f3f3',
+      borderRight: '1px solid rgba(255,255,255,0.03)',
+      overflowY: 'auto',
+      zIndex: 3,
+      boxShadow: '0 1px 10px rgba(0,0,0,0.5)',
+      fontFamily: '"Kanit", "Sarabun", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       width: `${width}px`,
       backgroundColor: '#262626',
-      padding: 16,
-      boxShadow: '0 0 12px rgba(255, 215, 0, 0.3)',
-      position: 'relative',  // ✅ ทำให้ z-index ทำงาน
-      zIndex: 0,             // ✅ ให้ต่ำกว่า navbar (navbar ควรมี z-index > 10)
-      color: 'white',
       borderRadius: 12,
-      border: "2px solid gold",
-      transition: "box-shadow 0.3s ease-in-out",
+      border: '2px solid gold',
+      transition: 'box-shadow 0.3s ease-in-out',
     }}
       onMouseEnter={(e) =>
       (e.currentTarget.style.boxShadow = "0 4px 12px rgba(255, 215, 0, 0.4)")
       }
       onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
   >
+    <style jsx="true">{`
+      .ant-select-selector, .ant-input-number {
+        background: transparent !important;
+        border-color: rgba(247, 247, 247, 0.06) !important;
+      }
+      .ant-select-selection-placeholder, .ant-input-number-input::placeholder {
+        color: #f3f3f3 !important;
+      }
+      .ant-select-selection-item, .ant-input-number-input {
+        color: #f3f3f3 !important;
+      }
+      .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector,
+      .ant-input-number-focused {
+        border-color: #ffd400 !important;
+        box-shadow: 0 0 0 2px rgba(255, 212, 0, 0.2) !important;
+      }
+      .ant-select-dropdown {
+        background: #2a2a2a;
+        color: #f3f3f3;
+      }
+      .ant-select-item-option-content {
+        color: #f3f3f3;
+      }
+      .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+        background-color: rgba(255, 212, 0, 0.2) !important;
+      }
+      .ant-slider-track {
+        background-color: #ffd400 !important;
+      }
+    `}</style>
+    
     {/* Title */}
-    <div className="sidebar-header">
-      <div className="sidebar-title">
+    <div style={{
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      textAlign: 'center',
+      gap: 12,
+      padding: '12px 0',
+    }}>
+      <div style={{
+        fontWeight: 700,
+        color: '#111',
+        padding: '6px 10px',
+        borderRadius: 6,
+        color: '#f8f8f8',
+        fontSize: 14,
+      }}>
         <Title level={4} style={{ color: "gold", margin: '2px 0' }}>
           ค้นหารถยนต์
         </Title>
@@ -193,29 +239,36 @@ const Filter: React.FC<Props> = ({
 
     {/* Brand */}
     {enabledFilters.includes('brand') && (
-      <div className="filter-section">
-        <label className="label" style={{ color: "white" }}>ยี่ห้อ</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          color: '#9b9b9b',
+          fontSize: 13,
+          marginBottom: 8,
+          color: "white"
+        }}>ยี่ห้อ</label>
         <Select
           placeholder="เลือกแบรนด์"
           value={brand}
           onChange={(v) => { setBrand(v); setModel(undefined); }}
           allowClear
           options={brandOptions}
-          style={{
-            width: '100%',
-            backgroundColor: '#2a2a2a',
-            borderRadius: 5,
-            color: 'white'
-          }}
-          dropdownStyle={{ backgroundColor: '#2a2a2a', color: 'white' }}
+          style={{ width: '100%', borderRadius: 5 }}
+          dropdownStyle={{ backgroundColor: '#2a2a2a', color: '#f3f3f3' }}
         />
       </div>
     )}
 
     {/* Model */}
     {enabledFilters.includes('model') && (
-      <div className="filter-section">
-        <label className="label" style={{ color: "white" }}>รุ่น</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          color: '#9b9b9b',
+          fontSize: 13,
+          marginBottom: 8,
+          color: "white"
+        }}>รุ่น</label>
         <Select
           placeholder="เลือกรุ่น"
           value={model}
@@ -223,21 +276,22 @@ const Filter: React.FC<Props> = ({
           allowClear
           options={modelOptions}
           disabled={modelList.length === 0}
-          style={{
-            width: '100%',
-            backgroundColor: '#2a2a2a',
-            borderRadius: 5,
-            color: 'white'
-          }}
-          dropdownStyle={{ backgroundColor: '#2a2a2a', color: 'white' }}
+          style={{ width: '100%', borderRadius: 5 }}
+          dropdownStyle={{ backgroundColor: '#2a2a2a', color: '#f3f3f3' }}
         />
       </div>
     )}
 
     {/* Price */}
     {enabledFilters.includes('price') && (
-      <div className="filter-section">
-        <label className="label" style={{ color: "white" }}>ราคา (฿)</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          color: '#9b9b9b',
+          fontSize: 13,
+          marginBottom: 8,
+          color: "white"
+        }}>ราคา (฿)</label>
       <Slider
         range
         min={Math.floor(priceMinDefault)}
@@ -261,17 +315,17 @@ const Filter: React.FC<Props> = ({
         ]}
         railStyle={{ backgroundColor: '#555' }}
       />
-        <div className="range-values" style={{ marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
           <InputNumber
             value={priceRange[0]}
             onChange={(v) => setPriceRange([Number(v ?? 0), priceRange[1]])}
-            style={{ width: '45%', backgroundColor: '#2a2a2a', color: 'white' }}
+            style={{ width: '45%', backgroundColor: '#2a2a2a', borderRadius: 5 }}
           />
           <span style={{ color: 'gold' }}>—</span>
           <InputNumber
             value={priceRange[1]}
             onChange={(v) => setPriceRange([priceRange[0], Number(v ?? priceRange[1])])}
-            style={{ width: '45%', backgroundColor: '#2a2a2a', color: 'white' }}
+            style={{ width: '45%', backgroundColor: '#2a2a2a', borderRadius: 5 }}
           />
         </div>
       </div>
@@ -279,8 +333,14 @@ const Filter: React.FC<Props> = ({
 
     {/* Year */}
     {enabledFilters.includes('year') && (
-      <div className="filter-section">
-        <label className="label" style={{ color: "white" }}>ปีที่ผลิต</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          color: '#9b9b9b',
+          fontSize: 13,
+          marginBottom: 8,
+          color: "white"
+        }}>ปีที่ผลิต</label>
         <Slider
           range
           min={Math.floor(yearMinDefault)}
@@ -294,7 +354,7 @@ const Filter: React.FC<Props> = ({
           ]}
           railStyle={{ backgroundColor: '#555' }}
         />
-        <div className="range-values small" style={{ marginTop: 4, color: 'gold', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ marginTop: 4, color: '#bfbfbf', fontSize: 12, display: 'flex', justifyContent: 'space-between', color: 'gold' }}>
           <span>{yearRange[0]}</span>
           <span>{yearRange[1]}</span>
         </div>
@@ -303,8 +363,14 @@ const Filter: React.FC<Props> = ({
 
     {/* Usage */}
     {enabledFilters.includes('usage') && (
-      <div className="filter-section">
-        <label className="label" style={{ color: "white" }}>อายุการใช้งาน (ปี)</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          color: '#9b9b9b',
+          fontSize: 13,
+          marginBottom: 8,
+          color: "white"
+        }}>อายุการใช้งาน (ปี)</label>
         <Slider
           range
           min={0}
@@ -318,7 +384,7 @@ const Filter: React.FC<Props> = ({
           ]}
           railStyle={{ backgroundColor: '#555' }}
         />
-        <div className="range-values small" style={{ color: 'gold', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ color: '#bfbfbf', fontSize: 12, display: 'flex', justifyContent: 'space-between', color: 'gold' }}>
           <span>{usageRange ? usageRange[0] : 0} ปี</span>
           <span>{usageRange ? usageRange[1] : 20} ปี</span>
         </div>
@@ -327,7 +393,7 @@ const Filter: React.FC<Props> = ({
 
     {/* Checkbox Sections */}
     {enabledFilters.includes('available') && (
-      <div className="filter-section">
+      <div style={{ marginBottom: 16 }}>
         <Checkbox
           checked={isAvailable}
           onChange={(e) => setIsAvailable(e.target.checked)}
@@ -339,8 +405,14 @@ const Filter: React.FC<Props> = ({
     )}
 
     {enabledFilters.includes('conditions') && (
-      <div className="filter-section">
-        <label className="label" style={{ color: "white" }}>สภาพรถ</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          color: '#9b9b9b',
+          fontSize: 13,
+          marginBottom: 8,
+          color: "white"
+        }}>สภาพรถ</label>
         <Checkbox.Group
           options={[
             { label: 'สวย', value: 'สวย' },
@@ -356,8 +428,14 @@ const Filter: React.FC<Props> = ({
 
     {/* Extras */}
     {enabledFilters.includes('extras') && (
-      <div className="filter-section">
-        <label className="label" style={{ color: "white" }}>สิ่งอำนวยความสะดวก</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          color: '#9b9b9b',
+          fontSize: 13,
+          marginBottom: 8,
+          color: "white"
+        }}>สิ่งอำนวยความสะดวก</label>
         <Checkbox.Group
           options={[
             { label: 'กล้องหลัง', value: 'กล้องหลัง' },
@@ -373,8 +451,14 @@ const Filter: React.FC<Props> = ({
 
     {/* Status */}
     {enabledFilters.includes('status') && (
-      <div className="filter-section">
-        <label className="label" style={{ color: "white" }}>สถานะรถยนต์</label>
+      <div style={{ marginBottom: 16 }}>
+        <label style={{
+          display: 'block',
+          color: '#9b9b9b',
+          fontSize: 13,
+          marginBottom: 8,
+          color: "white"
+        }}>สถานะรถยนต์</label>
         <Checkbox.Group
           options={[
             { label: 'กำลังขาย', value: 'กำลังขาย' },
@@ -440,4 +524,4 @@ const Filter: React.FC<Props> = ({
 
 };
 
-export default Filter;
+export default BuyRentFillter;
