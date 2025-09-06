@@ -1,93 +1,151 @@
-// src/pages/customer/register/RegisterPage.tsx
-import React, { useState } from 'react'; // <-- เพิ่ม useState
-import {
-  Layout, Button, Row, Col, Card, Form, Input, message, Typography
-} from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { mockCustomers } from '../../../data/users';
+// frontend/src/pages/customer/register/RegisterPage.tsx
 
-const { Content } = Layout;
+import React from 'react';
+import { Form, Input, Button, DatePicker, Row, Col, Typography, message } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import 'dayjs/locale/th';
+import locale from 'antd/es/date-picker/locale/th_TH';
+
 const { Title } = Typography;
 
 const RegisterPage: React.FC = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+    const [form] = Form.useForm();
 
-  // --- vvvvv --- เพิ่ม state สำหรับจัดการ hover --- vvvvv ---
-  const [isHovered, setIsHovered] = useState(false);
-  // --- ^^^^^ --- จบส่วนที่เพิ่ม --- ^^^^^ ---
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onFinish = async (values: any) => {
+        console.log('Received values of form: ', values);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onFinish = (values: any) => {
-    // Check if user already exists
-    const existingUser = mockCustomers.find(user => user.email === values.email);
-    if (existingUser) {
-      message.error('อีเมลนี้มีผู้ใช้งานแล้ว');
-      return;
-    }
+        // Corrected payload to match backend's RegisterInput struct
+        const payload = {
+            first_name: values.firstName, // Use snake_case
+            last_name: values.lastName,   // Use snake_case
+            email: values.email,
+            password: values.password,
+            phone: values.phoneNumber,
+            birthday: values.dateOfBirth.format('YYYY-MM-DD'), // ส่งเป็น string ในรูปแบบที่เข้าใจง่าย
+        };
 
-    // Add new user to mock data
-    const newUser = {
-      id: String(mockCustomers.length + 1),
-      ...values,
-      role: 'customer'
+        try {
+            const response = await fetch('http://localhost:8080/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                message.success('ลงทะเบียนสำเร็จ! โปรดเข้าสู่ระบบ');
+                navigate('/login');
+            } else {
+                const errorData = await response.json();
+                message.error(`ลงทะเบียนไม่สำเร็จ: ${errorData.error}`);
+            }
+        } catch (error) {
+            console.error('Registration failed:', error);
+            message.error('การเชื่อมต่อล้มเหลว โปรดลองอีกครั้ง');
+        }
     };
-    mockCustomers.push(newUser);
-    
-    message.success('สมัครสมาชิกสำเร็จ!');
-    navigate('/login');
-  };
 
-  return (
-    <Layout>
-      <Content style={{ padding: '24px 48px' }}>
-        <Row justify="center" align="middle" style={{ minHeight: 'calc(100vh - 48px)' }}>
-          <Col xs={24} sm={16} md={12} lg={8}>
-            <Card style={{ backgroundColor: '#4A4A4A' }}>
-              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                <Title level={2} style={{ color: 'white' }}>สมัครสมาชิก</Title>
-              </div>
-              <Form name="register" onFinish={onFinish}>
-                <Form.Item name="name" rules={[{ required: true, message: 'กรุณากรอกชื่อ!' }]}>
-                  <Input style={{ background: '#424242 ', border: 'grey' }} prefix={<UserOutlined />} placeholder="ชื่อ" />
-                </Form.Item>
-                <Form.Item name="email" rules={[{ required: true, message: 'กรุณากรอกอีเมล!' }, { type: 'email', message: 'รูปแบบอีเมลไม่ถูกต้อง!'}]}>
-                  <Input style={{ background: '#424242 ', border: 'grey' }} prefix={<MailOutlined />} placeholder="อีเมล" />
-                </Form.Item>
-                <Form.Item name="password" rules={[{ required: true, message: 'กรุณากรอกรหัสผ่าน!' }]}>
-                  <Input.Password style={{ background: '#424242 ', border: 'grey' }} prefix={<LockOutlined />} placeholder="รหัสผ่าน" />
-                </Form.Item>
-                <Form.Item>
-                  <Button type="primary" htmlType="submit" block>
-                    สมัครสมาชิก
-                  </Button>
-                </Form.Item>
-                <Form.Item>
-                  {/* --- vvvvv --- แก้ไขส่วนนี้ --- vvvvv --- */}
-                  <Button 
-                    type="default" 
-                    block 
-                    onClick={() => navigate('/login')}
-                    onMouseEnter={() => setIsHovered(true)} // เมื่อเมาส์เข้ามา
-                    onMouseLeave={() => setIsHovered(false)} // เมื่อเมาส์ออก
-                    style={{ 
-                      backgroundColor: isHovered ? '#616161' : 'transparent', // เปลี่ยนพื้นหลังเมื่อ hover
-                      borderColor: isHovered ? '#616161' : 'white', // เปลี่ยนสีขอบเมื่อ hover (ให้เนียนกับพื้นหลัง)
-                      color: isHovered ? 'white' : 'white', // สีข้อความยังคงเป็นสีขาว
-                      transition: 'all 0.3s ease-in-out' // เพิ่ม Transition เพื่อให้การเปลี่ยนสีดูนุ่มนวล
-                    }}
-                  >
-                    กลับไปหน้าเข้าสู่ระบบ
-                  </Button>
-                  {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
-                </Form.Item>
-              </Form>
-            </Card>
-          </Col>
-        </Row>
-      </Content>
-    </Layout>
-  );
+    return (
+        <div style={{ background: '#222', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Row justify="center" align="middle" style={{ width: '100%' }}>
+                <Col xs={24} sm={20} md={16} lg={12} xl={8}>
+                    <div style={{ padding: '20px', background: '#333', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0,0,0,0.5)' }}>
+                        <Title level={2} style={{ textAlign: 'center', color: '#FFD700', marginBottom: '24px' }}>ลงทะเบียน</Title>
+                        <Form
+                            form={form}
+                            name="register"
+                            onFinish={onFinish}
+                            layout="vertical"
+                            autoComplete="off"
+                            style={{ color: 'white' }}
+                        >
+                            <Row gutter={16}>
+                                <Col span={12}>
+                                    <Form.Item
+                                        name="firstName"
+                                        label={<span style={{ color: 'white' }}>ชื่อ</span>}
+                                        rules={[{ required: true, message: 'กรุณากรอกชื่อ!' }]}
+                                    >
+                                        <Input />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={12}>
+                                    <Form.Item
+                                        name="lastName"
+                                        label={<span style={{ color: 'white' }}>นามสกุล</span>}
+                                        rules={[{ required: true, message: 'กรุณากรอกนามสกุล!' }]}
+                                    >
+                                        <Input />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+
+                            <Form.Item
+                                name="email"
+                                label={<span style={{ color: 'white' }}>อีเมล</span>}
+                                rules={[{ required: true, type: 'email', message: 'กรุณากรอกอีเมลที่ถูกต้อง!' }]}
+                            >
+                                <Input />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="password"
+                                label={<span style={{ color: 'white' }}>รหัสผ่าน</span>}
+                                rules={[{ required: true, message: 'กรุณากรอกรหัสผ่าน!' }]}
+                            >
+                                <Input.Password />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="confirmPassword"
+                                label={<span style={{ color: 'white' }}>ยืนยันรหัสผ่าน</span>}
+                                dependencies={['password']}
+                                hasFeedback
+                                rules={[
+                                    { required: true, message: 'กรุณายืนยันรหัสผ่าน!' },
+                                    ({ getFieldValue }) => ({
+                                        validator(_, value) {
+                                            if (!value || getFieldValue('password') === value) {
+                                                return Promise.resolve();
+                                            }
+                                            return Promise.reject(new Error('รหัสผ่านไม่ตรงกัน!'));
+                                        },
+                                    }),
+                                ]}
+                            >
+                                <Input.Password />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="phoneNumber"
+                                label={<span style={{ color: 'white' }}>เบอร์โทรศัพท์</span>}
+                                rules={[{ required: true, message: 'กรุณากรอกเบอร์โทรศัพท์!' }]}
+                            >
+                                <Input />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="dateOfBirth"
+                                label={<span style={{ color: 'white' }}>วันเกิด</span>}
+                                rules={[{ required: true, message: 'กรุณาเลือกวันเกิด!' }]}
+                            >
+                                <DatePicker style={{ width: '100%' }} locale={locale} />
+                            </Form.Item>
+                            
+                            <Form.Item>
+                                <Button type="primary" htmlType="submit" style={{ width: '100%', background: 'linear-gradient(45deg, #FFD700, #FFA500)', color: 'black', border: 'none', fontWeight: 'bold' }}>
+                                    ลงทะเบียน
+                                </Button>
+                            </Form.Item>
+                        </Form>
+                    </div>
+                </Col>
+            </Row>
+        </div>
+    );
 };
 
 export default RegisterPage;

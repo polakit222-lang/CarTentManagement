@@ -64,3 +64,64 @@
   background-color: var(--gold) !important;
   color: var(--black) !important;
 }
+/* --- Style Variables --- */
+:root {
+  --gold: #d4af37;
+  --gold-dark: #b38e2f;
+  --black: #121212;
+  --white: #ffffff;
+  --gray: #1e1e1e;
+}
+
+/* =============================================================
+  1. FIX: ทำให้ไอคอน DatePicker และ Search มองเห็นชัดขึ้น
+  =============================================================
+*/
+
+/* ไอคอนปฏิทินใน DatePicker และไอคอนแว่นขยายในช่อง Search */
+.ant-picker-suffix .anticon,
+.ant-input-search-icon .anticon {
+  color: var(--gold) !important;
+}
+
+/* =============================================================
+  2. FIX: สไตล์สำหรับ Dropdown "อัปเดตสถานะ" (ธีมสีเข้ม)
+  =============================================================
+*/
+
+/* กล่อง Select ที่แสดงสถานะปัจจุบัน (ในตาราง) */
+.status-select-custom .ant-select-selector {
+  background-color: var(--gray) !important; /* เปลี่ยนพื้นหลังให้เด่นขึ้น */
+  border: 1px solid var(--gold) !important;
+  color: var(--white) !important;
+  box-shadow: 0 0 5px rgba(212, 175, 55, 0.3); /* เพิ่มเงาเล็กน้อย */
+}
+
+.status-select-custom .ant-select-arrow {
+  color: var(--gold) !important;
+}
+
+/* พื้นหลังของ Dropdown ทั้งหมด */
+.status-select-dropdown {
+  background-color: var(--gray) !important;
+  border: 1px solid var(--gold) !important;
+}
+
+/* ตัวเลือก (Option) แต่ละอันในสถานะปกติ */
+.status-select-dropdown .ant-select-item {
+  color: var(--white) !important;
+  background-color: transparent !important;
+}
+
+/* ตัวเลือก (Option) เมื่อเอาเมาส์ไปชี้ */
+.status-select-dropdown .ant-select-item-option-hover {
+  background-color: var(--gold-dark) !important;
+  color: var(--black) !important;
+}
+
+/* ตัวเลือก (Option) ที่ถูกเลือกอยู่ */
+.status-select-dropdown .ant-select-item-option-selected {
+  background-color: var(--gold) !important;
+  color: var(--black) !important;
+  font-weight: bold;
+}

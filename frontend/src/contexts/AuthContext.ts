@@ -1,32 +1,20 @@
-// // src/contexts/AuthContext.ts
-// import { createContext } from 'react';
-
-// // Define the structure of the user object
-// export interface User {
-//   id: number;
-//   name: string;
-//   role: 'customer' | 'manager' | 'employee';
-// }
-
-// // Define the shape of the context data
-// export interface AuthContextType {
-//   isAuthenticated: boolean;
-//   user: User | null; // User can be an object or null
-//   login: (userData: User) => void;
-//   logout: () => void;
-// }
-
-// // Create the context with an initial undefined value
-// export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 // src/contexts/AuthContext.ts
+
 import { createContext } from 'react';
-import type { User } from '../data/users';
+import type { Customer } from '../interface/Customer';
+import type { Employee } from '../interface/Employee';
+import type { Manager } from '../interface/Manager'; // Import the Manager interface
+// A Union Type that can be a Customer, an Employee, or a Manager
+export type User = Customer | Employee | Manager;
 
 export interface AuthContextType {
-    user: User | null;
-    login: (userData: User) => void;
-    logout: () => void;
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  role: 'customer' | 'employee' | 'manager' | undefined | null;
+  login: (userData: User, token: string) => void;
+  logout: () => void;
 }
 
+// Create and export ONLY the context
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

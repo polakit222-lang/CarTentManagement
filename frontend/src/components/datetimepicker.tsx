@@ -9,12 +9,19 @@ import buddhistEra from 'dayjs/plugin/buddhistEra';
 dayjs.locale('th');
 dayjs.extend(buddhistEra);
 
+// --- ขั้นตอนที่ 1: เพิ่ม disabledDate ใน props ---
+// เพื่อให้ Component นี้รับฟังก์ชันเงื่อนไขจากข้างนอกได้
 interface CustomDatePickerProps {
   selectedDate: Dayjs | null;
   setSelectedDate: (date: Dayjs) => void;
+  disabledDate?: (current: Dayjs) => boolean;
 }
 
-const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selectedDate, setSelectedDate }) => {
+const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
+  selectedDate,
+  setSelectedDate,
+  disabledDate, // --- ขั้นตอนที่ 2: รับ prop เข้ามาใช้งาน ---
+}) => {
   const [weekStartDate, setWeekStartDate] = useState(dayjs());
   const today = dayjs().startOf('day');
 
@@ -32,7 +39,6 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selectedDate, setSe
 
   const dateOptions = generateDateOptions(7, weekStartDate);
 
-  // Check if the previous week is entirely in the past
   const isPrevWeekDisabled = weekStartDate.subtract(7, 'day').endOf('week').isBefore(today);
 
   return (
@@ -58,7 +64,13 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selectedDate, setSe
         <Col xs={16} sm={20}>
           <Row justify="center" gutter={[8, 8]}>
             {dateOptions.map((option, index) => {
-              const isDisabled = option.date.isBefore(today);
+              // --- ขั้นตอนที่ 3: ใช้ disabledDate ที่รับมาเพื่อตัดสินใจว่าจะ disable ปุ่มหรือไม่ ---
+              const isPastDate = option.date.isBefore(today);
+              // ตรวจสอบเงื่อนไขจาก prop ที่ส่งเข้ามา ถ้าไม่มี ให้เป็น false
+              const isExternallyDisabled = disabledDate ? disabledDate(option.date) : false;
+              // ปุ่มจะถูก disable ถ้าเป็นวันในอดีต หรือเข้าเงื่อนไขจากข้างนอก
+              const isDisabled = isPastDate || isExternallyDisabled;
+
               return (
                 <Col key={index} span={3}>
                   <Button

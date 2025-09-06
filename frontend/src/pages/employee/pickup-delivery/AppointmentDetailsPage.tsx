@@ -1,12 +1,12 @@
-// src/pages/employee/AppointmentDetailsPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Col, Row, Typography, Button, message, Descriptions, Tag, Divider, Spin, ConfigProvider } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 
+import './AppointmentAll.css';
+
 const { Title, Text } = Typography;
 
-// --- Style Variables from Employeestyle.css ---
 const colors = {
   gold: '#d4af37',
   goldDark: '#b38e2f',
@@ -17,6 +17,7 @@ const colors = {
 
 interface PickupBooking {
   id: number;
+  customerId: number;
   contractNumber: string;
   appointmentDate: string;
   appointmentTime: string;
@@ -29,104 +30,140 @@ interface PickupBooking {
   status?: string;
 }
 
+interface CustomerData {
+  id: number;
+  FirstName: string;
+  LastName: string;
+}
+
 const AppointmentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState<PickupBooking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [customerName, setCustomerName] = useState<string>('');
 
   useEffect(() => {
     const storedBookings = localStorage.getItem('pickupBookings');
-    if (storedBookings) {
+    const storedCustomers = localStorage.getItem('customerData');
+
+    if (storedBookings && id) {
       const allBookings: PickupBooking[] = JSON.parse(storedBookings);
-      const foundAppointment = allBookings.find(b => b.id === Number(id));
-      if (foundAppointment) {
-        setAppointment(foundAppointment);
+      const bookingDetails = allBookings.find(b => b.id === parseInt(id));
+
+      if (bookingDetails) {
+        setAppointment(bookingDetails);
+
+        if (storedCustomers) {
+          const allCustomers: CustomerData[] = JSON.parse(storedCustomers);
+          const customer = allCustomers.find(c => c.id === bookingDetails.customerId);
+          if (customer) {
+            setCustomerName(`${customer.FirstName} ${customer.LastName}`);
+          } else {
+            setCustomerName('ไม่พบข้อมูลลูกค้า');
+          }
+        }
+
+      } else {
+        message.error('ไม่พบข้อมูลการนัดหมาย');
+        navigate('/AppointmentAll');
       }
     }
     setLoading(false);
-  }, [id]);
+  }, [id, navigate]);
 
   const handleUpdateStatus = () => {
-    const storedBookings = localStorage.getItem('pickupBookings');
-    if (storedBookings) {
-      let allBookings: PickupBooking[] = JSON.parse(storedBookings);
-      
-      allBookings = allBookings.map(b => 
-        b.id === Number(id) ? { ...b, status: 'จัดส่งสำเร็จ' } : b
-      );
-
-      localStorage.setItem('pickupBookings', JSON.stringify(allBookings));
-      
-      setAppointment(prev => prev ? { ...prev, status: 'จัดส่งสำเร็จ' } : null);
-
-      message.success('อัปเดตสถานะสำเร็จ!');
+    if (appointment) {
+      const storedBookings = localStorage.getItem('pickupBookings');
+      if (storedBookings) {
+        let allBookings: PickupBooking[] = JSON.parse(storedBookings);
+        allBookings = allBookings.map(b =>
+          b.id === appointment.id ? { ...b, status: 'จัดส่งสำเร็จ' } : b
+        );
+        localStorage.setItem('pickupBookings', JSON.stringify(allBookings));
+        setAppointment(prev => prev ? { ...prev, status: 'จัดส่งสำเร็จ' } : null);
+        message.success('อัปเดตสถานะเป็น "จัดส่งสำเร็จ" เรียบร้อยแล้ว');
+      }
     }
   };
 
   if (loading) {
+    return <Spin size="large" style={{ display: 'block', marginTop: '50px' }} />;
+  }
+
+  if (!appointment) {
     return (
-      <div style={{ background: colors.black, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Spin size="large" />
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <Title level={3} style={{ color: 'white' }}>ไม่พบข้อมูลการนัดหมาย</Title>
+        <Button onClick={() => navigate('/AppointmentAll')}>กลับไปหน้ารายการ</Button>
       </div>
     );
   }
 
-  if (!appointment) {
-    return <Title level={3} style={{ textAlign: 'center', marginTop: '50px', color: colors.white }}>ไม่พบข้อมูลการนัดหมาย</Title>;
-  }
-
-  const labelStyle: React.CSSProperties = { color: colors.gold };
+  const labelStyle: React.CSSProperties = { color: colors.gold, fontWeight: 'bold' };
+  const contentStyle: React.CSSProperties = { color: colors.white };
 
   return (
-    <ConfigProvider
-      theme={{
-        components: {
-          Card: {
-            colorBgContainer: colors.gray,
-            headerBg: colors.gray,
-            colorBorderSecondary: colors.gold,
-          },
-          Descriptions: {
-            colorText: colors.white,
-            colorSplit: colors.gold,
-          },
-          Button: {
-            colorPrimary: colors.gold,
-            colorPrimaryHover: colors.goldDark,
-            colorPrimaryText: colors.black,
-            defaultBg: colors.gray,
-            defaultColor: colors.white,
-            defaultBorderColor: colors.gold,
-            defaultHoverBg: colors.goldDark,
-            defaultHoverColor: colors.black,
-            defaultHoverBorderColor: colors.gold,
-          },
-          Divider: {
-            colorSplit: colors.gold,
-          },
-          Spin: {
-            colorPrimary: colors.gold,
-          }
+    // --- vvvvv --- แก้ไข Theme Tokens ให้ถูกต้อง --- vvvvv ---
+    <ConfigProvider theme={{
+      components: {
+        Descriptions: {
+          colorText: colors.white,
+          colorSplit: colors.gold,
         },
-      }}
-    >
-      <div style={{ padding: '24px', background: colors.black, minHeight: '100vh', marginTop: '60px' }}>
+        Button: {
+          colorPrimary: colors.gold,
+          colorPrimaryHover: colors.goldDark,
+          colorPrimaryText: colors.black,
+          defaultBg: colors.gray,
+          defaultColor: colors.white,
+          defaultBorderColor: colors.gold,
+          defaultHoverBg: colors.goldDark,
+          defaultHoverColor: colors.black,
+          defaultHoverBorderColor: colors.gold,
+        },
+        Card: {
+          colorBgContainer: colors.gray,
+          headerBg: colors.gray,
+          colorBorderSecondary: colors.gold,
+        },
+        Divider: {
+          colorSplit: colors.gold,
+        },
+        Spin: {
+          colorPrimary: colors.gold,
+        }
+      },
+    }}>
+      <div style={{ padding: '2rem', background: colors.black, minHeight: '100vh', marginTop: '60px' }}>
         <Row justify="center">
-          <Col xs={24} md={20} lg={16} xl={12}>
-            <Card 
-              title={<Title level={4} style={{ color: colors.gold, margin: 0 }}>{`รายละเอียดนัดหมาย: ${appointment.contractNumber}`}</Title>} 
-              bordered={true}
-            >
-              <Descriptions bordered column={1}>
-                <Descriptions.Item label={<Text style={labelStyle}>หมายเลขสัญญา</Text>}>{appointment.contractNumber}</Descriptions.Item>
-                <Descriptions.Item label={<Text style={labelStyle}>วันที่นัดหมาย</Text>}>{appointment.appointmentDate}</Descriptions.Item>
-                <Descriptions.Item label={<Text style={labelStyle}>เวลา</Text>}>{appointment.appointmentTime}</Descriptions.Item>
-                <Descriptions.Item label={<Text style={labelStyle}>พนักงานดูแล</Text>}>{appointment.employee}</Descriptions.Item>
-                <Descriptions.Item label={<Text style={labelStyle}>วิธีการรับรถ</Text>}>{appointment.appointmentMethod}</Descriptions.Item>
-                {appointment.appointmentMethod === 'จัดส่งรถถึงที่' && (
-                  <Descriptions.Item label={<Text style={labelStyle}>ที่อยู่จัดส่ง</Text>}>
-                    <Text style={{ color: colors.white }}>
+          <Col xs={24} md={18} lg={12}>
+            <Card>
+              <Title style={{ color: colors.gold }} level={3}>
+                รายละเอียดการนัดหมาย #{appointment.id}
+              </Title>
+              <Descriptions bordered column={1} size="middle">
+                <Descriptions.Item label={<Text style={labelStyle}>ชื่อ-สกุล ลูกค้า</Text>}>
+                  <Text style={contentStyle}>{customerName}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>เลขที่สัญญา</Text>}>
+                  <Text style={contentStyle}>{appointment.contractNumber}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>วันที่นัดหมาย</Text>}>
+                  <Text style={contentStyle}>{appointment.appointmentDate}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>เวลา</Text>}>
+                  <Text style={contentStyle}>{appointment.appointmentTime}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>พนักงาน</Text>}>
+                  <Text style={contentStyle}>{appointment.employee}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label={<Text style={labelStyle}>ประเภท</Text>}>
+                  <Text style={contentStyle}>{appointment.appointmentMethod}</Text>
+                </Descriptions.Item>
+                {appointment.appointmentMethod?.includes('จัดส่ง') && (
+                  <Descriptions.Item label={<Text style={labelStyle}>ที่อยู่</Text>}>
+                    <Text style={contentStyle}>
                       {`${appointment.address || ''} ต.${appointment.subdistrict || ''} อ.${appointment.district || ''} จ.${appointment.province || ''}`}
                     </Text>
                   </Descriptions.Item>
@@ -137,26 +174,27 @@ const AppointmentDetailsPage: React.FC = () => {
                   </Tag>
                 </Descriptions.Item>
               </Descriptions>
-              
+
               <Divider />
-              
+
               <Row justify="space-between" align="middle">
                 <Col>
-                  {/* ✅ FIX: ใช้เงื่อนไขเพื่อซ่อนปุ่มเมื่อสถานะเป็น 'จัดส่งสำเร็จ' */}
-                  {appointment.status !== 'จัดส่งสำเร็จ' && (
-                    <Button 
-                      type="primary" 
+                  {(appointment.status !== 'จัดส่งสำเร็จ' && appointment.status !== 'ยกเลิก') && (
+                    <Button
+                      type="primary"
                       onClick={handleUpdateStatus}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = colors.goldDark)}
+                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = colors.gold)}
                     >
                       อัปเดตสถานะเป็น "จัดส่งสำเร็จ"
                     </Button>
                   )}
                 </Col>
                 <Col>
-                  <Button 
+                  <Button
                     type="default"
-                    icon={<ArrowLeftOutlined />} 
-                    onClick={() => navigate('/AppointmentAll')} 
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate('/AppointmentAll')}
                   >
                     กลับ
                   </Button>
@@ -167,6 +205,7 @@ const AppointmentDetailsPage: React.FC = () => {
         </Row>
       </div>
     </ConfigProvider>
+    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
   );
 };
 

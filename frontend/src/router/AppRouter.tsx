@@ -48,23 +48,26 @@ import AppointmentAll from '../pages/employee/pickup-delivery/AppointmentAll';
 import InspectionPage from '../pages/employee/inspection/InspectionPage';
 import SummaryPage from '../pages/employee/sell-summary/SummaryPage'
 import EmpProfilePage from '../pages/employee/profile/EmployeeDashboard'
-// --- vvvvv --- THIS IS THE FIX --- vvvvv ---
+
 interface ProtectedRouteProps {
     allowedRoles: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
-    const { user } = useAuth(); // Change from userRole to user
+    const { user, role, loading } = useAuth();
 
-    if (!user) {
-        // If no user is logged in, redirect to the login page
+    // Show a loading state until authentication check is complete
+    if (loading) {
+        return <div>กำลังโหลด...</div>;
+    }
+
+    if (!user || !role) {
+        // If there's no user or no role after loading, redirect to the login page.
         return <Navigate to="/login" replace />;
     }
 
-    // Check if the user's role is in the list of allowed roles
-    return allowedRoles.includes(user.role) ? <Outlet /> : <Navigate to="/login" replace />;
+    return allowedRoles.includes(role) ? <Outlet /> : <Navigate to="/login" replace />;
 };
-// --- ^^^^^ --- END OF FIX --- ^^^^^ ---
 
 const AppRouter: React.FC = () => {
     return (

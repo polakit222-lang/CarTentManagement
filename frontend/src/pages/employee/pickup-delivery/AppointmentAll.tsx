@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Table, Tag, Button, Space, Spin, Empty, DatePicker, ConfigProvider, Input, message } from 'antd';
+import { Typography, Table, Tag, Button, Space, Spin, Empty, DatePicker, ConfigProvider, Input, message, Checkbox } from 'antd';
 import type { TableProps } from 'antd';
-import { CalendarOutlined, FileTextOutlined, ClearOutlined } from '@ant-design/icons';
+import { CalendarOutlined, FileTextOutlined, ClearOutlined, FilterOutlined } from '@ant-design/icons';
 import { useAuth } from '../../../hooks/useAuth';
 
 // --- Day.js settings for Thai language and Buddhist Era ---
@@ -31,8 +31,16 @@ const colors = {
   gray: '#1e1e1e',
 };
 
+// --- vvvvv --- ส่วนที่เพิ่มและแก้ไข --- vvvvv ---
+interface CustomerData {
+    id: number;
+    FirstName: string;
+    LastName: string;
+}
+
 interface PickupBooking {
   id: number;
+  customerId: number; // เพิ่ม customerId เพื่ออ้างอิง
   contractNumber: string;
   appointmentDate: string;
   appointmentTime: string;
@@ -42,8 +50,14 @@ interface PickupBooking {
   province?: string;
   district?: string;
   subdistrict?: string;
-  status?: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'จัดส่งสำเร็จ';
+  status?: 'กำลังดำเนินการ' | 'ยกเลิก' |'จัดส่งสำเร็จ';
 }
+
+interface DisplayBooking extends PickupBooking {
+    customerName: string; // เพิ่มชื่อ-สกุล สำหรับแสดงผล
+}
+// --- ^^^^^ --- จบส่วนที่เพิ่มและแก้ไข --- ^^^^^ ---
+
 
 const parseThaiDate = (dateString: string): Date | null => {
   if (!dateString) return null;
@@ -67,12 +81,14 @@ const parseThaiDate = (dateString: string): Date | null => {
 };
 
 const AppointmentAll: React.FC = () => {
-  const [appointments, setAppointments] = useState<PickupBooking[]>([]);
+  const [appointments, setAppointments] = useState<DisplayBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [filterDate, setFilterDate] = useState<Dayjs | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [tableFilters, setTableFilters] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const fetchAppointments = () => {
@@ -81,12 +97,25 @@ const AppointmentAll: React.FC = () => {
         return;
       }
       try {
-        const storedData = localStorage.getItem('pickupBookings');
-        if (storedData) {
-          const allBookings: PickupBooking[] = JSON.parse(storedData);
-          const employeeBookings = allBookings.filter(
-            booking => booking.employee === user.name
-          );
+        const storedBookings = localStorage.getItem('pickupBookings');
+        const storedCustomers = localStorage.getItem('customerData');
+        
+        if (storedBookings && storedCustomers) {
+          const allBookings: PickupBooking[] = JSON.parse(storedBookings);
+          const allCustomers: CustomerData[] = JSON.parse(storedCustomers);
+
+          const customerMap = new Map<number, string>();
+          allCustomers.forEach(customer => {
+            customerMap.set(customer.id, `${customer.FirstName} ${customer.LastName}`);
+          });
+
+          const employeeBookings = allBookings
+            .filter(booking => booking.employee === user.name)
+            .map(booking => ({
+                ...booking,
+                customerName: customerMap.get(booking.customerId) || 'ไม่พบชื่อ'
+            }));
+
           setAppointments(employeeBookings);
         }
       } catch (error) {
@@ -101,12 +130,14 @@ const AppointmentAll: React.FC = () => {
   const handleClearFilters = () => {
     setSearchText('');
     setFilterDate(null);
+    setTableFilters({});
     message.info('ล้างค่าการกรองทั้งหมดแล้ว');
   };
 
   const filteredData = appointments.filter(item => {
     const matchesSearchText = searchText === '' ||
-      item.contractNumber.toLowerCase().includes(searchText);
+      item.contractNumber.toLowerCase().includes(searchText) ||
+      item.customerName.toLowerCase().includes(searchText); // ค้นหาจากชื่อ
 
     let matchesDate = true;
     if (filterDate) {
@@ -126,16 +157,19 @@ const AppointmentAll: React.FC = () => {
 
   const getStatusColor = (status: string | undefined) => {
     switch (status) {
-      case 'Pending': return 'orange';
-      case 'Confirmed': return 'blue';
-      case 'Completed': return 'green';
+      case 'กำลังดำเนินการ': return 'orange';
       case 'จัดส่งสำเร็จ': return 'green';
-      case 'Cancelled': return 'red';
+      case 'ยกเลิก': return 'red';
       default: return 'default';
     }
   };
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleTableChange = (pagination: any, filters: any) => {
+    setTableFilters(filters);
+  };
 
-  const columns: TableProps<PickupBooking>['columns'] = [
+  const columns: TableProps<DisplayBooking>['columns'] = [
     {
       title: 'วันที่และเวลานัดหมาย',
       dataIndex: 'appointmentDate',
@@ -158,6 +192,17 @@ const AppointmentAll: React.FC = () => {
         );
       },
     },
+    // --- vvvvv --- เพิ่มคอลัมน์ชื่อ-สกุล --- vvvvv ---
+    {
+        title: 'ชื่อ-สกุล ลูกค้า',
+        dataIndex: 'customerName',
+        key: 'customerName',
+        sorter: (a, b) => a.customerName.localeCompare(b.customerName),
+        render: (text) => (
+            <span style={{ color: colors.white }}>{text}</span>
+        )
+    },
+    // --- ^^^^^ --- จบส่วนที่เพิ่ม --- ^^^^^ ---
     {
       title: 'เลขที่สัญญา',
       dataIndex: 'contractNumber',
@@ -180,7 +225,37 @@ const AppointmentAll: React.FC = () => {
             {isPickUp ? 'รับที่เต็นท์' : 'จัดส่ง'}
           </Tag>
         );
-      }
+      },
+      filters: [
+        { text: 'รับที่เต็นท์', value: 'รับรถที่เต็นท์' },
+        { text: 'จัดส่ง', value: 'จัดส่ง' },
+      ],
+      filteredValue: tableFilters.appointmentMethod || null,
+      onFilter: (value, record) => {
+        const method = record.appointmentMethod || '';
+        if (value === 'จัดส่ง') {
+            return !method.includes('รับรถที่เต็นท์');
+        }
+        return method.includes(value as string);
+      },
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Checkbox.Group
+            style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}
+            options={[
+              { label: 'รับที่เต็นท์', value: 'รับรถที่เต็นท์' },
+              { label: 'จัดส่ง', value: 'จัดส่ง' },
+            ]}
+            value={selectedKeys as string[]}
+            onChange={(keys) => setSelectedKeys(keys)}
+          />
+          <Space>
+            <Button onClick={() => { if (clearFilters) clearFilters(); confirm({ closeDropdown: true }); }} size="small" style={{ width: 90 }}>รีเซ็ต</Button>
+            <Button type="primary" onClick={() => confirm()} size="small" style={{ width: 90 }}>ตกลง</Button>
+          </Space>
+        </div>
+      ),
+      filterIcon: (filtered: boolean) => <FilterOutlined style={{ color: filtered ? colors.gold : undefined }} />,
     },
     {
       title: 'สถานะ',
@@ -191,6 +266,32 @@ const AppointmentAll: React.FC = () => {
           {(status || 'N/A').toUpperCase()}
         </Tag>
       ),
+      filters: [
+        { text: 'กำลังดำเนินการ', value: 'กำลังดำเนินการ' },
+        { text: 'ยกเลิก', value: 'ยกเลิก' },
+        { text: 'จัดส่งสำเร็จ', value: 'จัดส่งสำเร็จ' },
+      ],
+      filteredValue: tableFilters.status || null,
+      onFilter: (value, record) => record.status?.indexOf(value as string) === 0,
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Checkbox.Group
+            style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}
+            options={[
+                { label: 'กำลังดำเนินการ', value: 'กำลังดำเนินการ' },
+                { label: 'ยกเลิก', value: 'ยกเลิก' },
+                { label: 'จัดส่งสำเร็จ', value: 'จัดส่งสำเร็จ' },
+            ]}
+            value={selectedKeys as string[]}
+            onChange={(keys) => setSelectedKeys(keys)}
+          />
+          <Space>
+            <Button onClick={() => { if (clearFilters) clearFilters(); confirm({ closeDropdown: true }); }} size="small" style={{ width: 90 }}>รีเซ็ต</Button>
+            <Button type="primary" onClick={() => confirm()} size="small" style={{ width: 90 }}>ตกลง</Button>
+          </Space>
+        </div>
+      ),
+      filterIcon: (filtered: boolean) => <FilterOutlined style={{ color: filtered ? colors.gold : undefined }} />,
     },
     {
       title: 'จัดการ',
@@ -216,59 +317,12 @@ const AppointmentAll: React.FC = () => {
       locale={thTH}
       theme={{
         components: {
-          Table: {
-            colorBgContainer: colors.gray,
-            headerBg: colors.goldDark,
-            headerColor: colors.black,
-            colorBorderSecondary: colors.gold,
-            rowHoverBg: '#2a2a2a',
-            colorText: colors.white,
-            headerSortActiveBg: colors.gold,
-            headerSortHoverBg: colors.gold,
-          },
-          Input: {
-            colorBgContainer: colors.black,
-            colorText: colors.white,
-            colorBorder: colors.gold,
-            activeBorderColor: colors.gold,
-            hoverBorderColor: colors.gold,
-            colorTextPlaceholder: '#aaa',
-            controlOutline: 'none',
-            colorIcon: colors.gold,
-            colorIconHover: colors.goldDark,
-          },
-          DatePicker: {
-            colorBgContainer: colors.black,
-            colorText: colors.white,
-            colorBorder: colors.gold,
-            activeBorderColor: colors.gold,
-            hoverBorderColor: colors.gold,
-            colorTextPlaceholder: '#aaa',
-            controlOutline: `2px solid ${colors.gold}40`,
-            cellHoverBg: colors.goldDark,
-            controlItemBgActive: colors.gold,
-            colorBgElevated: colors.gray,
-            colorTextHeading: colors.white,
-            colorIcon: colors.gold,
-            colorIconHover: colors.goldDark,
-          },
-          Button: {
-            defaultBg: colors.gray,
-            defaultColor: colors.white,
-            defaultBorderColor: colors.gold,
-            defaultHoverBg: colors.goldDark,
-            defaultHoverColor: colors.black,
-            defaultHoverBorderColor: colors.gold,
-          },
-          Empty: {
-            colorText: colors.white,
-            colorTextDisabled: '#aaa',
-          },
-          Pagination: {
-            colorText: colors.gold,          // สีของตัวอักษรและลูกศร
-            colorTextDisabled: colors.gold,  // สีของลูกศรเมื่อถูกปิดใช้งาน
-            
-          },
+          Table: { colorBgContainer: colors.gray, headerBg: colors.goldDark, headerColor: colors.black, colorBorderSecondary: colors.gold, rowHoverBg: '#2a2a2a', colorText: colors.white, headerSortActiveBg: colors.gold, headerSortHoverBg: colors.gold, filterDropdownBg: colors.gray },
+          Input: { colorBgContainer: colors.black, colorText: colors.white, colorBorder: colors.gold, activeBorderColor: colors.gold, hoverBorderColor: colors.gold, colorTextPlaceholder: '#aaa', controlOutline: 'none', colorIcon: colors.gold, colorIconHover: colors.goldDark },
+          DatePicker: { colorBgContainer: colors.black, colorText: colors.white, colorBorder: colors.gold, activeBorderColor: colors.gold, hoverBorderColor: colors.gold, colorTextPlaceholder: '#aaa', controlOutline: `2px solid ${colors.gold}40`, cellHoverBg: colors.goldDark, controlItemBgActive: colors.gold, colorBgElevated: colors.gray, colorTextHeading: colors.white, colorIcon: colors.gold, colorIconHover: colors.goldDark },
+          Button: { defaultBg: colors.gray, defaultColor: colors.white, defaultBorderColor: colors.gold, defaultHoverBg: colors.goldDark, defaultHoverColor: colors.black, defaultHoverBorderColor: colors.gold },
+          Empty: { colorText: colors.white, colorTextDisabled: '#aaa' },
+          Pagination: { colorText: colors.gold, colorTextDisabled: colors.gold },
         },
       }}
     >
@@ -278,7 +332,7 @@ const AppointmentAll: React.FC = () => {
         </Title>
         <Space direction="vertical" style={{ marginBottom: '24px', width: '100%' }}>
           <Search
-            placeholder="ค้นหาจากเลขที่สัญญา"
+            placeholder="ค้นหาจากเลขที่สัญญา หรือ ชื่อลูกค้า"
             allowClear
             value={searchText}
             onChange={(e) => setSearchText(e.target.value.toLowerCase())}
@@ -289,13 +343,10 @@ const AppointmentAll: React.FC = () => {
               value={filterDate}
               onChange={(date) => setFilterDate(date)}
               placeholder="กรองตามวันที่นัดหมาย"
-              format="D MMMM BBBB"
+              format="D MMMM YYYY"
               style={{ minWidth: 220 }}
             />
-            <Button
-              icon={<ClearOutlined />}
-              onClick={handleClearFilters}
-            >
+            <Button icon={<ClearOutlined />} onClick={handleClearFilters}>
               ล้างค่า
             </Button>
           </Space>
@@ -307,7 +358,9 @@ const AppointmentAll: React.FC = () => {
             dataSource={filteredData}
             rowKey="id"
             pagination={{ pageSize: 10, showSizeChanger: true }}
-            locale={{ emptyText: <Empty description="ไม่พบข้อมูลการนัดหมายสำหรับคุณ" /> }}
+            locale={{ emptyText: <Empty description={<Typography.Text style={{ color: '#777' }}>
+                            {'ไม่มีข้อมูลการนัดหมายที่ตรงกับเงื่อนไข'}</Typography.Text>} />}} 
+            onChange={handleTableChange}
           />
         </Spin>
       </div>

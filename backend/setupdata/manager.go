@@ -1,3 +1,4 @@
+// backend/setupdata/manager.go
 package setupdata
 
 import (
@@ -5,16 +6,21 @@ import (
 	"time"
 
 	"github.com/PanuAutawo/CarTentManagement/backend/entity"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 // InsertMockManagers สร้างข้อมูล Manager ตัวอย่าง
 func InsertMockManagers(db *gorm.DB) {
+	// Hash passwords
+	hashedPassword1, _ := bcrypt.GenerateFromPassword([]byte("pass1234"), bcrypt.DefaultCost)
+	hashedPassword2, _ := bcrypt.GenerateFromPassword([]byte("abc123"), bcrypt.DefaultCost)
+
 	managers := []entity.Manager{
 		{
 			Username:  "manager1",
 			Email:     "manager1@example.com",
-			Password:  "pass1234",
+			Password:  string(hashedPassword1),
 			FirstName: "Anan",
 			LastName:  "Srisuk",
 			Birthday:  time.Date(1985, 3, 15, 0, 0, 0, 0, time.UTC),
@@ -22,7 +28,7 @@ func InsertMockManagers(db *gorm.DB) {
 		{
 			Username:  "manager2",
 			Email:     "manager2@example.com",
-			Password:  "abc123",
+			Password:  string(hashedPassword2),
 			FirstName: "Somsak",
 			LastName:  "Chaiyo",
 			Birthday:  time.Date(1990, 7, 22, 0, 0, 0, 0, time.UTC),

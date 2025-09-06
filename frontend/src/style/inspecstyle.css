@@ -43,16 +43,17 @@
     border-color: #f1d430ff !important;
 }
 
-/* ปรับสีของปุ่ม "บันทึก" และ "ยกเลิก" */
-/* .ant-space-item .ant-btn:first-child {
-    background-color: #292727ff !important;
-    color: black !important;
-}
-.ant-space-item .ant-btn:nth-child(2) {
-    background-color: #817d7d !important;
+/* เปลี่ยนสีข้อความที่ "ถูกเลือก" และ "Placeholder" ใน Select ให้เป็นสีขาว */
+/* .custom-select .ant-select-selection-item {
+   
+    background-color: #4a4a4a !important;
+    border: 1px solid #666666 !important;
     color: white !important;
-    border: none !important;
-}
-.ant-space-item .ant-btn:nth-child(2):hover {
-    background-color: #888888 !important;
+} */
+
+
+/* เปลี่ยนสีพื้นหลังของกล่อง Select */
+/* .custom-select .ant-select-selector {
+    background-color: #4A4A4A !important;
+    border-color: #4A4A4A !important;
 } */

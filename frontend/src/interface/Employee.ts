@@ -1,12 +1,21 @@
-import type dayjs from "dayjs";
 
 export interface Employee {
-    id: string;
-    first_name: string;
-    last_name: string;
-    position: string;
-    phone_number: string;
-    start_date: dayjs.Dayjs;
-    status: string;
-    total_sales: number;
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string | null;
+
+  profileimage: string;
+  first_name: string;
+  last_name: string;
+  password?: string; // Mapped to optional because it's sensitive information
+  email: string;
+  phone_number: string;
+  address: string;
+  start_date: string; // Mapped from time.Time in Go
+  sex: string;
+  position: string;
+  jobtype: string; // Mapped from time.Time in Go
+
+  total_sales: unknown; // Mapped from Status type with gorm:"-" tag
 }
