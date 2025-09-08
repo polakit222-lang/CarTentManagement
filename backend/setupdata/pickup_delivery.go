@@ -58,9 +58,9 @@ func InsertMockPickupDelivery(db *gorm.DB) {
 		DateTime:          time.Now().Add(5 * 24 * time.Hour), // นัดอีก 5 วันข้างหน้า
 		EmployeeID:        employee.ID,
 		Address:           "123/45 อาคารสยามสแควร์วัน",
-		SubDistrictID:     subDistrict.ID,
-		DistrictID:        district.ID,
-		ProvinceID:        province.ID,
+		SubDistrictID:     &subDistrict.ID,
+		DistrictID:        &district.ID,
+		ProvinceID:        &province.ID,
 		Status:            "รอดำเนินการ",
 	}
 

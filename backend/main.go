@@ -1,4 +1,3 @@
-// backend/main.go
 package main
 
 import (
@@ -9,7 +8,7 @@ import (
 	"github.com/PanuAutawo/CarTentManagement/backend/controllers"
 	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
 	"github.com/PanuAutawo/CarTentManagement/backend/setupdata"
-	"github.com/gin-contrib/cors" // <--- เพิ่ม import cors
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,32 +16,31 @@ func main() {
 	// 1. Connect DB
 	configs.ConnectDatabase("car_full_data.db")
 
-	// 2. Insert mock data (เรียงลำดับตามความสำคัญ)
+	// 2. Insert mock data
 	setupdata.InsertMockManagers(configs.DB)
 	setupdata.InsertMockEmployees(configs.DB)
 	setupdata.InsertProvinces(configs.DB)
-	setupdata.InsertHardcodedAddressData(configs.DB) // ใช้ hardcoded แทนไฟล์ json
+	setupdata.InsertHardcodedAddressData(configs.DB)
 	setupdata.InsertCarsFromCSV(configs.DB, "car_full_data.csv")
 	setupdata.InsertMockPictures(configs.DB)
 	setupdata.InsertMockSaleList(configs.DB)
 	setupdata.InsertMockRentListWithDates(configs.DB)
 	setupdata.InsertCarSystems(configs.DB)
 	setupdata.InsertTypeInformations(configs.DB)
-	setupdata.InsertMockInspections(configs.DB)      // สร้าง Customer และ SalesContract จำลอง
-	setupdata.InsertMockPickupDelivery(configs.DB) // สร้าง PickupDelivery จำลอง
+	setupdata.InsertMockInspections(configs.DB)
+	setupdata.InsertMockPickupDelivery(configs.DB)
 
 	// 3. Create router
 	r := gin.Default()
-	// Use CORS middleware
-    r.Use(cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:5173"}, // URL ของ Frontend (Vite)
-        AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-        AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-        ExposeHeaders:    []string{"Content-Length"},
-        AllowCredentials: true,
-        MaxAge: 12 * time.Hour,
-    }))
-    // ^^^^ --- สิ้นสุดส่วนที่เพิ่ม --- ^^^^
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	// --- Controllers Setup ---
 	carController := controllers.NewCarController(configs.DB)
 	inspectionAppointmentController := controllers.NewInspectionAppointmentController(configs.DB)
@@ -53,24 +51,25 @@ func main() {
 	subDistrictController := controllers.NewSubDistrictController(configs.DB)
 	employeeController := controllers.NewEmployeeController(configs.DB)
 	customerController := controllers.NewCustomerController(configs.DB)
-    managerController := controllers.NewManagerController(configs.DB) // เพิ่ม Manager Controller
+	managerController := controllers.NewManagerController(configs.DB)
+	typeInformationController := controllers.NewTypeInformationController(configs.DB)
 
 	// --- Routes ---
 
-	// Public Routes (ไม่ต้อง Login)
+	// Public Routes
 	r.POST("/register", customerController.RegisterCustomer)
 	r.POST("/login", customerController.LoginCustomer)
 	r.POST("/employee/login", employeeController.LoginEmployee)
-    r.POST("/manager/login", managerController.LoginManager) // เพิ่ม endpoint สำหรับ Manager
+	r.POST("/manager/login", managerController.LoginManager)
 
-	// Car Routes (ข้อมูลรถยนต์ อาจจะ public)
+	// Car Routes
 	carRoutes := r.Group("/cars")
 	{
 		carRoutes.GET("", carController.GetCars)
 		carRoutes.GET("/:id", carController.GetCarByID)
 	}
 
-	// Address Routes (ข้อมูลที่อยู่, public)
+	// Address Routes
 	provinceRoutes := r.Group("/provinces")
 	{
 		provinceRoutes.GET("", provinceController.GetProvinces)
@@ -84,32 +83,34 @@ func main() {
 		subDistrictRoutes.GET("/by-district/:districtID", subDistrictController.GetSubDistrictsByDistrict)
 	}
 
-	// VVVV --- เพิ่มส่วนของ Car System Routes ที่หายไป --- VVVV
+	// Car System Routes
 	carSystemRoutes := r.Group("/car-systems")
 	{
 		carSystemRoutes.GET("", carSystemController.GetCarSystems)
 	}
-	// ^^^^ --- สิ้นสุดส่วนที่เพิ่มเข้ามา --- ^^^^
 
-	// Protected Customer Routes (ลูกค้าที่ Login แล้ว)
+	// Type Information Routes
+	typeInformationRoutes := r.Group("/type-informations")
+	{
+		typeInformationRoutes.GET("", typeInformationController.GetTypeInformations)
+	}
+
+	// Protected Customer Routes
 	customerRoutes := r.Group("/customers")
 	customerRoutes.Use(middleware.CustomerAuthMiddleware())
 	{
 		customerRoutes.GET("/me", customerController.GetCurrentCustomer)
-		// เพิ่ม Routes ที่ต้องใช้สิทธิ์ลูกค้าที่นี่ เช่น สร้างการนัดหมาย
 	}
 
-	// Protected Employee Routes (พนักงานที่ Login แล้ว)
-	employeeRoutes := r.Group("/employee")
-	employeeRoutes.Use(middleware.EmployeeAuthMiddleware())
-	{
-		employeeRoutes.GET("/me", employeeController.GetCurrentEmployee)
-		// เพิ่ม Routes ที่ต้องใช้สิทธิ์พนักงานที่นี่
-	}
+	// Protected Employee Routes
+	// employeeRoutes := r.Group("/employee") // Renamed group to avoid conflict
+	// employeeRoutes.Use(middleware.EmployeeAuthMiddleware())
+	// {
+	// 	employeeRoutes.GET("/me", employeeController.GetCurrentEmployee)
+	// }
 
-	// Inspection Appointment Routes (อาจจะต้องใช้สิทธิ์พนักงาน)
+	// Inspection Appointment Routes
 	inspectionRoutes := r.Group("/inspection-appointments")
-	// inspectionRoutes.Use(middleware.EmployeeAuthMiddleware()) // ถ้าต้องการให้พนักงานจัดการเท่านั้น
 	{
 		inspectionRoutes.GET("", inspectionAppointmentController.GetInspectionAppointments)
 		inspectionRoutes.GET("/:id", inspectionAppointmentController.GetInspectionAppointmentByID)
@@ -131,13 +132,18 @@ func main() {
 		pickupDeliveryRoutes.DELETE("/:id", pickupDeliveryController.DeletePickupDelivery)
 	}
 
-	// Admin-Only Routes (สำหรับจัดการข้อมูลหลังบ้าน)
-
-	adminEmployeeRoutes := r.Group("/admin/employees")
-	// adminEmployeeRoutes.Use(middleware.AdminAuthMiddleware()) // ควรมี Middleware สำหรับ Admin/Manager ในอนาคต
+	// --- vvvvv --- ส่วนที่แก้ไข: ย้าย Employee Routes มาไว้ที่นี่ --- vvvvv ---
+	// Employee Routes (Public for now)
+	employeePublicRoutes := r.Group("/employees")
 	{
-		adminEmployeeRoutes.GET("", employeeController.GetEmployees)
-		adminEmployeeRoutes.GET("/:id", employeeController.GetEmployeeByID)
+		employeePublicRoutes.GET("", employeeController.GetEmployees)
+		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
+	}
+	// --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
+
+	// Admin-Only Routes (สำหรับจัดการข้อมูลหลังบ้าน)
+	adminEmployeeRoutes := r.Group("/admin/employees")
+	{
 		adminEmployeeRoutes.POST("", employeeController.CreateEmployee)
 		adminEmployeeRoutes.PUT("/:id", employeeController.UpdateEmployee)
 		adminEmployeeRoutes.DELETE("/:id", employeeController.DeleteEmployee)
