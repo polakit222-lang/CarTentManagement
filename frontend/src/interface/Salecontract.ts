@@ -1,11 +1,21 @@
-import type { Employee } from "../interface/Employee";
-import type { Sale } from "../interface/Sale";
-import type { Customer } from "../interface/Customer";
+import type { SaleList } from "./CarSell";
+import type { Employee } from "./Employee";
 
 export interface SaleContract {
-    id: string;
-    customer_id?: Customer;
-    status: string;
-    car_sale_id?: Sale;
-    employee_id?: Employee;
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt?: string | null;
+
+  SaleListID: number;
+  SaleList?: SaleList | null;
+
+  EmployeeID: number;
+  Employee?: Employee | null;
+
+  CustomerID: number;
+  Customer?: unknown | null;
+
+  InspectionAppointments?: unknown | null;
+  Payment?: unknown | null;
 }

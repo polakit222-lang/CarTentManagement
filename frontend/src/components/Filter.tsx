@@ -1,46 +1,34 @@
-//src/components/Filter.tsx
-import React, { useMemo, useState } from 'react';
-import {
-  Select,
-  Slider,
-  InputNumber,
-  Button,
-  Divider,
-  Checkbox,
-} from 'antd';
-type CheckboxValueType = string | number;
-
-import type { CarInfo } from '../interface/Car';
-import { carList as defaultCarList } from '../data/carList';
+import React, { useState, useMemo } from 'react';
+import { Slider, InputNumber, Button, Divider, Select, Input, Checkbox } from 'antd';
+import type { CarInfo, CarForSale } from '../interface/Car';
 import "../style/sidebar.css";
+
+const { Option } = Select;
 
 export type FilterValues = {
   brand?: string | null;
   model?: string | null;
+  subModel?: string | null;
   priceRange?: [number, number];
-  yearRange?: [number, number];
-  usageRange?: [number, number];
+  ageRange?: [number, number];   // ✅ ใช้อายุการใช้งานแทน yearRange
   mileageMax?: number | null;
-  isAvailable?: boolean;
-  extras?: string[];
   conditions?: string[];
   status?: string[];
-  
 };
+
 type EnabledFilter =
   | 'brand'
   | 'model'
+  | 'subModel'
   | 'price'
-  | 'year'
+  | 'age'
   | 'mileage'
-  | 'available'
   | 'conditions'
-  | 'extras'
-  | 'status'
-  | 'usage';
+  | 'status';
 
 type Props = {
   carList?: CarInfo[];
+  saleCarList?: CarForSale[];
   width?: number;
   defaultValues?: FilterValues;
   onApply?: (values: FilterValues) => void;
@@ -48,113 +36,103 @@ type Props = {
   enabledFilters?: EnabledFilter[];
 };
 
-const safeMin = (arr: number[], fallback = 0) =>
-  arr.length > 0 ? Math.min(...arr) : fallback;
-const safeMax = (arr: number[], fallback = 1000000) =>
-  arr.length > 0 ? Math.max(...arr) : fallback;
+const safeMin = (arr: number[], fallback = 0) => arr.length > 0 ? Math.min(...arr) : fallback;
+const safeMax = (arr: number[], fallback = 1000000) => arr.length > 0 ? Math.max(...arr) : fallback;
+
 const Filter: React.FC<Props> = ({
-  carList = defaultCarList,
+  carList = [],
+  saleCarList = [],
   width = 300,
   defaultValues,
   onApply,
   onClear,
-  enabledFilters = [
-    'brand',
-    'model',
-    'price',
-    'year',
-    'mileage',
-    'available',
-    'conditions',
-    'extras',
-    'status',
-    'usage',
-  ], // 👈 ถ้าไม่ส่งมา แสดงทั้งหมด
+  enabledFilters = ['brand','model','subModel','price','age','mileage','conditions','status'],
 }) => {
-  const brandList = useMemo(
-    () => Array.from(new Set(carList.map((c) => c.brand))).filter(Boolean),
-    [carList]
-  ) as string[];
 
-  const modelListAll = useMemo(
-    () => Array.from(new Set(carList.map((c) => c.model))).filter(Boolean),
-    [carList]
-  ) as string[];
+  // รวมข้อมูลรถ (CarInfo)
+  const mergedCars: CarInfo[] = saleCarList.length > 0 
+    ? saleCarList.map(s => s.car!).filter(Boolean)
+    : carList;
 
-  const priceNumbers = carList.map((c) => Number(c.price ?? 0)).filter((n) => !Number.isNaN(n));
+  // ราคา
+  const priceNumbers = mergedCars.map(c => Number(c.purchase_price ?? 0)).filter(n => !Number.isNaN(n));
   const priceMinDefault = safeMin(priceNumbers, 0);
   const priceMaxDefault = safeMax(priceNumbers, 1000000);
 
-  const yearNumbers = carList.map((c) => Number(c.yearManufactured ?? 0)).filter((n) => !Number.isNaN(n));
-  const yearMinDefault = safeMin(yearNumbers, 1990);
-  const yearMaxDefault = safeMax(yearNumbers, new Date().getFullYear());
+  // อายุการใช้งาน (ปี) จาก purchase_date
+  const ages = mergedCars
+    .map(c => {
+      if (!c.purchase_date) return null;
+      const purchaseYear = new Date(c.purchase_date).getFullYear();
+      return new Date().getFullYear() - purchaseYear;
+    })
+    .filter((n): n is number => n !== null);
 
-  const [brand, setBrand] = useState<string | undefined>(defaultValues?.brand ?? undefined);
-  const [model, setModel] = useState<string | undefined>(defaultValues?.model ?? undefined);
+  const ageMinDefault = safeMin(ages, 0);
+  const ageMaxDefault = safeMax(ages, 30);
+
+  // State
+  const [brand, setBrand] = useState<string | null>(defaultValues?.brand ?? null);
+  const [model, setModel] = useState<string | null>(defaultValues?.model ?? null);
+  const [subModel, setSubModel] = useState<string | null>(defaultValues?.subModel ?? null);
   const [priceRange, setPriceRange] = useState<[number, number]>(
     defaultValues?.priceRange ?? [priceMinDefault, priceMaxDefault]
   );
-  const [yearRange, setYearRange] = useState<[number, number]>(
-    defaultValues?.yearRange ?? [yearMinDefault, yearMaxDefault]
+  const [ageRange, setAgeRange] = useState<[number, number]>(
+    defaultValues?.ageRange ?? [ageMinDefault, ageMaxDefault]
   );
   const [mileageMax, setMileageMax] = useState<number | null>(defaultValues?.mileageMax ?? null);
-  const [isAvailable, setIsAvailable] = useState<boolean>(defaultValues?.isAvailable ?? false);
-  const [extras, setExtras] = useState<string[]>(defaultValues?.extras ?? []);
   const [conditions, setConditions] = useState<string[]>(defaultValues?.conditions ?? []);
-  const [usageRange, setUsageRange] = useState<[number, number] | undefined>(undefined);
   const [status, setStatus] = useState<string[]>(defaultValues?.status ?? []);
 
-  const modelList = useMemo(() => {
-    if (!brand) return modelListAll;
-    return Array.from(new Set(carList.filter((c) => c.brand === brand).map((c) => c.model))).filter(Boolean) as string[];
-  }, [brand, carList, modelListAll]);
+  // Dropdown options
+  const brandOptions = Array.from(new Set(mergedCars.map(c => c.detail?.Brand?.brand_name).filter(Boolean))) as string[];
   
+  const modelOptions = useMemo(() => {
+    if (!brand) return [];
+    return Array.from(new Set(
+      mergedCars
+        .filter(c => c.detail?.Brand?.brand_name === brand)
+        .map(c => c.detail?.CarModel?.ModelName)
+        .filter(Boolean)
+    )) as string[];
+  }, [brand, mergedCars]);
+
+  const subModelOptions = useMemo(() => {
+    if (!model) return [];
+    return Array.from(new Set(
+      mergedCars
+        .filter(c => c.detail?.CarModel?.ModelName === model)
+        .map(c => c.detail?.SubModel?.SubModelName)
+        .filter(Boolean)
+    )) as string[];
+  }, [model, mergedCars]);
+
+  // Apply filter
   const handleApply = () => {
     onApply?.({
-      brand: brand ?? null,
-      model: model ?? null,
+      brand,
+      model,
+      subModel,
       priceRange,
-      yearRange,
+      ageRange,
       mileageMax,
-      isAvailable,
-      extras,
       conditions,
       status,
-      usageRange,
     });
   };
 
   const handleClear = () => {
-    setBrand(undefined);
-    setModel(undefined);
+    setBrand(null);
+    setModel(null);
+    setSubModel(null);
     setPriceRange([priceMinDefault, priceMaxDefault]);
-    setYearRange([yearMinDefault, yearMaxDefault]);
+    setAgeRange([ageMinDefault, ageMaxDefault]);
     setMileageMax(null);
-    setIsAvailable(false);
-    setExtras([]);
     setConditions([]);
     setStatus([]);
-    setUsageRange(undefined);
     onClear?.();
-
   };
-
-  const onExtrasChange = (checkedValues: CheckboxValueType[]) => {
-    setExtras(checkedValues.map((v) => String(v)));
-  };
-
-  const onPriceSliderChange = (val: number | number[]) => {
-    if (Array.isArray(val)) setPriceRange([Number(val[0]), Number(val[1])]);
-    else setPriceRange([Number(val), Number(val)]);
-  };
-
-  const onYearSliderChange = (val: number | number[]) => {
-    if (Array.isArray(val)) setYearRange([Number(val[0]), Number(val[1])]);
-    else setYearRange([Number(val), Number(val)]);
-  };
-
-  const brandOptions = brandList.map((b) => ({ label: b, value: b }));
-  const modelOptions = modelList.map((m) => ({ label: m, value: m }));
 
   return (
     <div className="sidebar" style={{ width: `${width}px` }}>
@@ -162,20 +140,21 @@ const Filter: React.FC<Props> = ({
       <div className="sidebar-header">
         <div className="sidebar-title">ค้นหารถยนต์</div>
       </div>
-      <Divider style={{ margin: '8px 0', borderColor: 'rgba(255,255,255,0.04)' }} />
+      <Divider />
 
       {/* Brand */}
       {enabledFilters.includes('brand') && (
         <div className="filter-section">
           <label className="label">ยี่ห้อ</label>
           <Select
-            placeholder="เลือกแบรนด์"
+            placeholder="เลือกยี่ห้อ"
             value={brand}
-            onChange={(v) => { setBrand(v); setModel(undefined); }}
+            onChange={(val) => { setBrand(val); setModel(null); setSubModel(null); }}
+            style={{ width: '100%' }}
             allowClear
-            options={brandOptions}
-            style={{ width: '100%', backgroundColor: 'white', borderRadius: 5 }}
-          />
+          >
+            {brandOptions.map(b => <Option key={b} value={b}>{b}</Option>)}
+          </Select>
         </div>
       )}
 
@@ -186,12 +165,30 @@ const Filter: React.FC<Props> = ({
           <Select
             placeholder="เลือกรุ่น"
             value={model}
-            onChange={(v) => setModel(v)}
+            onChange={(val) => { setModel(val); setSubModel(null); }}
+            style={{ width: '100%' }}
             allowClear
-            options={modelOptions}
-            disabled={modelList.length === 0}
-            style={{ width: '100%', backgroundColor: 'white', borderRadius: 5 }}
-          />
+            disabled={!brand}
+          >
+            {modelOptions.map(m => <Option key={m} value={m}>{m}</Option>)}
+          </Select>
+        </div>
+      )}
+
+      {/* SubModel */}
+      {enabledFilters.includes('subModel') && (
+        <div className="filter-section">
+          <label className="label">ซับโมเดล</label>
+          <Select
+            placeholder="เลือกซับโมเดล"
+            value={subModel}
+            onChange={(val) => setSubModel(val)}
+            style={{ width: '100%' }}
+            allowClear
+            disabled={!model}
+          >
+            {subModelOptions.map(sm => <Option key={sm} value={sm}>{sm}</Option>)}
+          </Select>
         </div>
       )}
 
@@ -204,7 +201,7 @@ const Filter: React.FC<Props> = ({
             min={Math.floor(priceMinDefault)}
             max={Math.ceil(priceMaxDefault)}
             value={priceRange}
-            onChange={onPriceSliderChange}
+            onChange={(val) => setPriceRange(val as [number, number])}
           />
           <div className="range-values" style={{ marginTop: 4 }}>
             <InputNumber
@@ -222,38 +219,21 @@ const Filter: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Year */}
-      {enabledFilters.includes('year') && (
-        <div className="filter-section">
-          <label className="label">ปีที่ผลิต</label>
-          <Slider
-            range
-            min={Math.floor(yearMinDefault)}
-            max={Math.ceil(yearMaxDefault)}
-            value={yearRange}
-            onChange={onYearSliderChange}
-          />
-          <div className="range-values small" style={{ marginTop: 4 }}>
-            <span>{yearRange[0]}</span>
-            <span>{yearRange[1]}</span>
-          </div>
-        </div>
-      )}
-      {enabledFilters.includes('usage') && (
-        <div className="filter-section">
-          <label className="label">อายุการใช้งาน (ปี)</label>
-          <Slider
-            range
-            min={0}
-            max={20}  // สมมุติว่ารถไม่เกิน 20 ปี
-            value={usageRange ?? [0, 20]}
-            onChange={(val) => setUsageRange(val as [number, number])}
-          />
-          <div className="range-values small">
-            <span>{usageRange ? usageRange[0] : 0} ปี</span>
-            <span>{usageRange ? usageRange[1] : 20} ปี</span>
-          </div>
-        </div>
+      {/* Age (usage) */}
+      {enabledFilters.includes('age') && (
+        <div style={{ marginBottom: 20 }}>
+        <p>อายุการใช้งาน (ปี)</p>
+        <Slider
+          range
+          min={1}
+          max={30}
+          step={1}
+          value={ageRange}
+          onChange={(val) => setAgeRange(val as [number, number])}
+        />
+        <p>{`${ageRange[0]} - ${ageRange[1]} ปี`}</p>
+      </div>
+
       )}
 
       {/* Mileage */}
@@ -270,83 +250,43 @@ const Filter: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Availability */}
-      {enabledFilters.includes('available') && (
-        <div className="filter-section">
-          <Checkbox
-            checked={isAvailable}
-            onChange={(e) => setIsAvailable(e.target.checked)}
-          >
-            มีประกัน
-          </Checkbox>
-        </div>
-      )}
-
       {/* Conditions */}
       {enabledFilters.includes('conditions') && (
         <div className="filter-section">
           <label className="label">สภาพรถ</label>
           <Checkbox.Group
             options={[
-              { label: 'สวย', value: 'สวย' },
+              { label: 'ดี', value: 'ดี' },
               { label: 'ปานกลาง', value: 'ปานกลาง' },
               { label: 'แย่', value: 'แย่' },
             ]}
             value={conditions}
             onChange={(checkedValues) => setConditions(checkedValues.map(v => String(v)))}
-            className="checkbox-conditions"
           />
         </div>
       )}
 
-      {/* Extras */}
-      {enabledFilters.includes('extras') && (
-        <div className="filter-section">
-          <label className="label">สิ่งอำนวยความสะดวก</label>
-          <Checkbox.Group
-            options={[
-              { label: 'กล้องหลัง', value: 'กล้องหลัง' },
-              { label: 'เซ็นเซอร์', value: 'เซ็นเซอร์' },
-              { label: 'จอสัมผัส', value: 'จอสัมผัส' },
-            ]}
-            value={extras}
-            onChange={onExtrasChange}
-            className="checkbox-conditions"
-          />
-        </div>
-      )}
+      {/* Status */}
       {enabledFilters.includes('status') && (
         <div className="filter-section">
           <label className="label">สถานะรถยนต์</label>
           <Checkbox.Group
             options={[
-              { label: 'กำลังขาย', value: 'กำลังขาย' },
-              { label: 'กำลังให้เช่า', value: 'กำลังให้เช่า' },
-              { label: 'ยังไม่ดำเนินการ', value: 'ยังไม่ดำเนินการ' },
+              { label: 'กำลังขาย', value: 'selling' },
+              { label: 'กำลังให้เช่า', value: 'renting' },
+              { label: 'ยังไม่ดำเนินการ', value: 'pending' },
             ]}
             value={status}
             onChange={(checkedValues) => setStatus(checkedValues.map(v => String(v)))}
-            className="checkbox-status"
           />
         </div>
       )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        <Button className="filter-clear" onClick={handleClear} block>
-          ล้าง
-        </Button>
-        <Button className="filter-apply" type="primary" onClick={handleApply} block>
-          ใช้ตัวกรอง
-        </Button>
-      </div>
-      <br />
-
-
-      <div style={{ marginTop: 18, color: '#9b9b9b', fontSize: 12 }}>
-        <div>ผลลัพธ์จะอัพเดตเมื่อกด "ใช้ตัวกรอง"</div>
+        <Button onClick={handleClear} block>ล้าง</Button>
+        <Button type="primary" onClick={handleApply} block>ใช้ตัวกรอง</Button>
       </div>
     </div>
-
   );
 };
 

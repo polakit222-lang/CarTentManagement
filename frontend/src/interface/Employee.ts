@@ -1,21 +1,33 @@
-
 export interface Employee {
   ID: number;
   CreatedAt: string;
   UpdatedAt: string;
-  DeletedAt: string | null;
+  DeletedAt?: string | null;
 
   profileimage: string;
   first_name: string;
   last_name: string;
-  password?: string; // Mapped to optional because it's sensitive information
+  password: string;
   email: string;
   phone_number: string;
   address: string;
-  start_date: string; // Mapped from time.Time in Go
+  start_date: string;
   sex: string;
   position: string;
-  jobtype: string; // Mapped from time.Time in Go
+  jobtype: string;
 
-  total_sales: unknown; // Mapped from Status type with gorm:"-" tag
+  total_sales: {
+    ID: number;
+    CreatedAt: string;
+    UpdatedAt: string;
+    DeletedAt?: string | null;
+    Status: string;
+    Insurance: unknown | null;
+  };
+
+  PickupDelivery?: unknown | null;
+  Car?: unknown | null;
+  SaleList?: unknown | null;
+  SalesContract?: unknown | null;
+  LeaveRequest?: unknown | null;
 }

@@ -1,164 +1,134 @@
-import { useParams,useNavigate } from "react-router-dom";
-import CarGrid from "../../../components/CarGrid";
-import { carList } from "../../../data/carList";
-import "../../../style/CreateSellCarPage.css";
-import { carSellList } from "../../../data/carSellList";
-import {
-  Button,
-  Form,
-  Input,
-  InputNumber,
-  Select,
-} from 'antd';
-const formItemLayout = {
-  labelCol: {
-    xs: { span: 24 },
-    sm: { span: 24},
-  },
-  wrapperCol: {
-    xs: { span: 24 },
-    sm: { span: 30 },
-  },
-};
-const salePersons = [
-  { SalePerson_ID: 1, name: 'สมชาย' },
-  { SalePerson_ID: 2, name: 'สมศรี' },
-  { SalePerson_ID: 3, name: 'John Doe' },
-];
+// CreateSellCarPage.tsx
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import type { SaleList } from '../../../interface/CarSell';
+import type { CarPicture } from '../../../interface/Car';
 
-
-
-
-
-function CreateSellCar() {
-  const { id } = useParams(); // ดึง id จาก URL (string | undefined)
-  const [form] = Form.useForm();
-  const variant = Form.useWatch('variant', form);
-  const navigate = useNavigate();
-
-
-  // หาเฉพาะรถที่ id ตรงกัน
-  const car = carList.find(c => c.id === Number(id));
-
-  if (!car) {
-    return <div>ไม่พบรถที่ต้องการ</div>;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleFormSubmit = (values: any) => {
-    // สร้างข้อมูลการเช่าใหม่
-    const newSellEntry = {
-      id: Number(id), // ID ของรถที่เลือก
-      description: values.TextArea, // คำอธิบายจากฟอร์ม
-      periods: values.rentPeriods, // ช่วงเวลาและราคาที่เช่า
-    };
-
-    // เพิ่มข้อมูลใหม่ลงใน carRentList (ในการใช้งานจริง ส่วนนี้จะเป็นการส่งข้อมูลไปที่ API)
-    carSellList.push(newSellEntry);
-
-    console.log("Form submitted:", values);
-    console.log("New rent entry added:", newSellEntry);
-    console.log("Updated carRentList:", carSellList);
-
-    // หลังจากบันทึกเสร็จ ให้ redirect กลับไปที่หน้ารายการเช่า
-    navigate('/sell');
-  };
-
-
-  return (
-    <>
-      <div className="sell-page-root" style={{  minHeight: '110vh' }}>
-        <h1 style={{ marginTop: 90, marginLeft: 30 }}>กรอกข้อมูลการขายเพิ่มเติม</h1>
-        <div style={{ display: "flex", paddingRight: 10, paddingLeft: 10, width: '100%'}}>
-          <div style={{ marginTop: 20 }}>
-            <div className="showCar">
-              <CarGrid cars={[car]} />
-            </div>
-          </div>
-          <div style={{marginLeft:150 ,width:'100%',marginTop:40}}>
-            <Form
-              {...formItemLayout}
-              form={form}
-              variant={variant || 'outlined'}
-              style={{ maxWidth: 500 }}
-              initialValues={{ variant: 'outlined' }}
-              onFinish={handleFormSubmit}
-            >
-              <Form.Item
-                label="ป้อนคำโฆษณา"
-                name="TextArea"
-                rules={[{ required: true, message: 'โปรดป้อนคำอธิบาย' }]}
-              >
-                <Input.TextArea placeholder="กรอกคำอธิบายเพิ่มเติม..." size="large" />
-              </Form.Item>
-
-              <Form.Item
-                label="ระบุราคาขาย"
-                name="InputPrice"
-                rules={[{ required: true, message: 'โปรดป้อนราคาขาย' }]}
-              >
-                <InputNumber<number>
-                  style={{ width: '100%' }}
-                  placeholder="กรอกราคาขาย"
-                  size="large"
-                  controls={true} // เพิ่มบรรทัดนี้
-                  formatter={(value) =>
-                    value !== undefined && value !== null
-                      ? `฿ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      : ''
-                  }
-                  parser={(displayValue) => {
-                    const n = Number((displayValue ?? '').replace(/[^\d.-]/g, ''));
-                    return Number.isNaN(n) ? NaN : n;
-                  }}
-                  min={0}
-                />
-              </Form.Item>
-
-              <Form.Item label="ระบุส่วนลด" name="InputDiscount">
-                <InputNumber<number>
-                  style={{ width: '100%' }}
-                  placeholder="กรอกส่วนลด"
-                  size="large"
-                  controls={true} // เพิ่มบรรทัดนี้
-                  formatter={(value) =>
-                    value !== undefined && value !== null ? `${value}%` : ''
-                  }
-                  parser={(displayValue) => {
-                    const n = Number((displayValue ?? '').replace(/[^\d.-]/g, ''));
-                    return Number.isNaN(n) ? NaN : n;
-                  }}
-                  min={0}
-                  max={100}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="เลือกพนักงาน"
-                name="SalePerson_ID"
-                rules={[{ required: true, message: 'โปรดเลือกพนักงาน!' }]}
-              >
-                <Select placeholder="เลือกพนักงาน" size="large">
-                  {salePersons.map((sp) => (
-                    <Select.Option key={sp.SalePerson_ID} value={sp.SalePerson_ID}>
-                      {sp.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <div>
-                <Form.Item wrapperCol={{ offset: 6, span: 16 }}>
-                  <Button type="primary" htmlType="submit" size="large">
-                    Submit
-                  </Button>
-                </Form.Item>
-              </div>
-            </Form>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+interface CreateSellCarPageProps {
+  saleListID: number;
 }
 
-export default CreateSellCar;
+const CreateSellCarPage: React.FC<CreateSellCarPageProps> = ({ saleListID }) => {
+  const [saleList, setSaleList] = useState<SaleList | null>(null);
+  const [currentPicIndex, setCurrentPicIndex] = useState(0);
+  const [salePrice, setSalePrice] = useState<number | ''>('');
+  const [employeeID, setEmployeeID] = useState<number | ''>('');
+  const [status, setStatus] = useState('Available');
+
+  useEffect(() => {
+    axios.get(`/salelists/${saleListID}`).then(res => {
+      setSaleList(res.data);
+      setSalePrice(res.data.sale_price ?? '');
+      setStatus(res.data.status ?? 'Available');
+      setEmployeeID(res.data.employeeID ?? '');
+    }).catch(err => console.error(err));
+  }, [saleListID]);
+
+  if (!saleList) return <p>Loading...</p>;
+
+  const pictures: CarPicture[] = saleList.car?.pictures && saleList.car.pictures.length > 0
+    ? saleList.car.pictures
+    : [{ ID: 0, title: 'Default', path: '/images/default_car.jpg', car_id: saleList.carID }];
+
+  const handleNextPic = () => {
+    setCurrentPicIndex((prev) => (prev + 1) % pictures.length);
+  };
+
+  const handlePrevPic = () => {
+    setCurrentPicIndex((prev) => (prev - 1 + pictures.length) % pictures.length);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    axios.put(`/salelists/${saleListID}`, {
+      sale_price: salePrice,
+      employeeID,
+      status
+    }).then(res => {
+      alert('Updated successfully!');
+      setSaleList(res.data);
+    }).catch(err => console.error(err));
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', padding: 20, gap: 20 }}>
+      {/* ส่วนบน: Gallery + Form */}
+      <div style={{ display: 'flex', gap: 20 }}>
+        {/* Gallery */}
+        <div style={{ flex: 3, position: 'relative' }}>
+          <img
+            src={pictures[currentPicIndex].path}
+            alt={saleList.car?.car_name}
+            style={{ width: '100%', height: 300, objectFit: 'cover', borderRadius: 8 }}
+          />
+          {pictures.length > 1 && (
+            <>
+              <button
+                onClick={handlePrevPic}
+                style={{
+                  position: 'absolute', top: '50%', left: 5, transform: 'translateY(-50%)',
+                  background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 35, height: 35, cursor: 'pointer', fontSize: 24
+                }}
+              >‹</button>
+              <button
+                onClick={handleNextPic}
+                style={{
+                  position: 'absolute', top: '50%', right: 5, transform: 'translateY(-50%)',
+                  background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 35, height: 35, cursor: 'pointer', fontSize: 24
+                }}
+              >›</button>
+            </>
+          )}
+        </div>
+
+        {/* Form */}
+        <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h2>{saleList.car?.car_name}</h2>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label>
+              ราคาขาย:
+              <input
+                type="number"
+                value={salePrice}
+                onChange={(e) => setSalePrice(Number(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            </label>
+            <label>
+              พนักงานผู้ดูแล (ID):
+              <input
+                type="number"
+                value={employeeID}
+                onChange={(e) => setEmployeeID(Number(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            </label>
+            <label>
+              สถานะ:
+              <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: '100%' }}>
+                <option value="Available">Available</option>
+                <option value="Sold">Sold</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </label>
+            <button type="submit">บันทึก</button>
+          </form>
+        </div>
+      </div>
+
+      {/* ส่วนล่าง: รายละเอียดรถ */}
+      <div style={{ padding: 10, backgroundColor: '#f2f2f2', borderRadius: 8 }}>
+        <h3>รายละเอียดรถ</h3>
+        <p>สี: {saleList.car?.color}</p>
+        <p>ปีที่ผลิต: {saleList.car?.year_manufacture}</p>
+        <p>ระยะทาง: {saleList.car?.mileage?.toLocaleString()} กม.</p>
+        <p>สภาพ: {saleList.car?.condition}</p>
+        {saleList.car?.detail?.Brand && <p>ยี่ห้อ: {saleList.car.detail.Brand.brand_name}</p>}
+        {saleList.car?.detail?.CarModel && <p>รุ่น: {saleList.car.detail.CarModel.ModelName}</p>}
+        {saleList.car?.detail?.SubModel && <p>SubModel: {saleList.car.detail.SubModel.SubModelName}</p>}
+      </div>
+    </div>
+  );
+};
+
+export default CreateSellCarPage;

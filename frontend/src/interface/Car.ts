@@ -1,61 +1,54 @@
-import dayjs, { Dayjs } from 'dayjs';
 
-dayjs.locale('th');
+import type { Manager } from "./Manager";
+import type { Employee } from "./Employee";
+import type { SaleContract } from "./Salecontract";
+
 
 export interface CarInfo {
-  purchaseDate: any;
-  color: string;
-  registrationNumber: string;
-  registrationProvince: string;
-  id: number;
-  brand: string;
-  model: string;
-  subModel: string;
+  ID: number;
+  car_name: string;
+  purchase_date: string | null;
+  purchase_price: number;
+  year_manufacture: number;
   mileage: number;
-  price: number;
-  yearManufactured: number;
-  yearUsed: number;
   condition: string;
-  pic: string[];
-  status: string[];
-}
-
-export interface Car {
-  id: number;
-  registrationNumber: string;
-  registrationProvince: string;
-  purchaseDate: Dayjs | null;
-  brand?: Brand["brand"];
-  model?: Model["model"];
-  subModel?: SubModel["submodel"];
-  mileage: number;
+  status?: string;   // เผื่อ backend ยังไม่มีส่งมา
   color: string;
-  price: number;
-  yearManufactured: number;
-  yearUsed: number;
-  condition: string;
-  pic: string[];
-  status: string[] | null;
+  pictures: CarPicture[];
+  detail?: {
+    Brand?: { brand_name: string };
+    CarModel?: { ModelName: string };
+    SubModel?: { SubModelName: string };
+  };
 }
 
-export interface Brand {
-  id: number;
-  brand: string;
+export interface CarPicture {
+  ID: number;
+  title: string;
+  path: string;
+  car_id: number;
 }
-
-export interface Model {
-  id: number;
-  model: string;
-  brand?: string;
+export interface CarForSale {
+  car: CarInfo;
+  sale_price: number;
 }
+export interface SaleList {
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt?: string | null;
 
-export interface SubModel {
-  id: number;
-  submodel: string;
-  model?: string;
-}
+  sale_price: number;       // 👈 JSON ที่ backend ส่งมาสะกดแบบนี้จริง ๆ
+  carID: number;
+  car?: CarInfo | null;
 
-export interface ProvinceInfo {
-  id: number;
-  province: string;
+  status: string;
+
+  managerID: number;
+  manager?: Manager | null;
+
+  employeeID: number;
+  employee?: Employee | null;
+
+  SalesContract: SaleContract[]; // 👈 ชื่อ field ใน JSON ขึ้นต้นด้วยตัวใหญ่
 }
