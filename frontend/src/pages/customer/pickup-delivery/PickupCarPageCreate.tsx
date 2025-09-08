@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Select, Button, Space, Row, Col, Input,
-  Typography, Divider, message
+  Typography, Divider, message, Spin
 } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
@@ -31,20 +31,46 @@ interface TypeInformation {
   type: string;
 }
 
+interface SalesContract {
+    ID: number;
+}
+
+interface Province {
+    ProvinceName: string;
+}
+interface District {
+    DistrictName: string;
+}
+interface SubDistrict {
+    SubDistrictName: string;
+}
+
 interface PickupDeliveryFromDB {
     ID: number;
     DateTime: string;
     Status: string;
 }
 
+interface PickupDeliveryForEdit {
+    ID: number;
+    DateTime: string;
+    Address: string;
+    SalesContract: SalesContract;
+    Employee: Employee;
+    TypeInformation: TypeInformation;
+    Province?: Province;
+    District?: District;
+    SubDistrict?: SubDistrict;
+}
 
 const PickupCarCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editingId = searchParams.get('id');
-  
-  const { user } = useAuth();
-  
+
+  const { user, token } = useAuth();
+
+  const [loading, setLoading] = useState<boolean>(!!editingId);
   const [bookedTimeSlots, setBookedTimeSlots] = useState<string[]>([]);
 
   // Form state
@@ -68,11 +94,13 @@ const PickupCarCreatePage: React.FC = () => {
   };
 
   const districtOptions = useMemo(() => {
+    if (!selectedProvince) return [];
     const province = provinces.find(p => p.name_th === selectedProvince);
     return province ? province.amphure.map(a => ({ value: a.name_th, label: a.name_th })) : [];
   }, [selectedProvince]);
 
   const subdistrictOptions = useMemo(() => {
+    if (!selectedDistrict) return [];
     const province = provinces.find(p => p.name_th === selectedProvince);
     const district = province?.amphure.find(a => a.name_th === selectedDistrict);
     return district ? district.tambon.map(t => ({ value: t.name_th, label: t.name_th })) : [];
@@ -92,25 +120,13 @@ const PickupCarCreatePage: React.FC = () => {
     (selectedMethodName === 'ให้ไปส่งตามที่อยู่' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
 
   useEffect(() => {
-    if (user && user.ID) {
-      setCustomerId(Number(user.ID));
-    } else {
-      message.error("ไม่พบข้อมูลผู้ใช้, กรุณาเข้าสู่ระบบอีกครั้ง");
-      navigate('/login');
-    }
-  }, [user, navigate]);
-
-
-  useEffect(() => {
     const fetchDropdownData = async () => {
       try {
         const [empResponse, typeResponse] = await Promise.all([
           fetch('http://localhost:8080/employees'),
           fetch('http://localhost:8080/type-informations')
         ]);
-        if (!empResponse.ok || !typeResponse.ok) {
-          throw new Error('Failed to fetch initial data');
-        }
+        if (!empResponse.ok || !typeResponse.ok) throw new Error('Failed to fetch initial data');
         const empData = await empResponse.json();
         const typeData = await typeResponse.json();
         setEmployees(empData);
@@ -120,8 +136,62 @@ const PickupCarCreatePage: React.FC = () => {
         message.error("เกิดข้อผิดพลาดในการดึงข้อมูลเริ่มต้น");
       }
     };
-    fetchDropdownData();
-  }, []);
+
+    const fetchBookingDataForEdit = async () => {
+      if (!editingId || !token) return;
+      setLoading(true);
+      try {
+        const response = await fetch(`http://localhost:8080/pickup-deliveries/${editingId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('ไม่พบข้อมูลการนัดหมาย');
+
+        const { data }: { data: PickupDeliveryForEdit } = await response.json();
+
+        setContractNumber(data.SalesContract.ID.toString());
+        setSelectedEmployeeId(data.Employee.ID);
+        setSelectedMethodId(data.TypeInformation.ID);
+        const bookingDateTime = dayjs(data.DateTime);
+        setSelectedDate(bookingDateTime);
+        setSelectedTime(bookingDateTime.format('HH:mm'));
+
+        if (data.Address) {
+            setAddress(data.Address);
+        }
+        if (data.Province) {
+            setSelectedProvince(data.Province.ProvinceName);
+        }
+        if (data.District) {
+            setSelectedDistrict(data.District.DistrictName);
+        }
+        if (data.SubDistrict) {
+            setSelectedSubdistrict(data.SubDistrict.SubDistrictName);
+        }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        message.error(`เกิดข้อผิดพลาด: ${error.message}`);
+        navigate('/pickup-car');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDropdownData().then(() => {
+        if (editingId) {
+            fetchBookingDataForEdit();
+        } else {
+            setLoading(false);
+        }
+    });
+
+  }, [editingId, token, navigate]);
+
+  useEffect(() => {
+    if (user && user.ID) {
+      setCustomerId(Number(user.ID));
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchBookedTimes = async () => {
@@ -130,14 +200,20 @@ const PickupCarCreatePage: React.FC = () => {
       try {
         const response = await fetch('http://localhost:8080/pickup-deliveries');
         if (!response.ok) throw new Error('Failed to fetch bookings');
-        
+
         const bookings: PickupDeliveryFromDB[] = (await response.json()).data || [];
-        
+
         const unavailableTimes = bookings
-          .filter(booking => dayjs(booking.DateTime).isSame(selectedDate, 'day'))
+          .filter(booking => {
+            if (editingId && booking.ID.toString() === editingId) {
+                return false;
+            }
+            return dayjs(booking.DateTime).isSame(selectedDate, 'day');
+          })
           .map(booking => dayjs(booking.DateTime).format('HH:mm'));
 
         setBookedTimeSlots(unavailableTimes);
+
       } catch (error) {
         console.error(error);
         message.error("ไม่สามารถดึงข้อมูลเวลาที่จองแล้วได้");
@@ -145,7 +221,7 @@ const PickupCarCreatePage: React.FC = () => {
     };
 
     fetchBookedTimes();
-  }, [selectedDate]);
+  }, [selectedDate, editingId]);
 
 
   const handleSave = async () => {
@@ -163,14 +239,12 @@ const PickupCarCreatePage: React.FC = () => {
         .minute(parseInt(selectedTime!.split(':')[1]))
         .second(0);
 
-    // ✅ 3. แก้ไข Payload ให้ถูกต้อง
     const payload = {
         CustomerID: customerId,
         EmployeeID: selectedEmployeeId!,
         TypeInformationID: selectedMethodId!,
-        // Key คือ "SalesContractNumber" และค่าถูกแปลงเป็นตัวเลข
         SalesContractNumber: parseInt(contractNumber, 10),
-        PickupDate: pickupDateTime.toISOString(),
+        PickupDate: pickupDateTime.format(),
         Address: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? address : "",
         Province: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedProvince || "") : "",
         District: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedDistrict || "") : "",
@@ -178,14 +252,23 @@ const PickupCarCreatePage: React.FC = () => {
     };
 
     try {
-        const response = await fetch('http://localhost:8080/pickup-deliveries', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const url = editingId
+            ? `http://localhost:8080/pickup-deliveries/${editingId}`
+            : 'http://localhost:8080/pickup-deliveries';
+        
+        const method = editingId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(payload),
         });
 
         if (response.ok) {
-            message.success('สร้างการนัดหมายสำเร็จ!');
+            message.success(editingId ? 'แก้ไขการนัดหมายสำเร็จ!' : 'สร้างการนัดหมายสำเร็จ!');
             navigate('/pickup-car');
         } else {
             const errorData = await response.json();
@@ -205,19 +288,36 @@ const PickupCarCreatePage: React.FC = () => {
     return false;
   };
 
+  if (loading) {
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Spin size="large" />
+        </div>
+    );
+  }
+
+  // --- vvvvv --- เพิ่ม CSS สำหรับ Placeholder --- vvvvv ---
   const customCss = `
-    .ant-select-selection-item { color: white !important; }
-    .ant-select-focused .ant-select-selector, .ant-select-selector:hover {
-        border-color: #d6cd99ff !important;
-        box-shadow: 0 0 0 2px rgba(241, 212, 48, 0.2);
+    .ant-select-selection-placeholder {
+        color: #a9a9a9 !important; /* สีเทาเข้ม */
     }
-    .ant-select-selection-placeholder { color: #a9a9a9 !important; }
-    .ant-input::placeholder { color: #a9a9a9 !important; }
+    .ant-input::placeholder {
+        color: #a9a9a9 !important; /* สีเทาเข้ม */
+    }
   `;
+  // --- ^^^^^ --- จบส่วนที่เพิ่ม --- ^^^^^ ---
 
   return (
     <div style={{ padding: '24px 48px' }}>
+      {/* --- vvvvv --- เพิ่ม Tag Style เพื่อให้ CSS ทำงาน --- vvvvv --- */}
       <style>{customCss}</style>
+       <style>{`
+        .ant-select-selection-item {
+          color: #FFFFFF !important;
+        }
+        
+      `}</style>
+      {/* --- ^^^^^ --- จบส่วนที่เพิ่ม --- ^^^^^ --- */}
       <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
         <Row justify="center">
           <Col xs={24} sm={22} md={20} lg={18} xl={16}>
@@ -329,7 +429,7 @@ const PickupCarCreatePage: React.FC = () => {
                   }}
                   onClick={handleSave}
                 >
-                  บันทึก
+                  {editingId ? 'บันทึกการแก้ไข' : 'บันทึก'}
                 </Button>
                 <Button
                   type="default"

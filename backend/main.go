@@ -103,11 +103,12 @@ func main() {
 	}
 
 	// Protected Employee Routes
-	// employeeRoutes := r.Group("/employee") // Renamed group to avoid conflict
-	// employeeRoutes.Use(middleware.EmployeeAuthMiddleware())
-	// {
-	// 	employeeRoutes.GET("/me", employeeController.GetCurrentEmployee)
-	// }
+	employeeProtectedRoutes := r.Group("/employees")
+	employeeProtectedRoutes.Use(middleware.EmployeeAuthMiddleware())
+	{
+		employeeProtectedRoutes.GET("/me", employeeController.GetCurrentEmployee)
+		employeeProtectedRoutes.PUT("/me", employeeController.UpdateCurrentEmployee)
+	}
 
 	// Inspection Appointment Routes
 	inspectionRoutes := r.Group("/inspection-appointments")
@@ -124,6 +125,8 @@ func main() {
 	// Pickup Delivery Routes
 	pickupDeliveryRoutes := r.Group("/pickup-deliveries")
 	{
+		pickupDeliveryRoutes.GET("/:id", pickupDeliveryController.GetPickupDeliveryByID)
+		pickupDeliveryRoutes.GET("/employee/:employeeID", pickupDeliveryController.GetPickupDeliveriesByEmployeeID)
 		pickupDeliveryRoutes.GET("", pickupDeliveryController.GetPickupDeliveries)
 		pickupDeliveryRoutes.GET("/customer/:customerID", pickupDeliveryController.GetPickupDeliveriesByCustomerID)
 		pickupDeliveryRoutes.POST("", pickupDeliveryController.CreatePickupDelivery)
@@ -132,22 +135,15 @@ func main() {
 		pickupDeliveryRoutes.DELETE("/:id", pickupDeliveryController.DeletePickupDelivery)
 	}
 
-	// --- vvvvv --- ส่วนที่แก้ไข: ย้าย Employee Routes มาไว้ที่นี่ --- vvvvv ---
-	// Employee Routes (Public for now)
+	// Public Employee Routes (for admin or other uses)
 	employeePublicRoutes := r.Group("/employees")
 	{
 		employeePublicRoutes.GET("", employeeController.GetEmployees)
 		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
 	}
-	// --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
-	// Admin-Only Routes (สำหรับจัดการข้อมูลหลังบ้าน)
-	adminEmployeeRoutes := r.Group("/admin/employees")
-	{
-		adminEmployeeRoutes.POST("", employeeController.CreateEmployee)
-		adminEmployeeRoutes.PUT("/:id", employeeController.UpdateEmployee)
-		adminEmployeeRoutes.DELETE("/:id", employeeController.DeleteEmployee)
-	}
+	// Admin-Only Routes
+	
 
 	adminCustomerRoutes := r.Group("/admin/customers")
 	{

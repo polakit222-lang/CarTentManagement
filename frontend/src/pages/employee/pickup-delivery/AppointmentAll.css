@@ -1,9 +1,0 @@
-/* --- Style Variables --- */
-:root {
-  --gold: #d4af37;
-}
-
-/* ✅ FIX: กำหนดสีข้อความตัวเลือกจำนวนหน้าให้เป็นสีทอง */
-.ant-pagination-options .ant-select-selection-item {
-  color: var(--gold) !important;
-}

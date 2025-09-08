@@ -1,21 +1,25 @@
+// 1. แก้ไขค่าใน Type 'Sex' ให้เป็นตัวพิมพ์เล็กทั้งหมด
+export type Sex = 'male' | 'female' | 'other';
 
 export interface Employee {
-  ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  DeletedAt: string | null;
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 
-  profileimage: string;
-  first_name: string;
-  last_name: string;
-  password?: string; // Mapped to optional because it's sensitive information
+  profileImage: string;
+  firstName: string;
+  lastName: string;
+  password?: string;
   email: string;
-  phone_number: string;
+  phoneNumber: string;
   address: string;
-  start_date: string; // Mapped from time.Time in Go
-  sex: string;
-  position: string;
-  jobtype: string; // Mapped from time.Time in Go
+  startDate: string;
+  
+  // 2. ตอนนี้ Type 'sex' จะใช้ค่าที่เป็นตัวพิมพ์เล็กตามที่แก้ไขด้านบน
+  sex: Sex;
 
-  total_sales: unknown; // Mapped from Status type with gorm:"-" tag
+  position: string;
+  jobType: string;
+  totalSales: number;
 }

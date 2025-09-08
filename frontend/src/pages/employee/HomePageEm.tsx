@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/employee/HomePageEm.tsx
 import React, { useEffect, useState } from 'react';
-import { Card, Col, Row, List, Typography, Tag, Button, Statistic, Progress, Divider, Timeline, Calendar, Badge, Tooltip, ConfigProvider, Collapse } from 'antd';
+import { Card, Col, Row, List, Typography, Tag, Button, Statistic, Progress, Divider, Timeline, Calendar, Badge, Tooltip, ConfigProvider, Collapse, message } from 'antd';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { CarOutlined, TrophyOutlined, ClockCircleOutlined, CheckCircleOutlined, IssuesCloseOutlined, ClearOutlined } from '@ant-design/icons';
@@ -10,10 +11,7 @@ import 'dayjs/locale/th';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
 import thTH from 'antd/locale/th_TH';
 
-// Import CSS files
-
 import './Employeestyle.css';
-
 
 dayjs.locale('th');
 dayjs.extend(buddhistEra);
@@ -30,32 +28,43 @@ const colors = {
   gray: '#1e1e1e',
 };
 
-// --- Mockup Data and functions (no changes) ---
+// --- Mockup Data (Sales and Leave only) ---
 interface CarSell { id: number; carName: string; price: number; date: string; employee: string; }
 const mockCarSellList: CarSell[] = [
-    { id: 1, carName: 'Toyota Camry', price: 850000, date: '2025-09-04', employee: 'สมชาย' },
-    { id: 2, carName: 'Honda Civic', price: 780000, date: '2025-09-03', employee: 'สมศรี' },
-    { id: 3, carName: 'Ford Ranger', price: 920000, date: '2025-09-01', employee: 'สมชาย' },
-    { id: 4, carName: 'Isuzu D-Max', price: 890000, date: '2025-08-15', employee: 'สมชาย' },
+    { id: 1, carName: 'Toyota Camry', price: 850000, date: '2025-09-04', employee: 'Somchai' },
+    { id: 2, carName: 'Honda Civic', price: 780000, date: '2025-09-03', employee: 'Somsri' },
+    { id: 3, carName: 'Ford Ranger', price: 920000, date: '2025-09-01', employee: 'Somchai' },
+    { id: 4, carName: 'Isuzu D-Max', price: 890000, date: '2025-08-15', employee: 'Somchai' },
 ];
 const mockLeaveHistory = [
-  { id: 1, employee: 'สมชาย', date: '2025-09-10', status: 'Approved' },
-  { id: 2, employee: 'สมศรี', date: '2025-09-12', status: 'Pending' },
+  { id: 1, employee: 'Somchai', date: '2025-09-10', status: 'Approved' },
+  { id: 2, employee: 'Somsri', date: '2025-09-12', status: 'Pending' },
 ];
 const SALES_TARGET = 2_000_000;
+
+// --- Interfaces ---
 interface PickupBooking { id: number; contractNumber: string; appointmentDate: string; appointmentTime: string; employee: string | undefined; }
+// --- vvvvv --- ส่วนที่แก้ไข 1 --- vvvvv ---
+interface AuthenticatedUser {
+    id: number; // แก้ไขจาก ID เป็น id (ตัวเล็ก)
+    firstName?: string;
+    lastName?: string;
+}
+// --- ^^^^^ --- จบส่วนที่แก้ไข 1 --- ^^^^^ ---
+
+// --- Helper Functions ---
 const parseThaiDate = (thaiDate: string): Date | null => {
     const months: { [key: string]: number } = { 'มกราคม': 0, 'กุมภาพันธ์': 1, 'มีนาคม': 2, 'เมษายน': 3, 'พฤษภาคม': 4, 'มิถุนายน': 5, 'กรกฎาคม': 6, 'สิงหาคม': 7, 'กันยายน': 8, 'ตุลาคม': 9, 'พฤศจิกายน': 10, 'ธันวาคม': 11 };
     const parts = thaiDate.split(' ');
     if (parts.length !== 3) return null;
-    const day = parseInt(parts[0], 10), month = months[parts[1]], year = parseInt(parts[2], 10);
+    const day = parseInt(parts[0], 10), month = months[parts[1]], year = parseInt(parts[2], 10) - 543;
     if (!isNaN(day) && month !== undefined && !isNaN(year)) return new Date(year, month, day);
     return null;
 };
 
+
 const HomePageEm: React.FC = () => {
-    const { user } = useAuth();
-    // All state and useEffect hooks remain the same
+    const { user } = useAuth() as { user: AuthenticatedUser | null };
     const [allAppointments, setAllAppointments] = useState<PickupBooking[]>([]);
     const [displayedAppointments, setDisplayedAppointments] = useState<PickupBooking[]>([]);
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
@@ -72,33 +81,69 @@ const HomePageEm: React.FC = () => {
     });
 
     useEffect(() => {
-        if (user) {
-            const storedBookings = localStorage.getItem('pickupBookings');
-            let employeeBookings: PickupBooking[] = [];
-            if (storedBookings) {
-                try {
-                    employeeBookings = JSON.parse(storedBookings).filter((app: PickupBooking) => app.employee === user.name);
-                    setAllAppointments(employeeBookings);
-                } catch (e) { console.error(e); }
+        const fetchAppointments = async () => {
+            // --- vvvvv --- ส่วนที่แก้ไข 2 --- vvvvv ---
+            if (!user || !user.id) return; // แก้ไขจาก user.ID เป็น user.id
+
+            try {
+                // แก้ไขจาก user.ID เป็น user.id
+                const response = await fetch(`http://localhost:8080/pickup-deliveries/employee/${user.id}`);
+            // --- ^^^^^ --- จบส่วนที่แก้ไข 2 --- ^^^^^ ---
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch appointments');
+                }
+                const result = await response.json();
+                
+                const transformedAppointments: PickupBooking[] = result.data.map((item: any) => ({
+                    id: item.ID,
+                    contractNumber: `SC-${item.SalesContract.ID}`,
+                    appointmentDate: dayjs(item.DateTime).format('D MMMM BBBB'),
+                    appointmentTime: dayjs(item.DateTime).format('HH:mm'),
+                    employee: item.Employee.first_name,
+                }));
+                
+                setAllAppointments(transformedAppointments);
+
+                // ตั้งค่าการแสดงผลเริ่มต้น
+                const today = dayjs();
+                const startDate = today.subtract(3, 'day').startOf('day');
+                const endDate = today.add(3, 'day').endOf('day');
+                const initialFiltered = transformedAppointments.filter(b => {
+                    const appDate = parseThaiDate(b.appointmentDate);
+                    return appDate && dayjs(appDate).isBetween(startDate, endDate, null, '[]');
+                });
+                setDisplayedAppointments(sortAppointments(initialFiltered));
+
+            } catch (error) {
+                console.error('Error fetching appointments:', error);
+                message.error('ไม่สามารถโหลดข้อมูลนัดหมายได้');
             }
-            const today = dayjs(), startDate = today.subtract(3, 'day').startOf('day'), endDate = today.add(3, 'day').endOf('day');
-            const initialFiltered = employeeBookings.filter(b => {
-                const appDate = parseThaiDate(b.appointmentDate);
-                return appDate && dayjs(appDate).isBetween(startDate, endDate, null, '[]');
-            });
-            setDisplayedAppointments(sortAppointments(initialFiltered));
-            const currentMonth = new Date().getMonth(), currentYear = new Date().getFullYear();
-            const employeeSales = mockCarSellList.filter(s => {
-                const saleDate = new Date(s.date);
-                return s.employee === user.name && saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
-            });
-            setSalesSummary({
-                totalSales: employeeSales.reduce((sum, s) => sum + s.price, 0),
-                carsSold: employeeSales.length,
-                recentSales: employeeSales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3)
-            });
-            setEmployeeLeaveHistory(mockLeaveHistory.filter(h => h.employee === user.name));
-        }
+        };
+
+        const setupMockData = () => {
+             if (user) {
+                const employeeFirstName = user.firstName;
+                if (employeeFirstName) {
+                    const currentMonth = new Date().getMonth();
+                    const currentYear = new Date().getFullYear();
+                    const employeeSales = mockCarSellList.filter(s => {
+                        const saleDate = new Date(s.date);
+                        return s.employee === employeeFirstName && saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+                    });
+                    setSalesSummary({
+                        totalSales: employeeSales.reduce((sum, s) => sum + s.price, 0),
+                        carsSold: employeeSales.length,
+                        recentSales: employeeSales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3)
+                    });
+                    setEmployeeLeaveHistory(mockLeaveHistory.filter(h => h.employee === employeeFirstName));
+                }
+            }
+        };
+
+        fetchAppointments();
+        setupMockData();
+
     }, [user]);
     
     const dateCellRender = (date: Dayjs) => {
@@ -145,52 +190,19 @@ const HomePageEm: React.FC = () => {
             locale={thTH}
             theme={{
                 components: {
-                    Button: {
-                        defaultBg: colors.gray,
-                        defaultColor: colors.white,
-                        defaultBorderColor: colors.gold,
-                        defaultHoverBg: colors.goldDark,
-                        defaultHoverColor: colors.black,
-                        defaultHoverBorderColor: colors.gold,
-                        colorBgTextHover: colors.goldDark,
-                    },
-                    Calendar: {
-                      colorBgContainer: 'transparent',
-                      colorText: colors.white,
-                      colorTextHeading: '#ccc',
-                      colorBgTextHover: colors.goldDark,
-                      controlItemBgActive: colors.gold,
-                    },
-                    Timeline: {
-                      colorPrimary: colors.gold,
-                      itemPaddingBottom: 20,
-                    },
-                     Divider: {
-                        colorSplit: colors.gold,
-                     },
-                     Badge: {
-                        colorPrimary: colors.gold,
-                        // ✅ 1. FIX: ทำให้ข้อความ "วันลา" เป็นสีทอง
-                        colorText: colors.gold,
-                     },
-                     Collapse: {
-                        colorBgContainer: colors.gray,
-                        colorText: colors.white,
-                        colorTextHeading: colors.gold,
-                        headerBg: colors.gray,
-                        colorBorder: colors.gold,
-                        contentBg: colors.gray,
-                     },
-                     // ✅ 2. FIX: ทำให้ตัวเลข % ใน Progress เป็นสีทอง
-                     Progress: {
-                        colorText: colors.gold,
-                     }
+                    Button: { defaultBg: colors.gray, defaultColor: colors.white, defaultBorderColor: colors.gold, defaultHoverBg: colors.goldDark, defaultHoverColor: colors.black, defaultHoverBorderColor: colors.gold, colorBgTextHover: colors.goldDark, },
+                    Calendar: { colorBgContainer: 'transparent', colorText: colors.white, colorTextHeading: '#ccc', colorBgTextHover: colors.goldDark, controlItemBgActive: colors.gold, },
+                    Timeline: { colorPrimary: colors.gold, itemPaddingBottom: 20, },
+                    Divider: { colorSplit: colors.gold, },
+                    Badge: { colorPrimary: colors.gold, colorText: colors.gold, },
+                    Collapse: { colorBgContainer: colors.gray, colorText: colors.white, colorTextHeading: colors.gold, headerBg: colors.gray, colorBorder: colors.gold, contentBg: colors.gray, },
+                    Progress: { colorText: colors.gold, }
                 }
             }}
         >
             <div style={{ padding: '2rem', background: colors.black, color: colors.white, minHeight: '100vh' }}>
                 <Title level={2} style={{ color: colors.gold, marginBottom: '24px', marginTop: '60px' }}>
-                    Welcome, {user?.name || 'Employee'}
+                    Welcome, {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Employee'}
                 </Title>
                 
                 <Row gutter={[24, 24]}>
@@ -243,7 +255,7 @@ const HomePageEm: React.FC = () => {
                             {displayedAppointments.length > 0 ? (
                                 <Timeline mode="left">
                                     {Object.keys(groupedAppointments).map(date => (
-                                        <Timeline.Item key={date} label={<Text style={{color: '#ccc'}}>{dayjs(parseThaiDate(date)).format('ddd D MMM')}</Text>}>
+                                        <Timeline.Item key={date} label={<Text style={{color: '#ccc'}}>{dayjs(parseThaiDate(date)).format('ddd D MMM YYYY')}</Text>}>
                                             {groupedAppointments[date].map(item => (
                                                 <Card key={item.id} size="small" hoverable style={{ marginBottom: '8px', backgroundColor: colors.black, borderColor: colors.gold }}>
                                                     <Row justify="space-between" align="middle">

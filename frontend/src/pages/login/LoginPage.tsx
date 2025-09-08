@@ -67,9 +67,23 @@ const LoginPage: React.FC = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                login(data.employee, data.token);
-                message.success('เข้าสู่ระบบสำเร็จ!');
-                navigate('/homepage-employee'); // Employee's home
+                
+                // --- vvvvv --- ส่วนที่แก้ไข (สำคัญที่สุด) --- vvvvv ---
+                // 1. สร้าง Object ข้อมูลพนักงานให้สมบูรณ์ตามที่ AuthProvider ต้องการ
+                const employeeData = {
+                    ...data.employee, // ข้อมูลเดิม: ID, email, firstName, lastName
+                    name: `${data.employee.firstName} ${data.employee.lastName}`, // เพิ่ม 'name' สำหรับแสดงผล
+                    position: data.employee.Position || 'Employee', // เพิ่ม 'position' เพื่อให้ isEmployee() ทำงานถูกต้อง
+                };
+
+                // 2. เรียกใช้ฟังก์ชัน login ด้วยข้อมูลที่ปรับปรุงแล้ว
+                login(employeeData, data.token);
+                
+                // 3. แสดงข้อความและนำทางไปยังหน้า homepage
+                message.success('เข้าสู่ระบบพนักงานสำเร็จ!');
+                navigate('/homepage-employee');
+                // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
+
             } else {
                 message.error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
             }
@@ -219,3 +233,4 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
+

@@ -14,7 +14,6 @@ dayjs.extend(buddhistEra);
 dayjs.locale('th');
 // ------------------------------------
 
-// ✅ 1. Import ไฟล์ CSS ที่สร้างขึ้นใหม่
 import './AppointmentAll.css';
 
 import type { Dayjs } from 'dayjs';
@@ -31,32 +30,27 @@ const colors = {
   gray: '#1e1e1e',
 };
 
-// --- vvvvv --- ส่วนที่เพิ่มและแก้ไข --- vvvvv ---
-interface CustomerData {
-    id: number;
-    FirstName: string;
-    LastName: string;
+// --- vvvvv --- ส่วนที่แก้ไข 1 --- vvvvv ---
+interface AuthenticatedUser {
+    id: number; // แก้ไขจาก ID เป็น id (ตัวพิมพ์เล็ก)
+    firstName?: string;
+    lastName?: string;
 }
+// --- ^^^^^ --- จบส่วนที่แก้ไข 1 --- ^^^^^ ---
 
-interface PickupBooking {
+// Interface สำหรับข้อมูลที่ใช้แสดงผลในตาราง
+interface DisplayBooking {
   id: number;
-  customerId: number; // เพิ่ม customerId เพื่ออ้างอิง
+  customerId: number;
   contractNumber: string;
   appointmentDate: string;
   appointmentTime: string;
   employee: string | undefined;
   appointmentMethod: string | undefined;
   address?: string;
-  province?: string;
-  district?: string;
-  subdistrict?: string;
-  status?: 'กำลังดำเนินการ' | 'ยกเลิก' |'จัดส่งสำเร็จ';
+  status?: 'รอดำเนินการ' | 'ยกเลิก' |'สำเร็จ';
+  customerName: string;
 }
-
-interface DisplayBooking extends PickupBooking {
-    customerName: string; // เพิ่มชื่อ-สกุล สำหรับแสดงผล
-}
-// --- ^^^^^ --- จบส่วนที่เพิ่มและแก้ไข --- ^^^^^ ---
 
 
 const parseThaiDate = (dateString: string): Date | null => {
@@ -83,7 +77,7 @@ const parseThaiDate = (dateString: string): Date | null => {
 const AppointmentAll: React.FC = () => {
   const [appointments, setAppointments] = useState<DisplayBooking[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: AuthenticatedUser | null };
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [filterDate, setFilterDate] = useState<Dayjs | null>(null);
@@ -91,35 +85,40 @@ const AppointmentAll: React.FC = () => {
   const [tableFilters, setTableFilters] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    const fetchAppointments = () => {
-      if (!user) {
+    const fetchAppointments = async () => {
+      // --- vvvvv --- ส่วนที่แก้ไข 2 --- vvvvv ---
+      if (!user || !user.id) { // แก้ไขจาก user.ID เป็น user.id
         setLoading(false);
         return;
       }
+      setLoading(true);
       try {
-        const storedBookings = localStorage.getItem('pickupBookings');
-        const storedCustomers = localStorage.getItem('customerData');
-        
-        if (storedBookings && storedCustomers) {
-          const allBookings: PickupBooking[] = JSON.parse(storedBookings);
-          const allCustomers: CustomerData[] = JSON.parse(storedCustomers);
-
-          const customerMap = new Map<number, string>();
-          allCustomers.forEach(customer => {
-            customerMap.set(customer.id, `${customer.FirstName} ${customer.LastName}`);
-          });
-
-          const employeeBookings = allBookings
-            .filter(booking => booking.employee === user.name)
-            .map(booking => ({
-                ...booking,
-                customerName: customerMap.get(booking.customerId) || 'ไม่พบชื่อ'
-            }));
-
-          setAppointments(employeeBookings);
+        // เรียก API โดยใช้ user.id (ตัวเล็ก)
+        const response = await fetch(`http://localhost:8080/pickup-deliveries/employee/${user.id}`);
+      // --- ^^^^^ --- จบส่วนที่แก้ไข 2 --- ^^^^^ ---
+        if (!response.ok) {
+          throw new Error('ไม่สามารถดึงข้อมูลการนัดหมายได้');
         }
+        const result = await response.json();
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const transformedData: DisplayBooking[] = result.data.map((item: any) => ({
+            id: item.ID,
+            customerId: item.Customer.ID,
+            contractNumber: `SC-${item.SalesContract.ID}`,
+            appointmentDate: dayjs(item.DateTime).format('D MMMM BBBB'),
+            appointmentTime: dayjs(item.DateTime).format('HH:mm'),
+            employee: item.Employee.first_name,
+            appointmentMethod: item.TypeInformation.type,
+            status: item.status,
+            customerName: `${item.Customer.FirstName} ${item.Customer.LastName}`,
+            address: `${item.Address} ${item.SubDistrict?.SubDistrictName || ''} ${item.District?.DistrictName || ''} ${item.Province?.ProvinceName || ''}`.trim()
+        }));
+        
+        setAppointments(transformedData);
       } catch (error) {
-        console.error("Failed to parse appointments from localStorage", error);
+        console.error("Failed to fetch or parse appointments", error);
+        message.error((error as Error).message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
       } finally {
         setLoading(false);
       }
@@ -137,7 +136,7 @@ const AppointmentAll: React.FC = () => {
   const filteredData = appointments.filter(item => {
     const matchesSearchText = searchText === '' ||
       item.contractNumber.toLowerCase().includes(searchText) ||
-      item.customerName.toLowerCase().includes(searchText); // ค้นหาจากชื่อ
+      item.customerName.toLowerCase().includes(searchText);
 
     let matchesDate = true;
     if (filterDate) {
@@ -157,8 +156,8 @@ const AppointmentAll: React.FC = () => {
 
   const getStatusColor = (status: string | undefined) => {
     switch (status) {
-      case 'กำลังดำเนินการ': return 'orange';
-      case 'จัดส่งสำเร็จ': return 'green';
+      case 'รอดำเนินการ': return 'orange';
+      case 'สำเร็จ': return 'green';
       case 'ยกเลิก': return 'red';
       default: return 'default';
     }
@@ -192,7 +191,6 @@ const AppointmentAll: React.FC = () => {
         );
       },
     },
-    // --- vvvvv --- เพิ่มคอลัมน์ชื่อ-สกุล --- vvvvv ---
     {
         title: 'ชื่อ-สกุล ลูกค้า',
         dataIndex: 'customerName',
@@ -202,7 +200,6 @@ const AppointmentAll: React.FC = () => {
             <span style={{ color: colors.white }}>{text}</span>
         )
     },
-    // --- ^^^^^ --- จบส่วนที่เพิ่ม --- ^^^^^ ---
     {
       title: 'เลขที่สัญญา',
       dataIndex: 'contractNumber',
@@ -219,32 +216,26 @@ const AppointmentAll: React.FC = () => {
       dataIndex: 'appointmentMethod',
       key: 'appointmentMethod',
       render: (method) => {
-        const isPickUp = method?.includes('รับรถที่เต็นท์');
+        const isDelivery = method?.includes('ให้ไปส่งตามที่อยู่');
         return (
-          <Tag color={isPickUp ? 'geekblue' : 'purple'}>
-            {isPickUp ? 'รับที่เต็นท์' : 'จัดส่ง'}
+          <Tag color={isDelivery ? 'purple' : 'geekblue'}>
+            {isDelivery ? 'จัดส่ง' : 'รับที่เต็นท์'}
           </Tag>
         );
       },
       filters: [
-        { text: 'รับที่เต็นท์', value: 'รับรถที่เต็นท์' },
-        { text: 'จัดส่ง', value: 'จัดส่ง' },
+        { text: 'รับที่เต็นท์', value: 'รับที่เต็นท์' },
+        { text: 'จัดส่ง', value: 'ให้ไปส่งตามที่อยู่' },
       ],
       filteredValue: tableFilters.appointmentMethod || null,
-      onFilter: (value, record) => {
-        const method = record.appointmentMethod || '';
-        if (value === 'จัดส่ง') {
-            return !method.includes('รับรถที่เต็นท์');
-        }
-        return method.includes(value as string);
-      },
+      onFilter: (value, record) => record.appointmentMethod?.includes(value as string) ?? false,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Checkbox.Group
             style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}
             options={[
-              { label: 'รับที่เต็นท์', value: 'รับรถที่เต็นท์' },
-              { label: 'จัดส่ง', value: 'จัดส่ง' },
+              { label: 'รับที่เต็นท์', value: 'รับที่เต็นท์' },
+              { label: 'จัดส่ง', value: 'ให้ไปส่งตามที่อยู่' },
             ]}
             value={selectedKeys as string[]}
             onChange={(keys) => setSelectedKeys(keys)}
@@ -267,9 +258,9 @@ const AppointmentAll: React.FC = () => {
         </Tag>
       ),
       filters: [
-        { text: 'กำลังดำเนินการ', value: 'กำลังดำเนินการ' },
+        { text: 'รอดำเนินการ', value: 'รอดำเนินการ' },
         { text: 'ยกเลิก', value: 'ยกเลิก' },
-        { text: 'จัดส่งสำเร็จ', value: 'จัดส่งสำเร็จ' },
+        { text: 'สำเร็จ', value: 'สำเร็จ' },
       ],
       filteredValue: tableFilters.status || null,
       onFilter: (value, record) => record.status?.indexOf(value as string) === 0,
@@ -278,9 +269,9 @@ const AppointmentAll: React.FC = () => {
           <Checkbox.Group
             style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}
             options={[
-                { label: 'กำลังดำเนินการ', value: 'กำลังดำเนินการ' },
+                { label: 'รอดำเนินการ', value: 'รอดำเนินการ' },
                 { label: 'ยกเลิก', value: 'ยกเลิก' },
-                { label: 'จัดส่งสำเร็จ', value: 'จัดส่งสำเร็จ' },
+                { label: 'สำเร็จ', value: 'สำเร็จ' },
             ]}
             value={selectedKeys as string[]}
             onChange={(keys) => setSelectedKeys(keys)}
