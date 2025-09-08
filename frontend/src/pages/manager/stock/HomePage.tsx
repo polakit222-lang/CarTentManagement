@@ -1,152 +1,76 @@
-// HomePage.tsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import CarGrid from '../../../components/CarGrid';
-import '../../../style/sidebar.css';
-import { Button } from 'antd';
-import { Link } from 'react-router-dom';
-import Filter, { type FilterValues } from '../../../components/Filter';
-import Sorter, { type SortOption } from '../../../components/Sorter';
-import type { CarInfo } from '../../../interface/Car';
+import Filter from '../../../components/Filter/Filter';
+import type { BaseCar, CarInfo, FilterValues } from '../../../interface/Car';
 import axios from 'axios';
 
-const conditionOrder = ['ดี', 'ปานกลาง', 'แย่'];
-
 const HomePage: React.FC = () => {
-  const [cars, setCars] = useState<CarInfo[]>([]);
-  const [filters, setFilters] = useState<FilterValues | null>(null);
-  const [sortOption, setSortOption] = useState<SortOption | undefined>(undefined);
+  const [cars, setCars] = useState<BaseCar[]>([]);
+  const [filters, setFilters] = useState<FilterValues>({});
 
+  // ดึงข้อมูลจาก API /cars
   useEffect(() => {
-    axios.get<CarInfo[]>('http://localhost:8080/cars')
-      .then((res) => {
-        setCars(res.data);
-      })
+    axios.get<BaseCar[]>('http://localhost:8080/cars')
+      .then(res => setCars(res.data))
       .catch(err => console.error(err));
   }, []);
 
-  // 🔹 ฟังก์ชันคำนวณอายุการใช้งานจาก purchase_date
-  const getCarAge = (purchase_date: string | null): number => {
-    if (!purchase_date) return 0;
-    const purchaseYear = new Date(purchase_date).getFullYear();
-    const currentYear = new Date().getFullYear();
-    return currentYear - purchaseYear;
-  };
+  // แปลง BaseCar[] → CarInfo[] สำหรับ Filter
+  const carInfoList: CarInfo[] = useMemo(() => {
+    return cars.map(car => ({
+      type: 'sale', // เราใช้ sale เป็น default
+      car,
+      sale_price: car.purchase_price,
+    }));
+  }, [cars]);
 
-  // กรองและ sort
+  // Filter ตาม FilterValues
   const filteredCars = useMemo(() => {
-    let result = cars;
+    return carInfoList.filter(c => {
+      const car = c.car;
 
-    if (filters) {
-      result = result.filter(c => {
-        // ✅ กรองราคาซื้อ
-        if (filters.priceRange) {
-          const p = c.purchase_price ?? 0;
-          if (p < filters.priceRange[0] || p > filters.priceRange[1]) return false;
-        }
+      // filter type
+      if (filters.type && c.type !== filters.type) return false;
 
-        // ✅ กรองอายุการใช้งาน
-        if (filters.ageRange) {
-          const age = getCarAge(c.purchase_date);
-          if (age < filters.ageRange[0] || age > filters.ageRange[1]) return false;
-        }
+      // filter price
+      if (filters.priceRange) {
+        const price = c.sale_price ?? car.purchase_price;
+        if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
+      }
 
-        // ✅ กรองเลขไมล์
-        if (filters.mileageMax != null) {
-          if ((c.mileage ?? 0) > filters.mileageMax) return false;
-        }
+      // filter brand/model/subModel
+      if (filters.brand && car.detail?.Brand?.brand_name !== filters.brand) return false;
+      if (filters.model && car.detail?.CarModel?.ModelName !== filters.model) return false;
+      if (filters.subModel && car.detail?.SubModel?.SubModelName !== filters.subModel) return false;
 
-        // ✅ กรองสภาพรถ
-        if (filters.conditions?.length) {
-          if (!filters.conditions.includes(c.condition ?? '')) return false;
-        }
+      // filter mileage
+      if (filters.mileageMax && car.mileage > filters.mileageMax) return false;
 
-        // ✅ กรองสถานะ
-        if (filters.status?.length) {
-          if (!filters.status.includes(c.status ?? '')) return false;
-        }
+      // filter age
+      if (filters.ageRange && car.purchase_date) {
+        const age = new Date().getFullYear() - new Date(car.purchase_date).getFullYear();
+        if (age < filters.ageRange[0] || age > filters.ageRange[1]) return false;
+      }
 
-        // ✅ กรองยี่ห้อ รุ่น ซับรุ่น
-        if (filters.brand) {
-          if (c.detail?.Brand?.brand_name !== filters.brand) return false;
-        }
-        if (filters.model) {
-          if (c.detail?.CarModel?.ModelName !== filters.model) return false;
-        }
-        if (filters.subModel) {
-          if (c.detail?.SubModel?.SubModelName !== filters.subModel) return false;
-        }
+      // filter condition
+      if (filters.conditions && !filters.conditions.includes(car.condition)) return false;
 
-        return true;
-      });
-    }
-
-    // ✅ Sort
-    if (sortOption) {
-      result = [...result].sort((a, b) => {
-        switch (sortOption) {
-          case 'priceAsc': return (a.purchase_price ?? 0) - (b.purchase_price ?? 0);
-          case 'priceDesc': return (b.purchase_price ?? 0) - (a.purchase_price ?? 0);
-          case 'mileageAsc': return (a.mileage ?? 0) - (b.mileage ?? 0);
-          case 'mileageDesc': return (b.mileage ?? 0) - (a.mileage ?? 0);
-          case 'condition':
-            return (conditionOrder.indexOf(a.condition ?? 'แย่')) - (conditionOrder.indexOf(b.condition ?? 'แย่'));
-          case 'yearUsedAsc':
-            return getCarAge(a.purchase_date) - getCarAge(b.purchase_date);
-          case 'yearUsedDesc':
-            return getCarAge(b.purchase_date) - getCarAge(a.purchase_date);
-          default: return 0;
-        }
-      });
-    }
-
-    return result;
-  }, [cars, filters, sortOption]);
+      return true;
+    });
+  }, [carInfoList, filters]);
 
   return (
-    <div style={{ display: 'flex', width: '100%', marginTop: 5, padding: 10 }}>
-      <div style={{ zIndex: 2 }}>
-        <Filter
-          carList={cars}
-          width={300}
-          onApply={setFilters}
-          onClear={() => setFilters(null)}
+    <div style={{ display: 'flex', padding: 20 }}>
+      <Filter
+        cars={carInfoList} // ส่ง CarInfo[] ให้ Filter ใช้
+        onApply={setFilters}
+        onClear={() => setFilters({})}
+      />
+      <div style={{ marginLeft: 20, flex: 1 }}>
+        <CarGrid
+          cars={filteredCars} // <-- เปลี่ยนจาก Cars เป็น cars
+          type="sale"
         />
-      </div>
-
-      <div style={{ marginLeft: 280, marginTop: 45, width: '100%' }}>
-        <main className="mainWithSidebar">
-          <div style={{
-            height: 80,
-            display: 'flex',
-            alignItems: 'center',
-            position: 'fixed',
-            width: '100%',
-            backgroundColor: '#FFD700',
-            zIndex: 10,
-            justifyContent: 'space-between',
-            padding: 20
-          }}>
-            <h2 style={{ color: 'black' }}>รถทั้งหมดในเตนท์</h2>
-            <Sorter value={sortOption} onChange={setSortOption} />
-            <div style={{ marginRight: 300 }}>
-              <Link to="/add-car">
-                <Button type="primary">+ ลงทะเบียนรถใหม่</Button>
-              </Link>
-            </div>
-          </div>
-        </main>
-
-        <div style={{ paddingTop: 80, paddingLeft: 30 }}>
-          <CarGrid
-            cars={filteredCars}
-            cardType="admin"
-            editBasePath="/edit"
-            deleteBasePath="/delete"
-            rentBasePath="/rent"
-            sellBasePath="/sell"
-            addBasePath="/add"
-          />
-        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { carList } from '../../../data/carList';
 import CarGrid from '../../../components/CarGrid';
 import { carSellList } from '../../../data/carSellList';
 
-import Filter, { type FilterValues } from '../../../components/Filter';
+import Filter, { type FilterValues } from '../../../components/Filter/Filter';
 // FIX: Import 'SortOption' type from the Sorter component
 import Sorter, { type SortOption } from '../../../components/Sorter';
 

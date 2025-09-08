@@ -60,10 +60,10 @@ func InsertMockRentList(db *gorm.DB) {
 		manager := managers[rand.Intn(len(managers))]
 
 		rent := entity.RentList{
-			CarID:      car.ID,
-			Status:     status,
-			RentPreice: rentPrice,
-			ManagerID:  manager.ID,
+			CarID:     car.ID,
+			Status:    status,
+			RentPrice: rentPrice,
+			ManagerID: manager.ID,
 		}
 
 		db.Create(&rent)

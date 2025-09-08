@@ -1,10 +1,13 @@
+export interface CarPicture {
+  ID: number;
+  title: string;
+  path: string;
+  car_id: number;
+}
 
-import type { Manager } from "./Manager";
-import type { Employee } from "./Employee";
-import type { SaleContract } from "./Salecontract";
+export type CarType = 'sale' | 'rent' | 'noUse';
 
-
-export interface CarInfo {
+export interface BaseCar {
   ID: number;
   car_name: string;
   purchase_date: string | null;
@@ -12,7 +15,6 @@ export interface CarInfo {
   year_manufacture: number;
   mileage: number;
   condition: string;
-  status?: string;   // เผื่อ backend ยังไม่มีส่งมา
   color: string;
   pictures: CarPicture[];
   detail?: {
@@ -22,33 +24,50 @@ export interface CarInfo {
   };
 }
 
-export interface CarPicture {
-  ID: number;
-  title: string;
-  path: string;
-  car_id: number;
-}
-export interface CarForSale {
-  car: CarInfo;
+export interface SaleList {
+  car?: BaseCar | null; // เผื่อ JSON บางตัวไม่มี car
   sale_price: number;
 }
-export interface SaleList {
-  ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  DeletedAt?: string | null;
 
-  sale_price: number;       // 👈 JSON ที่ backend ส่งมาสะกดแบบนี้จริง ๆ
-  carID: number;
-  car?: CarInfo | null;
-
-  status: string;
-
-  managerID: number;
-  manager?: Manager | null;
-
-  employeeID: number;
-  employee?: Employee | null;
-
-  SalesContract: SaleContract[]; // 👈 ชื่อ field ใน JSON ขึ้นต้นด้วยตัวใหญ่
+export interface RentList {
+  car?: BaseCar | null;
+  rent_price: number;
+  rent_start_date?: string;
+  rent_end_date?: string;
 }
+
+export interface NoUseList {
+  car?: BaseCar | null;
+}
+
+export interface CarInfo {
+  type: CarType;
+  car: BaseCar;
+  sale_list?: SaleList; // optional เผื่อไม่ใช่ sale
+  rent_list?: RentList; // optional เผื่อไม่ใช่ rent
+  sale_price?: number;  // shortcut สำหรับ sale
+  rent_price?: number;  // shortcut สำหรับ rent
+  rent_start_date?: string;
+  rent_end_date?: string;
+}
+
+export interface FilterValues {
+  type?: CarType;
+  priceRange?: [number, number];
+  ageRange?: [number, number];
+  mileageMax?: number;
+  conditions?: string[];
+  brand?: string;
+  model?: string;
+  subModel?: string;
+}
+
+// Sort option สำหรับ Sorter
+export type SortOption =
+  | 'priceAsc'
+  | 'priceDesc'
+  | 'mileageAsc'
+  | 'mileageDesc'
+  | 'condition'
+  | 'yearUsedAsc'
+  | 'yearUsedDesc';

@@ -18,27 +18,25 @@ func NewCarController(db *gorm.DB) *CarController {
 	return &CarController{DB: db}
 }
 
-// GetCars ดึงรถทั้งหมด พร้อม Detail และ Pictures
+// GetCars ดึงรถทั้งหมด พร้อม Detail, Pictures, Province
 func (cc *CarController) GetCars(c *gin.Context) {
 	var cars []entity.Car
 
 	if err := cc.DB.
-		Preload("Detail").
 		Preload("Detail.Brand").
 		Preload("Detail.CarModel").
 		Preload("Detail.SubModel").
-		Preload("Province").
 		Preload("Pictures").
+		Preload("Province").
 		Find(&cars).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// ปรับ Path รูปให้เป็น URL เต็ม
 	host := c.Request.Host
 	for i := range cars {
 		for j := range cars[i].Pictures {
-			filename := filepath.Base(cars[i].Pictures[j].Path) // เอาเฉพาะชื่อไฟล์
+			filename := filepath.Base(cars[i].Pictures[j].Path)
 			cars[i].Pictures[j].Path = fmt.Sprintf("http://%s/images/cars/%s", host, filename)
 		}
 	}
@@ -46,27 +44,27 @@ func (cc *CarController) GetCars(c *gin.Context) {
 	c.JSON(http.StatusOK, cars)
 }
 
-// GetCarByID ดึงรถทีละคัน พร้อม Detail และ Pictures
+// GetCarByID ดึงรถทีละคัน
 func (cc *CarController) GetCarByID(c *gin.Context) {
 	id := c.Param("id")
 	var car entity.Car
 
 	if err := cc.DB.
-		Preload("Detail").
 		Preload("Detail.Brand").
 		Preload("Detail.CarModel").
 		Preload("Detail.SubModel").
-		Preload("Province").
 		Preload("Pictures").
+		Preload("Province").
 		First(&car, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Car not found"})
 		return
 	}
 
-	// ปรับ Path รูปให้เป็น URL เต็ม
 	host := c.Request.Host
 	for i := range car.Pictures {
 		filename := filepath.Base(car.Pictures[i].Path)
 		car.Pictures[i].Path = fmt.Sprintf("http://%s/images/cars/%s", host, filename)
 	}
+
+	c.JSON(http.StatusOK, car)
 }

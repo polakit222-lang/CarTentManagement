@@ -1,0 +1,7 @@
+.car-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-left: 300px;
+  margin-top: 53px;
+}

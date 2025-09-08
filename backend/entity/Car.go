@@ -26,4 +26,7 @@ type Car struct {
 
 	DetailID uint    `json:"detail_id"`
 	Detail   *Detail `gorm:"foreignKey:DetailID" json:"detail"`
+
+	SaleList []SaleList `gorm:"foreignKey:CarID" json:"sale_list"`
+	RentList []RentList `gorm:"foreignKey:CarID" json:"rent_list"`
 }

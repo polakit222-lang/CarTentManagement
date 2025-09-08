@@ -70,7 +70,11 @@ func main() {
 	carRoutes := r.Group("/cars")
 	{
 		carRoutes.GET("", carController.GetCars)
+		carRoutes.GET("/filter", carController.GetCarsWithFilter)
 		carRoutes.GET("/:id", carController.GetCarByID)
+		carRoutes.POST("", carController.CreateCar)
+		carRoutes.PUT("/:id", carController.UpdateCar)
+		carRoutes.DELETE("/:id", carController.DeleteCar)
 	}
 
 	provinceRoutes := r.Group("/provinces")
