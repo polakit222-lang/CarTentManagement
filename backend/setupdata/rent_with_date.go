@@ -34,7 +34,7 @@ func InsertMockRentListWithDates(db *gorm.DB) {
 
 	rand.Seed(time.Now().UnixNano())
 
-	limit := 20
+	limit := 10
 	if len(cars) < limit {
 		limit = len(cars)
 	}
@@ -56,10 +56,10 @@ func InsertMockRentListWithDates(db *gorm.DB) {
 
 		// สร้าง RentList
 		rent := entity.RentList{
-			CarID:      car.ID,
-			Status:     status,
-			RentPreice: rentPrice,
-			ManagerID:  manager.ID,
+			CarID:     car.ID,
+			Status:    status,
+			RentPrice: rentPrice,
+			ManagerID: manager.ID,
 		}
 		db.Create(&rent)
 

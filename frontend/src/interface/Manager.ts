@@ -1,15 +1,15 @@
-// src/interface/Manager.ts
-
 export interface Manager {
   ID: number;
   CreatedAt: string;
   UpdatedAt: string;
-  DeletedAt: string | null;
+  DeletedAt?: string | null;
 
   Username: string;
   Email: string;
-  Password?: string; // ตั้งเป็น optional ด้วยเหตุผลเดียวกับ Employee
+  Password: string;
   FirstName: string;
   LastName: string;
-  Birthday: string; // Time.Time จะถูกแปลงเป็น string
+  Birthday: string;
+
+  SaleList?: unknown | null;
 }

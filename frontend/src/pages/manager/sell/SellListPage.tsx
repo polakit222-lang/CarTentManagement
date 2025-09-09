@@ -1,116 +1,89 @@
-import { useState, useMemo } from 'react';
-import { carList } from '../../../data/carList';
+import React, { useEffect, useState, useMemo } from 'react';
+import axios from 'axios';
 import CarGrid from '../../../components/CarGrid';
-import { carSellList } from '../../../data/carSellList';
+import Filter from '../../../components/Filter';
+import Sorter, { type SortOption } from '../../../components/Sorter';
 import { Button } from 'antd';
 import { Link } from 'react-router-dom';
-
-
-import Sorter, { type SortOption } from '../../../components/Sorter';
-import Filter, { type FilterValues } from '../../../components/Filter';
+import type { CarInfo, FilterValues } from '../../../interface/Car';
 
 const conditionOrder = ['ดี', 'ปานกลาง', 'แย่'];
-const SellListPage = () => {
-  const filteredCarsSell = carList.filter(car =>
-    carSellList.some(sellCar => sellCar.id === car.id)
-  );
- const [filters, setFilters] = useState<FilterValues | null>(null);
-  const [sortOption, setSortOption] = useState<SortOption | undefined>(
-    undefined
-  );
-  const filteredCars = useMemo(() => {
-    let result = filteredCarsSell;
 
-    if (filters) {
-      result = result.filter((c) => {
-        if (filters.brand && c.brand !== filters.brand) return false;
-        if (filters.model && c.model !== filters.model) return false;
-        if (filters.priceRange) {
-          const p = c.price ?? 0;
-          if (p < filters.priceRange[0] || p > filters.priceRange[1]) return false;
-        }
-        if (filters.yearRange) {
-          const y = c.yearManufactured ?? 0;
-          if (y < filters.yearRange[0] || y > filters.yearRange[1]) return false;
-        }
-        if (filters.mileageMax !== null && filters.mileageMax !== undefined) {
-          if ((c.mileage ?? 0) > (filters.mileageMax ?? Number.MAX_SAFE_INTEGER)) return false;
-        }
-        if (filters.isAvailable && !c.status?.includes('available')) return false;
-        if (filters.conditions && filters.conditions.length > 0) {
-          if (!filters.conditions.includes(c.condition ?? '')) return false;
-        }
-        if (filters.status && filters.status.length > 0) {
-          // สมมติว่า c.status เก็บเป็น string เช่น 'selling' | 'renting' | 'pending'
-          const carStatus = Array.isArray(c.status) ? c.status[0] : undefined; // ✅ ดึงค่า index ที่ 1
-          if (!filters.status.includes(carStatus ?? '')) return false;
-        }
-        if (filters.usageRange) {
-          const currentYear = new Date().getFullYear();
-          const usageAge = currentYear - (c.yearUsed ?? currentYear);
-          if (usageAge < filters.usageRange[0] || usageAge > filters.usageRange[1]) return false;
-        }
-        return true;
-      });
-    }
+const SellListPage: React.FC = () => {
+  const [carList, setCarList] = useState<CarInfo[]>([]);
+  const [filters, setFilters] = useState<FilterValues>({});
+  const [sortOption, setSortOption] = useState<SortOption | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get<CarInfo[]>('http://localhost:8080/cars/filter?type=sale')
+      .then(res => setCarList(res.data))
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const getCarAge = (purchase_date: string | null) => {
+    if (!purchase_date) return 0;
+    return new Date().getFullYear() - new Date(purchase_date).getFullYear();
+  };
+
+  const filteredCars = useMemo(() => {
+    let result = carList.filter(c => {
+      const car = c.car;
+      if (filters.brand && car.detail?.Brand?.brand_name !== filters.brand) return false;
+      if (filters.model && car.detail?.CarModel?.ModelName !== filters.model) return false;
+      if (filters.subModel && car.detail?.SubModel?.SubModelName !== filters.subModel) return false;
+      if (filters.priceRange) {
+        const price = c.sale_price ?? 0;
+        if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
+      }
+      if (filters.mileageMax && car.mileage > filters.mileageMax) return false;
+      return true;
+    });
 
     if (sortOption) {
       result = [...result].sort((a, b) => {
+        const carA = a.car;
+        const carB = b.car;
         switch (sortOption) {
-          case 'priceAsc':
-            return (a.price ?? 0) - (b.price ?? 0);
-          case 'priceDesc':
-            return (b.price ?? 0) - (a.price ?? 0);
-          case 'mileageAsc':
-            return (a.mileage ?? 0) - (b.mileage ?? 0);
-          case 'mileageDesc':
-            return (b.mileage ?? 0) - (a.mileage ?? 0);
-          case 'condition':
-            return (
-              conditionOrder.indexOf(a.condition ?? 'แย่') -
-              conditionOrder.indexOf(b.condition ?? 'แย่')
-            );
-          case 'yearUsedAsc':
-            return (a.yearUsed ?? 0) - (b.yearUsed ?? 0);
-          case 'yearUsedDesc':
-            return (b.yearUsed ?? 0) - (a.yearUsed ?? 0);
-          default:
-            return 0;
+          case 'priceAsc': return (a.sale_price ?? 0) - (b.sale_price ?? 0);
+          case 'priceDesc': return (b.sale_price ?? 0) - (a.sale_price ?? 0);
+          case 'mileageAsc': return (carA.mileage ?? 0) - (carB.mileage ?? 0);
+          case 'mileageDesc': return (carB.mileage ?? 0) - (carA.mileage ?? 0);
+          case 'condition': return conditionOrder.indexOf(carA.condition) - conditionOrder.indexOf(carB.condition);
+          default: return 0;
         }
       });
     }
 
     return result;
-    // FIX: Added missing dependency 'filteredCarsSell'
-  }, [filters, sortOption, filteredCarsSell]);
+  }, [carList, filters, sortOption]);
 
+  if (loading) return <p>กำลังโหลดข้อมูล...</p>;
 
   return (
-    <div style={{ display: 'Flex' ,width:'100%',marginTop:5,padding:10}}>
-      <div style={{ zIndex: 2 }}>
-        <Filter
-          carList={carList}
-          width={300}
-          onApply={(v) => setFilters(v)}
-          onClear={() => setFilters(null)}
-        />
-      </div>
-      <div style={{ marginLeft: 280, marginTop: 45 ,width:'100%'}}>
-        <div style={{ height: 80, display: 'Flex', alignItems: 'center', position: 'fixed', width: '100%', backgroundColor: '#FFD700', zIndex: 10, justifyContent: 'space-between', padding: 20 }}>
-          <h2 style={{color:'black'}}>รถที่วางขาย</h2>
+    <div style={{ display: 'flex', width: '100%', marginTop: 5, padding: 10 }}>
+      <Filter cars={carList} onApply={setFilters} onClear={() => setFilters({})} />
+      <div style={{ marginLeft: 280, marginTop: 45, width: '100%' }}>
+        <div style={{
+          height: 80,
+          display: 'flex',
+          alignItems: 'center',
+          position: 'fixed',
+          width: '100%',
+          backgroundColor: '#FFD700',
+          zIndex: 10,
+          justifyContent: 'space-between',
+          padding: 20,
+        }}>
+          <h2>รถที่วางขาย</h2>
           <Sorter value={sortOption} onChange={setSortOption} />
-          <div style={{ marginRight: 300 }}>
-            <Link to="/add-sell">
-              <Button type="primary">+ เพิ่มรายการขาย</Button>
-            </Link>
-          </div>
+          <Link to="/add-sell">
+            <Button type="primary">+ เพิ่มรายการขาย</Button>
+          </Link>
         </div>
-        <div style={{paddingTop:80,paddingLeft:30}}>
-        <CarGrid
-          cars={filteredCars}
-          editBasePath="/edit-sell"
-          addBasePath="/add-sell"
-          />
+        <div style={{ paddingTop: 80, paddingLeft: 30 }}>
+          <CarGrid cars={filteredCars} type="sale" />
         </div>
       </div>
     </div>
