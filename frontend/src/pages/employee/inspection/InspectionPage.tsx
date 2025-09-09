@@ -25,25 +25,15 @@ const colors = {
   gray: '#1e1e1e',
 };
 
-interface CustomerData {
-  id: number;
-  FirstName: string;
-  LastName: string;
-}
-
-interface InspectionBooking {
+// Interface for the data structure we will use in the frontend
+interface DisplayBooking {
   id: number;
   contractNumber: string;
+  customerName: string;
   appointmentDate: string;
   appointmentTime: string;
-  system: string;
-  CustomerDataId: number;
-  message?: string;
+  systems: string;
   status: 'กำลังดำเนินการ' | 'เสร็จสิ้น' | 'ยกเลิก';
-}
-
-interface DisplayBooking extends InspectionBooking {
-  customerName: string;
 }
 
 const InspectionPage: React.FC = () => {
@@ -53,41 +43,68 @@ const InspectionPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const bookingsData = localStorage.getItem('inspectionBookings');
-    const customersData = localStorage.getItem('customerData');
+    const fetchInspections = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('http://localhost:8080/inspection-appointments');
+        if (!response.ok) {
+          throw new Error('ไม่สามารถดึงข้อมูลการนัดหมายได้');
+        }
+        const data = await response.json();
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const transformedData: DisplayBooking[] = data.map((item: any) => ({
+          id: item.ID,
+          contractNumber: `SC-${item.SalesContract.ID}`,
+          customerName: `${item.Customer.FirstName} ${item.Customer.LastName}`,
+          // --- vvvvv --- ส่วนที่แก้ไข 1 --- vvvvv ---
+          // เปลี่ยน item.DateTime เป็น item.date_time
+          appointmentDate: dayjs(item.date_time).format('D MMMM YYYY'),
+          appointmentTime: dayjs(item.date_time).format('HH:mm'),
+          // --- ^^^^^ --- จบส่วนที่แก้ไข 1 --- ^^^^^ ---
+          systems: item.InspectionSystem.map((sys: { CarSystem: { system_name: string; }; }) => sys.CarSystem.system_name).join(', '),
+          // --- vvvvv --- ส่วนที่แก้ไข 2 --- vvvvv ---
+          // เปลี่ยน item.InspectionStatus เป็น item.inspection_status
+          status: item.inspection_status,
+          // --- ^^^^^ --- จบส่วนที่แก้ไข 2 --- ^^^^^ ---
+        }));
+        
+        setAllBookings(transformedData);
+      } catch (error) {
+        console.error("Failed to fetch inspections:", error);
+        message.error((error as Error).message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    if (bookingsData && customersData) {
-      const bookings: InspectionBooking[] = JSON.parse(bookingsData);
-      const customers: CustomerData[] = JSON.parse(customersData);
-
-      const customerMap = new Map<number, string>();
-      customers.forEach(customer => {
-        customerMap.set(customer.id, `${customer.FirstName} ${customer.LastName}`);
-      });
-
-      const combinedData = bookings.map(booking => ({
-        ...booking,
-        customerName: customerMap.get(booking.CustomerDataId) || 'ไม่พบชื่อลูกค้า',
-      }));
-
-      setAllBookings(combinedData);
-    }
-    setIsLoading(false);
+    fetchInspections();
   }, []);
   
-  const handleStatusChange = (id: number, newStatus: InspectionBooking['status']) => {
-    const updatedData = allBookings.map(item =>
-      item.id === id ? { ...item, status: newStatus } : item
-    );
-    setAllBookings(updatedData);
-    
-    const allStoredBookings = JSON.parse(localStorage.getItem('inspectionBookings') || '[]');
-    const globallyUpdatedBookings = allStoredBookings.map((item: InspectionBooking) => 
-        item.id === id ? { ...item, status: newStatus } : item
-    );
-    localStorage.setItem('inspectionBookings', JSON.stringify(globallyUpdatedBookings));
+  const handleStatusChange = async (id: number, newStatus: DisplayBooking['status']) => {
+    try {
+        const response = await fetch(`http://localhost:8080/inspection-appointments/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inspection_status: newStatus }),
+        });
 
-    message.success(`อัปเดตสถานะของสัญญา #${id} เป็น "${newStatus}" เรียบร้อย`);
+        if (!response.ok) {
+            throw new Error('การอัปเดตสถานะล้มเหลว');
+        }
+
+        // อัปเดตข้อมูลในตารางหลังจากสำเร็จ
+        setAllBookings(prevBookings =>
+            prevBookings.map(item =>
+                item.id === id ? { ...item, status: newStatus } : item
+            )
+        );
+        message.success(`อัปเดตสถานะของสัญญา #${id} เป็น "${newStatus}" เรียบร้อย`);
+
+    } catch (error) {
+        console.error("Failed to update status:", error);
+        message.error((error as Error).message);
+    }
   };
 
   const handleSearch = (value: string) => {
@@ -110,7 +127,7 @@ const InspectionPage: React.FC = () => {
         item.customerName.toLowerCase().includes(searchText);
 
       const matchesDate =
-        !selectedDate || dayjs(item.appointmentDate, 'DD MMMM YYYY').isSame(selectedDate, 'day');
+        !selectedDate || dayjs(item.appointmentDate, 'D MMMM YYYY').isSame(selectedDate, 'day');
       
       return matchesSearch && matchesDate;
     });
@@ -125,9 +142,9 @@ const InspectionPage: React.FC = () => {
   const columns: TableProps<DisplayBooking>['columns'] = [
     { title: 'เลขที่สัญญา', dataIndex: 'contractNumber', key: 'contractNumber', sorter: (a, b) => a.contractNumber.localeCompare(b.contractNumber) },
     { title: 'ชื่อ-สกุล ลูกค้า', dataIndex: 'customerName', key: 'customerName', sorter: (a, b) => a.customerName.localeCompare(b.customerName) },
-    { title: 'วันที่นัดหมาย', dataIndex: 'appointmentDate', key: 'appointmentDate', sorter: (a, b) => dayjs(a.appointmentDate, 'DD MMMM YYYY').unix() - dayjs(b.appointmentDate, 'DD MMMM YYYY').unix() },
+    { title: 'วันที่นัดหมาย', dataIndex: 'appointmentDate', key: 'appointmentDate', sorter: (a, b) => dayjs(a.appointmentDate, 'D MMMM YYYY').unix() - dayjs(b.appointmentDate, 'D MMMM YYYY').unix() },
     { title: 'เวลานัดหมาย', dataIndex: 'appointmentTime', key: 'appointmentTime' },
-    { title: 'รายการตรวจ', dataIndex: 'system', key: 'system' },
+    { title: 'รายการตรวจ', dataIndex: 'systems', key: 'systems' },
     {
       title: 'สถานะ', key: 'status', dataIndex: 'status',
       render: (status) => <Tag color={getStatusColor(status)} key={status}>{status.toUpperCase()}</Tag>,
@@ -138,12 +155,10 @@ const InspectionPage: React.FC = () => {
       ],
       onFilter: (value, record) => record.status.indexOf(value as string) === 0,
     },
-    // --- vvvvv --- แก้ไขคอลัมน์ "การจัดการ" --- vvvvv ---
     {
       title: 'การจัดการ',
       key: 'action',
       render: (_, record) => {
-        // ถ้าสถานะเสร็จสิ้นหรือยกเลิกแล้ว จะไม่แสดง Dropdown
         if (record.status === 'เสร็จสิ้น' || record.status === 'ยกเลิก') {
           return <span style={{ color: '#aaa' }}>-</span>;
         }
@@ -153,17 +168,16 @@ const InspectionPage: React.FC = () => {
               value={record.status}
               style={{ width: 150 }}
               onChange={(newStatus) => handleStatusChange(record.id, newStatus)}
-              // เพิ่ม className เพื่อให้ CSS ทำงาน
               className="status-select-custom"
               dropdownClassName="status-select-dropdown"
             >
               <Option value="กำลังดำเนินการ">กำลังดำเนินการ</Option>
+              <Option value="ยกเลิก">ยกเลิก</Option>
               <Option value="เสร็จสิ้น">เสร็จสิ้น</Option>
             </Select>
         );
       },
     },
-    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
   ];
 
   return (
@@ -244,3 +258,4 @@ const InspectionPage: React.FC = () => {
 };
 
 export default InspectionPage;
+

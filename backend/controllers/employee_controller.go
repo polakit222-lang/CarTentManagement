@@ -16,48 +16,53 @@ type EmployeeController struct {
 	DB *gorm.DB
 }
 
+// สร้าง Struct ใหม่สำหรับ Response ให้ตรงกับ entity.Employee และใช้ snake_case สำหรับ JSON
+type EmployeeResponse struct {
+	ID           uint      `json:"id"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+	ProfileImage string    `json:"profile_image"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	Email        string    `json:"email"`
+	PhoneNumber  string    `json:"phone_number"`
+	Address      string    `json:"address"`
+	Birthday     time.Time `json:"start_date"`
+	Sex          string    `json:"sex"`
+	Position     string    `json:"position"`
+	Jobtype      time.Time `json:"jobtype"`
+}
+
 func NewEmployeeController(db *gorm.DB) *EmployeeController {
 	return &EmployeeController{DB: db}
 }
 
-type LoginEmployeeInput struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
+// POST /employee/login
+func (e *EmployeeController) LoginEmployee(c *gin.Context) {
+	var loginInfo struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 
-// LoginEmployee godoc
-// @Summary Login for employees
-// @Description Authenticates an employee and returns a JWT token
-// @Tags Authentication
-// @Accept json
-// @Produce json
-// @Param employee_credentials body LoginEmployeeInput true "Employee login credentials"
-// @Success 200 {object} gin.H
-// @Failure 400 {object} gin.H
-// @Failure 401 {object} gin.H
-// @Router /employee/login [post]
-func (ctrl *EmployeeController) LoginEmployee(c *gin.Context) {
-	var input LoginEmployeeInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindJSON(&loginInfo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
 		return
 	}
 
 	var employee entity.Employee
-	if err := ctrl.DB.Where("Email = ?", input.Email).First(&employee).Error; err != nil {
+	if err := e.DB.Where("email = ?", loginInfo.Email).First(&employee).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(employee.Password), []byte(input.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(employee.Password), []byte(loginInfo.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
-	// Sign a token with Employee role
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":   employee.ID,
-		"role": "employee", // Role is now hardcoded for this endpoint
+		"role": "employee",
 		"exp":  time.Now().Add(time.Hour * 24).Unix(),
 	})
 
@@ -67,144 +72,143 @@ func (ctrl *EmployeeController) LoginEmployee(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"employee": employee, "token": tokenString})
+	// สร้าง response struct จาก entity
+	response := EmployeeResponse{
+		ID:           employee.ID,
+		CreatedAt:    employee.CreatedAt,
+		UpdatedAt:    employee.UpdatedAt,
+		ProfileImage: employee.ProfileImage,
+		FirstName:    employee.FirstName,
+		LastName:     employee.LastName,
+		Email:        employee.Email,
+		PhoneNumber:  employee.PhoneNumber,
+		Address:      employee.Address,
+		Birthday:     employee.Birthday,
+		Sex:          employee.Sex,
+		Position:     employee.Position,
+		Jobtype:      employee.Jobtype,
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Login successful",
+		"token":    tokenString,
+		"employee": response,
+	})
 }
 
-// GetCurrentEmployee godoc
-// @Summary Get current employee's details
-// @Description Retrieves the details of the currently authenticated employee
-// @Tags Employee
-// @Security ApiKeyAuth
-// @Produce json
-// @Success 200 {object} entity.Employee
-// @Failure 401 {object} gin.H
-// @Router /employee/me [get]
-func (ctrl *EmployeeController) GetCurrentEmployee(c *gin.Context) {
-	employeeID, exists := c.Get("employeeID")
+// GET /employees/me (Protected)
+func (e *EmployeeController) GetCurrentEmployee(c *gin.Context) {
+	employeeID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authorized"})
 		return
 	}
 
 	var employee entity.Employee
-	if err := ctrl.DB.First(&employee, employeeID).Error; err != nil {
+	if err := e.DB.First(&employee, employeeID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, employee)
+	// แปลงข้อมูลเป็น Response Struct ใหม่ (ซึ่งตอนนี้เป็น snake_case แล้ว)
+	response := EmployeeResponse{
+		ID:           employee.ID,
+		CreatedAt:    employee.CreatedAt,
+		UpdatedAt:    employee.UpdatedAt,
+		ProfileImage: employee.ProfileImage,
+		FirstName:    employee.FirstName,
+		LastName:     employee.LastName,
+		Email:        employee.Email,
+		PhoneNumber:  employee.PhoneNumber,
+		Address:      employee.Address,
+		Birthday:     employee.Birthday,
+		Sex:          employee.Sex,
+		Position:     employee.Position,
+		Jobtype:      employee.Jobtype,
+	}
+	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
-// GetEmployees godoc
-// @Summary Get all employees
-// @Description Retrieves a list of all employees
-// @Tags Admin
-// @Security ApiKeyAuth
-// @Produce json
-// @Success 200 {array} entity.Employee
-// @Router /admin/employees [get]
-func (ctrl *EmployeeController) GetEmployees(c *gin.Context) {
+// PUT /employees/me (Protected)
+func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
+	employeeID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authorized"})
+		return
+	}
+
+	var employee entity.Employee
+	if err := e.DB.First(&employee, employeeID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
+		return
+	}
+
+	var updatedInfo struct {
+		ProfileImage string `json:"profile_image"`
+		FirstName    string `json:"first_name"`
+		LastName     string `json:"last_name"`
+		PhoneNumber  string `json:"phone_number"`
+		Address      string `json:"address"`
+		Birthday     string `json:"start_date"`
+		Sex          string `json:"sex"`
+		Position     string `json:"position"`
+		Jobtype      string `json:"jobtype"`
+	}
+
+	if err := c.ShouldBindJSON(&updatedInfo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data: " + err.Error()})
+		return
+	}
+
+	employee.ProfileImage = updatedInfo.ProfileImage
+	employee.FirstName = updatedInfo.FirstName
+	employee.LastName = updatedInfo.LastName
+	employee.PhoneNumber = updatedInfo.PhoneNumber
+	employee.Address = updatedInfo.Address
+	employee.Sex = updatedInfo.Sex
+	employee.Position = updatedInfo.Position
+
+	if err := e.DB.Save(&employee).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update employee data"})
+		return
+	}
+
+	// แปลงข้อมูลที่อัปเดตแล้วเป็น Response Struct ใหม่
+	response := EmployeeResponse{
+		ID:           employee.ID,
+		CreatedAt:    employee.CreatedAt,
+		UpdatedAt:    employee.UpdatedAt,
+		ProfileImage: employee.ProfileImage,
+		FirstName:    employee.FirstName,
+		LastName:     employee.LastName,
+		Email:        employee.Email,
+		PhoneNumber:  employee.PhoneNumber,
+		Address:      employee.Address,
+		Birthday:     employee.Birthday,
+		Sex:          employee.Sex,
+		Position:     employee.Position,
+		Jobtype:      employee.Jobtype,
+	}
+	c.JSON(http.StatusOK, gin.H{"data": response})
+}
+
+// GET /employees
+func (e *EmployeeController) GetEmployees(c *gin.Context) {
 	var employees []entity.Employee
-	if err := ctrl.DB.Find(&employees).Error; err != nil {
+	if err := e.DB.Find(&employees).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, employees)
 }
 
-// GetEmployeeByID godoc
-// @Summary Get an employee by ID
-// @Description Retrieves an employee's details by their ID
-// @Tags Admin
-// @Security ApiKeyAuth
-// @Produce json
-// @Param id path int true "Employee ID"
-// @Success 200 {object} entity.Employee
-// @Failure 404 {object} gin.H
-// @Router /admin/employees/{id} [get]
-func (ctrl *EmployeeController) GetEmployeeByID(c *gin.Context) {
+// GET /employees/:id
+func (e *EmployeeController) GetEmployeeByID(c *gin.Context) {
 	id := c.Param("id")
 	var employee entity.Employee
-	if err := ctrl.DB.Preload("PickupDelivery").First(&employee, id).Error; err != nil {
+	if err := e.DB.First(&employee, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
 		return
 	}
-	c.JSON(http.StatusOK, employee)
-}
-
-// CreateEmployee godoc
-// @Summary Create a new employee
-// @Description Creates a new employee account
-// @Tags Admin
-// @Security ApiKeyAuth
-// @Accept json
-// @Produce json
-// @Param employee_data body entity.Employee true "Employee registration data"
-// @Success 200 {object} entity.Employee
-// @Failure 400 {object} gin.H
-// @Router /admin/employees [post]
-func (ctrl *EmployeeController) CreateEmployee(c *gin.Context) {
-	var employee entity.Employee
-	if err := c.ShouldBindJSON(&employee); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	if err := ctrl.DB.Create(&employee).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusCreated, employee)
-}
-
-// UpdateEmployee godoc
-// @Summary Update an employee's details
-// @Description Updates the details of an existing employee
-// @Tags Admin
-// @Security ApiKeyAuth
-// @Accept json
-// @Produce json
-// @Param id path int true "Employee ID"
-// @Param employee_data body entity.Employee true "Updated employee details"
-// @Success 200 {object} entity.Employee
-// @Failure 400 {object} gin.H
-// @Failure 404 {object} gin.H
-// @Router /admin/employees/{id} [put]
-func (ctrl *EmployeeController) UpdateEmployee(c *gin.Context) {
-	id := c.Param("id")
-	var employee entity.Employee
-	if err := ctrl.DB.First(&employee, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
-		return
-	}
-
-	var input entity.Employee
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := ctrl.DB.Model(&employee).Updates(input).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, employee)
-}
-
-// DeleteEmployee godoc
-// @Summary Delete an employee
-// @Description Deletes an employee by their ID
-// @Tags Admin
-// @Security ApiKeyAuth
-// @Produce json
-// @Param id path int true "Employee ID"
-// @Success 200 {object} gin.H
-// @Failure 404 {object} gin.H
-// @Router /admin/employees/{id} [delete]
-func (ctrl *EmployeeController) DeleteEmployee(c *gin.Context) {
-	id := c.Param("id")
-	if err := ctrl.DB.Delete(&entity.Employee{}, id).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Delete failed"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "Employee deleted"})
+	c.JSON(http.StatusOK, gin.H{"data": employee})
 }

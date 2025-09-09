@@ -1,33 +1,25 @@
+// 1. แก้ไขค่าใน Type 'Sex' ให้เป็นตัวพิมพ์เล็กทั้งหมด
+export type Sex = 'male' | 'female' | 'other';
+
 export interface Employee {
-  ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  DeletedAt?: string | null;
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 
-  profileimage: string;
-  first_name: string;
-  last_name: string;
-  password: string;
+  profileImage: string;
+  firstName: string;
+  lastName: string;
+  password?: string;
   email: string;
-  phone_number: string;
+  phoneNumber: string;
   address: string;
-  start_date: string;
-  sex: string;
+  startDate: string;
+  
+  // 2. ตอนนี้ Type 'sex' จะใช้ค่าที่เป็นตัวพิมพ์เล็กตามที่แก้ไขด้านบน
+  sex: Sex;
+
   position: string;
-  jobtype: string;
-
-  total_sales: {
-    ID: number;
-    CreatedAt: string;
-    UpdatedAt: string;
-    DeletedAt?: string | null;
-    Status: string;
-    Insurance: unknown | null;
-  };
-
-  PickupDelivery?: unknown | null;
-  Car?: unknown | null;
-  SaleList?: unknown | null;
-  SalesContract?: unknown | null;
-  LeaveRequest?: unknown | null;
+  jobType: string;
+  totalSales: number;
 }

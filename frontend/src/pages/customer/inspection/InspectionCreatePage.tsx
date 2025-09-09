@@ -106,7 +106,7 @@ const InspectionCreatePage: React.FC = () => {
 
     // Effect to filter booked times based on the selected date and current time
     useEffect(() => {
-        if (selectedDate && allAppointments.length > 0) {
+        if (selectedDate && allAppointments.length > 1) {
             const formattedDate = selectedDate.format('YYYY-MM-DD');
             const bookedTimesForDate = allAppointments
                 .filter(booking =>

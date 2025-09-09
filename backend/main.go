@@ -1,4 +1,3 @@
-// backend/main.go
 package main
 
 import (
@@ -9,7 +8,6 @@ import (
 	"github.com/PanuAutawo/CarTentManagement/backend/controllers"
 	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
 	"github.com/PanuAutawo/CarTentManagement/backend/setupdata"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +22,7 @@ func main() {
 	setupdata.InsertProvinces(configs.DB)
 	setupdata.InsertHardcodedAddressData(configs.DB)
 	setupdata.InsertCarsFromCSV(configs.DB, "car_full_data.csv")
+	setupdata.InsertMockPictures(configs.DB)
 	setupdata.InsertMockSaleList(configs.DB)
 	setupdata.InsertMockRentListWithDates(configs.DB)
 	setupdata.InsertCarSystems(configs.DB)
@@ -33,8 +32,6 @@ func main() {
 
 	// 3. Create router
 	r := gin.Default()
-
-	// ✅ CORS: อนุญาต frontend port 5173
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -43,9 +40,6 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-
-	// ✅ Serve static images
-	r.Static("/images/cars", "./public/images/cars") // folder จริงต้องมีไฟล์รูป
 
 	// --- Controllers Setup ---
 	carController := controllers.NewCarController(configs.DB)
@@ -58,57 +52,65 @@ func main() {
 	employeeController := controllers.NewEmployeeController(configs.DB)
 	customerController := controllers.NewCustomerController(configs.DB)
 	managerController := controllers.NewManagerController(configs.DB)
-	saleListController := controllers.NewSaleListController(configs.DB)
-	rentListController := controllers.NewRentListController(configs.DB)
+	typeInformationController := controllers.NewTypeInformationController(configs.DB)
 
 	// --- Routes ---
+
+	// Public Routes
 	r.POST("/register", customerController.RegisterCustomer)
 	r.POST("/login", customerController.LoginCustomer)
 	r.POST("/employee/login", employeeController.LoginEmployee)
 	r.POST("/manager/login", managerController.LoginManager)
 
+	// Car Routes
 	carRoutes := r.Group("/cars")
 	{
 		carRoutes.GET("", carController.GetCars)
-		carRoutes.GET("/filter", carController.GetCarsWithFilter)
 		carRoutes.GET("/:id", carController.GetCarByID)
-		carRoutes.POST("", carController.CreateCar)
-		carRoutes.PUT("/:id", carController.UpdateCar)
-		carRoutes.DELETE("/:id", carController.DeleteCar)
 	}
 
+	// Address Routes
 	provinceRoutes := r.Group("/provinces")
 	{
 		provinceRoutes.GET("", provinceController.GetProvinces)
 	}
-
 	districtRoutes := r.Group("/districts")
 	{
 		districtRoutes.GET("/by-province/:provinceID", districtController.GetDistrictsByProvince)
 	}
-
 	subDistrictRoutes := r.Group("/sub-districts")
 	{
 		subDistrictRoutes.GET("/by-district/:districtID", subDistrictController.GetSubDistrictsByDistrict)
 	}
 
+	// Car System Routes
 	carSystemRoutes := r.Group("/car-systems")
 	{
 		carSystemRoutes.GET("", carSystemController.GetCarSystems)
 	}
 
+	// Type Information Routes
+	typeInformationRoutes := r.Group("/type-informations")
+	{
+		typeInformationRoutes.GET("", typeInformationController.GetTypeInformations)
+	}
+
+	// Protected Customer Routes
 	customerRoutes := r.Group("/customers")
 	customerRoutes.Use(middleware.CustomerAuthMiddleware())
 	{
 		customerRoutes.GET("/me", customerController.GetCurrentCustomer)
 	}
 
-	employeeRoutes := r.Group("/employee")
-	employeeRoutes.Use(middleware.EmployeeAuthMiddleware())
+	// Protected Employee Routes
+	employeeProtectedRoutes := r.Group("/employees")
+	employeeProtectedRoutes.Use(middleware.EmployeeAuthMiddleware())
 	{
-		employeeRoutes.GET("/me", employeeController.GetCurrentEmployee)
+		employeeProtectedRoutes.GET("/me", employeeController.GetCurrentEmployee)
+		employeeProtectedRoutes.PUT("/me", employeeController.UpdateCurrentEmployee)
 	}
 
+	// Inspection Appointment Routes
 	inspectionRoutes := r.Group("/inspection-appointments")
 	{
 		inspectionRoutes.GET("", inspectionAppointmentController.GetInspectionAppointments)
@@ -120,8 +122,11 @@ func main() {
 		inspectionRoutes.DELETE("/:id", inspectionAppointmentController.DeleteInspectionAppointment)
 	}
 
+	// Pickup Delivery Routes
 	pickupDeliveryRoutes := r.Group("/pickup-deliveries")
 	{
+		pickupDeliveryRoutes.GET("/:id", pickupDeliveryController.GetPickupDeliveryByID)
+		pickupDeliveryRoutes.GET("/employee/:employeeID", pickupDeliveryController.GetPickupDeliveriesByEmployeeID)
 		pickupDeliveryRoutes.GET("", pickupDeliveryController.GetPickupDeliveries)
 		pickupDeliveryRoutes.GET("/customer/:customerID", pickupDeliveryController.GetPickupDeliveriesByCustomerID)
 		pickupDeliveryRoutes.POST("", pickupDeliveryController.CreatePickupDelivery)
@@ -130,37 +135,21 @@ func main() {
 		pickupDeliveryRoutes.DELETE("/:id", pickupDeliveryController.DeletePickupDelivery)
 	}
 
-	adminEmployeeRoutes := r.Group("/admin/employees")
+	// Public Employee Routes (for admin or other uses)
+	employeePublicRoutes := r.Group("/employees")
 	{
-		adminEmployeeRoutes.GET("", employeeController.GetEmployees)
-		adminEmployeeRoutes.GET("/:id", employeeController.GetEmployeeByID)
-		adminEmployeeRoutes.POST("", employeeController.CreateEmployee)
-		adminEmployeeRoutes.PUT("/:id", employeeController.UpdateEmployee)
-		adminEmployeeRoutes.DELETE("/:id", employeeController.DeleteEmployee)
+		employeePublicRoutes.GET("", employeeController.GetEmployees)
+		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
 	}
+
+	// Admin-Only Routes
+	
 
 	adminCustomerRoutes := r.Group("/admin/customers")
 	{
 		adminCustomerRoutes.GET("/:id", customerController.GetCustomerByID)
 		adminCustomerRoutes.PUT("/:id", customerController.UpdateCustomer)
 		adminCustomerRoutes.DELETE("/:id", customerController.DeleteCustomer)
-	}
-
-	r.GET("/salelists", saleListController.GetSaleLists)
-	r.GET("/salelists/:id", saleListController.GetSaleListByID)
-	r.POST("/salelists", saleListController.CreateSaleList)
-	r.PUT("/salelists/:id", saleListController.UpdateSaleList)
-	r.DELETE("/salelists/:id", saleListController.DeleteSaleList)
-
-	rentListRoutes := r.Group("/rentlists")
-	{
-		rentListRoutes.GET("", rentListController.GetRentLists)
-		rentListRoutes.GET("/:id", rentListController.GetRentListByID)
-		rentListRoutes.POST("", rentListController.CreateRentList)
-		rentListRoutes.PUT("/:id", rentListController.UpdateRentList)
-		rentListRoutes.DELETE("/:id", rentListController.DeleteRentList)
-		rentListRoutes.POST("/:id/rentable-dates", rentListController.AddRentAbleDate)
-		rentListRoutes.GET("/:id/rentable-dates", rentListController.GetRentAbleDates)
 	}
 
 	// Start server
