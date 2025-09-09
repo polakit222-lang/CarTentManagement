@@ -30,7 +30,7 @@ type EmployeeResponse struct {
 	Birthday     time.Time `json:"start_date"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
-	Jobtype      time.Time `json:"jobtype"`
+	Jobtype      string `json:"jobtype"`
 }
 
 func NewEmployeeController(db *gorm.DB) *EmployeeController {
