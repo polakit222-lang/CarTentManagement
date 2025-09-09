@@ -44,8 +44,8 @@ func InsertMockEmployees(db *gorm.DB) {
 	}
 
 	for _, e := range employees {
-		// ✅ บังคับอัปเดตข้อมูล (รวมถึง Password) ถ้ามีอีเมลนี้อยู่แล้ว
-		db.Where(&entity.Employee{Email: e.Email}).Assign(e).FirstOrCreate(&e)
+		// ✅ จะสร้างเฉพาะถ้าไม่เจอ email นี้
+		db.FirstOrCreate(&e, entity.Employee{Email: e.Email})
 	}
 
 	fmt.Println("Inserted mock Employees successfully!")

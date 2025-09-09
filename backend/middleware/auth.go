@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"fmt"      // ✅ ใช้ใน fmt.Errorf
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-	//"github.com/PanuAutawo/CarTentManagement/backend/configs"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -16,60 +16,57 @@ var hmacSampleSecret []byte
 func init() {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
+		// ใช้ DEV เท่านั้น โปรดตั้ง JWT_SECRET ใน production
 		secret = "your_default_super_secret_key"
 	}
 	hmacSampleSecret = []byte(secret)
 }
 
-// GenerateToken สร้าง JWT สำหรับ Customer
-func GenerateToken(customerID uint) (string, error) {
+// GenerateToken ออก JWT โครงสร้างเดียวกันทุก role
+func GenerateToken(id uint, role string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"customer_id": customerID,
-		"exp":         time.Now().Add(time.Hour * 24).Unix(),
+		"id":   id,
+		"role": role,
+		"exp":  time.Now().Add(24 * time.Hour).Unix(),
 	})
 	return token.SignedString(hmacSampleSecret)
 }
 
-// GenerateEmployeeToken สร้าง JWT สำหรับ Employee
-func GenerateEmployeeToken(employeeID uint) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"employee_id": employeeID,
-		"exp":         time.Now().Add(time.Hour * 24).Unix(),
-	})
-	return token.SignedString(hmacSampleSecret)
-}
-
-// CustomerAuthMiddleware เป็น Middleware สำหรับตรวจสอบ Token ของลูกค้า
-func CustomerAuthMiddleware() gin.HandlerFunc {
+// --- กลาง: ตรวจ Bearer token แล้ว set "userID" และ "role" ---
+func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
+		authHeader := strings.TrimSpace(c.GetHeader("Authorization"))
 		if authHeader == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
 			return
 		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
+		if !strings.HasPrefix(authHeader, "Bearer ") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
 			return
 		}
 
+		tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				// ✅ ใช้ fmt.Errorf ดังนั้น import fmt ไม่ unused
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return hmacSampleSecret, nil
 		})
-
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			return
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			customerID := uint(claims["customer_id"].(float64))
-			c.Set("customer_id", customerID)
+			idFloat, ok := claims["id"].(float64)
+			if !ok {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+				return
+			}
+			c.Set("userID", uint(idFloat))
+			if roleStr, ok := claims["role"].(string); ok {
+				c.Set("role", roleStr)
+			}
 		} else {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 			return
@@ -78,41 +75,6 @@ func CustomerAuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-// EmployeeAuthMiddleware เป็น Middleware สำหรับตรวจสอบ Token ของพนักงาน
-func EmployeeAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-			return
-		}
-
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				// ✅ ใช้ fmt.Errorf เช่นกัน
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return hmacSampleSecret, nil
-		})
-
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			return
-		}
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			employeeID := uint(claims["employee_id"].(float64))
-			c.Set("employee_id", employeeID)
-		} else {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
-			return
-		}
-		c.Next()
-	}
-}
+// --- Wrappers เพื่อให้ main.go เดิมใช้งานได้ต่อ ไม่ต้องเปลี่ยน route ---
+func CustomerAuthMiddleware() gin.HandlerFunc { return AuthMiddleware() }
+func EmployeeAuthMiddleware() gin.HandlerFunc { return AuthMiddleware() }

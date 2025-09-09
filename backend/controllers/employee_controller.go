@@ -1,4 +1,3 @@
-// controllers/employee_controller.go
 package controllers
 
 import (
@@ -6,10 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/PanuAutawo/CarTentManagement/backend/configs"
+	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
 	"github.com/PanuAutawo/CarTentManagement/backend/services"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -22,7 +20,7 @@ func NewEmployeeController(db *gorm.DB) *EmployeeController {
 	return &EmployeeController{svc: services.NewEmployeeService(db)}
 }
 
-// GET /employees  (public list)
+// GET /employees
 func (ctl *EmployeeController) GetEmployees(c *gin.Context) {
 	items, err := ctl.svc.List()
 	if err != nil {
@@ -32,7 +30,7 @@ func (ctl *EmployeeController) GetEmployees(c *gin.Context) {
 	c.JSON(http.StatusOK, items)
 }
 
-// GET /employees/:id  (public get by id)
+// GET /employees/:id
 func (ctl *EmployeeController) GetEmployeeByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -65,25 +63,17 @@ func (ctl *EmployeeController) LoginEmployee(c *gin.Context) {
 		return
 	}
 
-	claims := jwt.MapClaims{
-		"sub":   emp.EmployeeID,
-		"role":  "employee",
-		"email": emp.Email,
-		"exp":   time.Now().Add(7 * 24 * time.Hour).Unix(),
-	}
-	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := tok.SignedString([]byte(configs.SECRET_KEY))
+	tokenStr, err := middleware.GenerateToken(emp.EmployeeID, "employee")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to sign token"})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{"token": tokenStr, "employee": emp})
 }
 
-// GET /employees/me   (protected by EmployeeAuthMiddleware)
+// GET /employees/me   (protected)
 func (ctl *EmployeeController) GetCurrentEmployee(c *gin.Context) {
-	val, ok := c.Get("employeeID")
+	val, ok := c.Get("userID")
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -101,9 +91,9 @@ func (ctl *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
-// PUT /employees/me   (protected by EmployeeAuthMiddleware)
+// PUT /employees/me   (protected)
 func (ctl *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
-	val, ok := c.Get("employeeID")
+	val, ok := c.Get("userID")
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -121,7 +111,7 @@ func (ctl *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 		Email        *string `json:"email"`
 		Phone        *string `json:"phone"`
 		Address      *string `json:"address"`
-		Birthday     *string `json:"birthday"` // "YYYY-MM-DD" หรือ RFC3339
+		Birthday     *string `json:"birthday"`
 		Sex          *string `json:"sex"`
 		Position     *string `json:"position"`
 		JobType      *string `json:"jobType"`
@@ -133,36 +123,16 @@ func (ctl *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 	}
 
 	patch := map[string]any{}
-	if dto.ProfileImage != nil {
-		patch["profileImage"] = *dto.ProfileImage
-	}
-	if dto.FirstName != nil {
-		patch["firstName"] = *dto.FirstName
-	}
-	if dto.LastName != nil {
-		patch["lastName"] = *dto.LastName
-	}
-	if dto.Email != nil {
-		patch["email"] = *dto.Email
-	}
-	if dto.Phone != nil {
-		patch["phone"] = *dto.Phone
-	}
-	if dto.Address != nil {
-		patch["address"] = *dto.Address
-	}
-	if dto.Sex != nil {
-		patch["sex"] = *dto.Sex
-	}
-	if dto.Position != nil {
-		patch["position"] = *dto.Position
-	}
-	if dto.JobType != nil {
-		patch["jobType"] = *dto.JobType
-	}
-	if dto.TotalSales != nil {
-		patch["totalSales"] = *dto.TotalSales
-	}
+	if dto.ProfileImage != nil { patch["profileImage"] = *dto.ProfileImage }
+	if dto.FirstName != nil    { patch["firstName"] = *dto.FirstName }
+	if dto.LastName != nil     { patch["lastName"]  = *dto.LastName }
+	if dto.Email != nil        { patch["email"]     = *dto.Email }
+	if dto.Phone != nil        { patch["phone"]     = *dto.Phone }
+	if dto.Address != nil      { patch["address"]   = *dto.Address }
+	if dto.Sex != nil          { patch["sex"]       = *dto.Sex }
+	if dto.Position != nil     { patch["position"]  = *dto.Position }
+	if dto.JobType != nil      { patch["jobType"]   = *dto.JobType }
+	if dto.TotalSales != nil   { patch["totalSales"]= *dto.TotalSales }
 	if dto.Birthday != nil {
 		if t, err := time.Parse(time.RFC3339, *dto.Birthday); err == nil {
 			patch["birthday"] = t
@@ -182,9 +152,8 @@ func (ctl *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
-// PUT /api/employees/:id   (public/หรือใส่ middleware เองตามต้องการ)
+// PUT /api/employees/:id
 func (ctl *EmployeeController) UpdateEmployeeByID(c *gin.Context) {
-	// parse path id
 	idStr := c.Param("id")
 	idInt, err := strconv.Atoi(idStr)
 	if err != nil || idInt <= 0 {
@@ -192,7 +161,6 @@ func (ctl *EmployeeController) UpdateEmployeeByID(c *gin.Context) {
 		return
 	}
 
-	// รับ payload
 	var dto struct {
 		ProfileImage *string `json:"profileImage"`
 		FirstName    *string `json:"firstName"`
@@ -200,7 +168,7 @@ func (ctl *EmployeeController) UpdateEmployeeByID(c *gin.Context) {
 		Email        *string `json:"email"`
 		Phone        *string `json:"phone"`
 		Address      *string `json:"address"`
-		Birthday     *string `json:"birthday"` // "YYYY-MM-DD" หรือ RFC3339
+		Birthday     *string `json:"birthday"`
 		Sex          *string `json:"sex"`
 		Position     *string `json:"position"`
 		JobType      *string `json:"jobType"`
@@ -211,7 +179,6 @@ func (ctl *EmployeeController) UpdateEmployeeByID(c *gin.Context) {
 		return
 	}
 
-	// สร้าง patch
 	patch := map[string]any{}
 	if dto.ProfileImage != nil { patch["profileImage"] = *dto.ProfileImage }
 	if dto.FirstName != nil    { patch["firstName"] = *dto.FirstName }
@@ -223,7 +190,6 @@ func (ctl *EmployeeController) UpdateEmployeeByID(c *gin.Context) {
 	if dto.Position != nil     { patch["position"]  = *dto.Position }
 	if dto.JobType != nil      { patch["jobType"]   = *dto.JobType }
 	if dto.TotalSales != nil   { patch["totalSales"]= *dto.TotalSales }
-
 	if dto.Birthday != nil {
 		if t, err := time.Parse(time.RFC3339, *dto.Birthday); err == nil {
 			patch["birthday"] = t
