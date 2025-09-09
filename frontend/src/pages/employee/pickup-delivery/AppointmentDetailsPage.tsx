@@ -1,12 +1,20 @@
-// src/pages/employee/AppointmentDetailsPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Col, Row, Typography, Button, message, Descriptions, Tag, Divider, Spin, ConfigProvider } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Col, Row, Typography, Button, message, Descriptions, Tag, Space,Divider, Spin, ConfigProvider, Select } from 'antd';
+import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import 'dayjs/locale/th';
+import buddhistEra from 'dayjs/plugin/buddhistEra';
+
+import './AppointmentAll.css';
+
+dayjs.extend(buddhistEra);
+dayjs.locale('th');
+
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
-// --- Style Variables from Employeestyle.css ---
 const colors = {
   gold: '#d4af37',
   goldDark: '#b38e2f',
@@ -15,159 +23,257 @@ const colors = {
   gray: '#1e1e1e',
 };
 
-interface PickupBooking {
-  id: number;
-  contractNumber: string;
-  appointmentDate: string;
-  appointmentTime: string;
-  employee: string | undefined;
-  appointmentMethod: string | undefined;
-  address?: string;
-  province?: string;
-  district?: string;
-  subdistrict?: string;
-  status?: string;
+// Interface for data from the API
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface AppointmentDataFromAPI extends Record<string, any> {
+  ID: number;
+  Customer: {
+    FirstName: string;
+    LastName: string;
+  };
+  SalesContract: {
+    ID: number;
+  };
+  DateTime: string;
+  Employee: {
+    first_name: string;
+  };
+  TypeInformation: {
+    type: string;
+  };
+  Address: string;
+  SubDistrict?: {
+    SubDistrictName: string;
+  };
+  District?: {
+    DistrictName: string;
+  };
+  Province?: {
+    ProvinceName: string;
+  };
+  status: string;
 }
+
 
 const AppointmentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [appointment, setAppointment] = useState<PickupBooking | null>(null);
+  const [appointment, setAppointment] = useState<AppointmentDataFromAPI | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState<string>('');
 
   useEffect(() => {
-    const storedBookings = localStorage.getItem('pickupBookings');
-    if (storedBookings) {
-      const allBookings: PickupBooking[] = JSON.parse(storedBookings);
-      const foundAppointment = allBookings.find(b => b.id === Number(id));
-      if (foundAppointment) {
-        setAppointment(foundAppointment);
+    const fetchAppointmentDetails = async () => {
+      if (!id) {
+        message.error('ไม่พบรหัสการนัดหมาย');
+        navigate('/AppointmentAll');
+        return;
       }
-    }
-    setLoading(false);
-  }, [id]);
+      setLoading(true);
+      try {
+        const response = await fetch(`http://localhost:8080/pickup-deliveries/${id}`);
+        if (!response.ok) {
+          throw new Error('ไม่สามารถโหลดข้อมูลการนัดหมายได้');
+        }
+        const result = await response.json();
+        setAppointment(result.data);
+        setCurrentStatus(result.data.status);
+      } catch (error) {
+        console.error("Failed to fetch appointment details:", error);
+        message.error((error as Error).message);
+        navigate('/AppointmentAll');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppointmentDetails();
+  }, [id, navigate]);
 
-  const handleUpdateStatus = () => {
-    const storedBookings = localStorage.getItem('pickupBookings');
-    if (storedBookings) {
-      let allBookings: PickupBooking[] = JSON.parse(storedBookings);
-      
-      allBookings = allBookings.map(b => 
-        b.id === Number(id) ? { ...b, status: 'จัดส่งสำเร็จ' } : b
-      );
+  const handleUpdateStatus = async () => {
+    if (!appointment) return;
+    try {
+        const response = await fetch(`http://localhost:8080/pickup-deliveries/${appointment.ID}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pickup_delivery_status: currentStatus }),
+        });
 
-      localStorage.setItem('pickupBookings', JSON.stringify(allBookings));
-      
-      setAppointment(prev => prev ? { ...prev, status: 'จัดส่งสำเร็จ' } : null);
+        if (!response.ok) {
+            throw new Error('การอัปเดตสถานะล้มเหลว');
+        }
 
-      message.success('อัปเดตสถานะสำเร็จ!');
+        const result = await response.json();
+        const updatedAppointment = result.data;
+        setAppointment(updatedAppointment); 
+        setCurrentStatus(updatedAppointment.status);
+        
+        message.success('อัปเดตสถานะเรียบร้อยแล้ว');
+
+    } catch (error) {
+        console.error("Failed to update status:", error);
+        message.error((error as Error).message);
     }
   };
 
+  const getStatusColor = (status: string | undefined) => {
+    switch (status) {
+      case 'รอดำเนินการ': return 'orange';
+      case 'สำเร็จ': return 'green';
+      case 'ยกเลิก': return 'red';
+      default: return 'default';
+    }
+  };
+
+
   if (loading) {
+    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
+  }
+
+  if (!appointment) {
     return (
-      <div style={{ background: colors.black, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Spin size="large" />
+      <div style={{ padding: '2rem', textAlign: 'center', background: colors.black, minHeight: '100vh', marginTop: '60px' }}>
+        <Title level={3} style={{ color: 'white' }}>ไม่พบข้อมูลการนัดหมาย</Title>
+        <Button onClick={() => navigate('/AppointmentAll')}>กลับไปหน้ารายการ</Button>
       </div>
     );
   }
 
-  if (!appointment) {
-    return <Title level={3} style={{ textAlign: 'center', marginTop: '50px', color: colors.white }}>ไม่พบข้อมูลการนัดหมาย</Title>;
-  }
+  const labelStyle: React.CSSProperties = { color: colors.gold, fontWeight: 'bold' };
+  const contentStyle: React.CSSProperties = { color: colors.white };
+  const fullAddress = `${appointment.Address || ''} ${appointment.SubDistrict?.SubDistrictName || ''} ${appointment.District?.DistrictName || ''} ${appointment.Province?.ProvinceName || ''}`.trim();
 
-  const labelStyle: React.CSSProperties = { color: colors.gold };
+  const isFinalStatus = appointment.status === 'สำเร็จ' || appointment.status === 'ยกเลิก';
+
+  // --- vvvvv --- ส่วนที่เพิ่ม --- vvvvv ---
+  // 1. เปรียบเทียบวันที่ปัจจุบันกับวันที่นัดหมาย
+  const appointmentDate = dayjs(appointment.DateTime);
+  const today = dayjs();
+  // จะแสดงตัวเลือก "สำเร็จ" ได้ ก็ต่อเมื่อถึงหรือเลยวันที่นัดหมายแล้ว
+  const canMarkAsCompleted = today.isAfter(appointmentDate) || today.isSame(appointmentDate, 'day');
+  // --- ^^^^^ --- จบส่วนที่เพิ่ม --- ^^^^^ ---
 
   return (
-    <ConfigProvider
-      theme={{
+    <>
+      <style>{`
+        .ant-select-selection-item {
+          color: #FFFFFF !important;
+        }
+        .custom-dropdown-theme .ant-select-item-option-content {
+          color: ${colors.black}; 
+        }
+        .custom-dropdown-theme .ant-select-item-option-active .ant-select-item-option-content {
+           color: #${colors.gray} 
+        }
+        .custom-dropdown-theme .ant-select-item-option-selected .ant-select-item-option-content {
+          color: ${colors.black};
+        }
+      `}</style>
+      
+      <ConfigProvider theme={{
         components: {
-          Card: {
+          Descriptions: { colorText: colors.white, colorSplit: colors.gold, },
+          Button: { colorPrimary: colors.gold, colorPrimaryHover: colors.goldDark, colorPrimaryText: colors.black, defaultBg: colors.gray, defaultColor: colors.white, defaultBorderColor: colors.gold, defaultHoverBg: colors.goldDark, defaultHoverColor: colors.black, defaultHoverBorderColor: colors.gold, },
+          Card: { colorBgContainer: colors.gray, headerBg: colors.gray, colorBorderSecondary: colors.gold, },
+          Divider: { colorSplit: colors.gold, },
+          Spin: { colorPrimary: colors.gold, },
+          Select: {
             colorBgContainer: colors.gray,
-            headerBg: colors.gray,
-            colorBorderSecondary: colors.gold,
-          },
-          Descriptions: {
             colorText: colors.white,
-            colorSplit: colors.gold,
+            colorBorder: colors.gold,
+            colorBgElevated: colors.gray,      
+            optionSelectedBg: colors.gold,      
+            optionActiveBg: 'rgba(212, 175, 55, 0.2)',
           },
-          Button: {
-            colorPrimary: colors.gold,
-            colorPrimaryHover: colors.goldDark,
-            colorPrimaryText: colors.black,
-            defaultBg: colors.gray,
-            defaultColor: colors.white,
-            defaultBorderColor: colors.gold,
-            defaultHoverBg: colors.goldDark,
-            defaultHoverColor: colors.black,
-            defaultHoverBorderColor: colors.gold,
-          },
-          Divider: {
-            colorSplit: colors.gold,
-          },
-          Spin: {
-            colorPrimary: colors.gold,
-          }
         },
-      }}
-    >
-      <div style={{ padding: '24px', background: colors.black, minHeight: '100vh', marginTop: '60px' }}>
-        <Row justify="center">
-          <Col xs={24} md={20} lg={16} xl={12}>
-            <Card 
-              title={<Title level={4} style={{ color: colors.gold, margin: 0 }}>{`รายละเอียดนัดหมาย: ${appointment.contractNumber}`}</Title>} 
-              bordered={true}
-            >
-              <Descriptions bordered column={1}>
-                <Descriptions.Item label={<Text style={labelStyle}>หมายเลขสัญญา</Text>}>{appointment.contractNumber}</Descriptions.Item>
-                <Descriptions.Item label={<Text style={labelStyle}>วันที่นัดหมาย</Text>}>{appointment.appointmentDate}</Descriptions.Item>
-                <Descriptions.Item label={<Text style={labelStyle}>เวลา</Text>}>{appointment.appointmentTime}</Descriptions.Item>
-                <Descriptions.Item label={<Text style={labelStyle}>พนักงานดูแล</Text>}>{appointment.employee}</Descriptions.Item>
-                <Descriptions.Item label={<Text style={labelStyle}>วิธีการรับรถ</Text>}>{appointment.appointmentMethod}</Descriptions.Item>
-                {appointment.appointmentMethod === 'จัดส่งรถถึงที่' && (
-                  <Descriptions.Item label={<Text style={labelStyle}>ที่อยู่จัดส่ง</Text>}>
-                    <Text style={{ color: colors.white }}>
-                      {`${appointment.address || ''} ต.${appointment.subdistrict || ''} อ.${appointment.district || ''} จ.${appointment.province || ''}`}
-                    </Text>
+      }}>
+        <div style={{ padding: '2rem', background: colors.black, minHeight: '100vh', marginTop: '60px' }}>
+          <Row justify="center">
+            <Col xs={24} md={18} lg={12}>
+              <Card>
+                <Title style={{ color: colors.gold }} level={3}>
+                  รายละเอียดการนัดหมาย #{appointment.ID}
+                </Title>
+                <Descriptions bordered column={1} size="middle">
+                  <Descriptions.Item label={<Text style={labelStyle}>ชื่อ-สกุล ลูกค้า</Text>}>
+                    <Text style={contentStyle}>{`${appointment.Customer?.FirstName || ''} ${appointment.Customer?.LastName || ''}`}</Text>
                   </Descriptions.Item>
-                )}
-                <Descriptions.Item label={<Text style={labelStyle}>สถานะ</Text>}>
-                  <Tag color={appointment.status === 'จัดส่งสำเร็จ' ? 'success' : 'processing'}>
-                    {(appointment.status || 'รอดำเนินการ').toUpperCase()}
-                  </Tag>
-                </Descriptions.Item>
-              </Descriptions>
-              
-              <Divider />
-              
-              <Row justify="space-between" align="middle">
-                <Col>
-                  {/* ✅ FIX: ใช้เงื่อนไขเพื่อซ่อนปุ่มเมื่อสถานะเป็น 'จัดส่งสำเร็จ' */}
-                  {appointment.status !== 'จัดส่งสำเร็จ' && (
-                    <Button 
-                      type="primary" 
-                      onClick={handleUpdateStatus}
-                    >
-                      อัปเดตสถานะเป็น "จัดส่งสำเร็จ"
-                    </Button>
+                  <Descriptions.Item label={<Text style={labelStyle}>เลขที่สัญญา</Text>}>
+                    <Text style={contentStyle}>SC-{appointment.SalesContract?.ID}</Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Text style={labelStyle}>วันที่นัดหมาย</Text>}>
+                    <Text style={contentStyle}>{dayjs(appointment.DateTime).format('D MMMM BBBB')}</Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Text style={labelStyle}>เวลา</Text>}>
+                    <Text style={contentStyle}>{dayjs(appointment.DateTime).format('HH:mm')}</Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Text style={labelStyle}>พนักงาน</Text>}>
+                    <Text style={contentStyle}>{appointment.Employee?.first_name}</Text>
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Text style={labelStyle}>ประเภท</Text>}>
+                    <Text style={contentStyle}>{appointment.TypeInformation?.type}</Text>
+                  </Descriptions.Item>
+                  {appointment.TypeInformation?.type.includes('ให้ไปส่งตามที่อยู่') && (
+                    <Descriptions.Item label={<Text style={labelStyle}>ที่อยู่</Text>}>
+                      <Text style={contentStyle}>{fullAddress}</Text>
+                    </Descriptions.Item>
                   )}
-                </Col>
-                <Col>
-                  <Button 
-                    type="default"
-                    icon={<ArrowLeftOutlined />} 
-                    onClick={() => navigate('/AppointmentAll')} 
-                  >
-                    กลับ
-                  </Button>
-                </Col>
-              </Row>
-            </Card>
-          </Col>
-        </Row>
-      </div>
-    </ConfigProvider>
+                  <Descriptions.Item label={<Text style={labelStyle}>สถานะ</Text>}>
+                    <Tag color={getStatusColor(appointment.status)}>
+                      {(appointment.status || 'รอดำเนินการ').toUpperCase()}
+                    </Tag>
+                  </Descriptions.Item>
+                </Descriptions>
+
+                <Divider />
+                
+                  <Row justify="space-between" align="middle">
+                      {!isFinalStatus ? (
+                        <Col>
+                            <Space>
+                                <Text style={contentStyle}>เปลี่ยนสถานะ:</Text>
+                                <Select
+                                    value={currentStatus}
+                                    onChange={(value) => setCurrentStatus(value)}
+                                    style={{ width: 150 }}
+                                    popupClassName="custom-dropdown-theme"
+                                >
+                                    <Option value="รอดำเนินการ">รอดำเนินการ</Option>
+                                    {/* --- vvvvv --- ส่วนที่แก้ไข --- vvvvv --- */}
+                                    {/* 2. ใช้เงื่อนไข canMarkAsCompleted เพื่อแสดงผล */}
+                                    {canMarkAsCompleted && <Option value="สำเร็จ">สำเร็จ</Option>}
+                                    {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
+                                    <Option value="ยกเลิก">ยกเลิก</Option>
+                                </Select>
+                                <Button
+                                  type="primary"
+                                  icon={<SaveOutlined />}
+                                  onClick={handleUpdateStatus}
+                                >
+                                  บันทึก
+                                </Button>
+                            </Space>
+                        </Col>
+                      ) : (
+                        <Col /> 
+                      )}
+                      <Col>
+                        <Button
+                          type="default"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={() => navigate('/AppointmentAll')}
+                        >
+                          กลับ
+                        </Button>
+                      </Col>
+                  </Row>
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      </ConfigProvider>
+    </>
   );
 };
 
 export default AppointmentDetailsPage;
+

@@ -36,18 +36,14 @@
 } */
 
 /* ปรับสีพื้นหลังของ Select และ Input */
-.ant-select-selector,
-.ant-input,
+
 /* .ant-select-selection-item {
     background-color: #4a4a4a !important;
     border: 1px solid #666666 !important;
     color: white !important;
 } */
 
-.ant-select-selection-placeholder,
-.ant-input::placeholder {
-    color: #cccccc !important;
-}
+
 .ant-select-arrow svg {
     color: white !important;
 }

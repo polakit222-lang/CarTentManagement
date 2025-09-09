@@ -1,20 +1,18 @@
 package entity
 
 import (
-	"time"
 
 	"gorm.io/gorm"
 )
 
 type Customer struct {
 	gorm.Model
-	Username  string
 	Password  string
 	Email     string
 	Phone     string
 	FirstName string
 	LastName  string
-	Birthday  time.Time
+	Birthday  string	`json:"birthday"`
 
 	
 

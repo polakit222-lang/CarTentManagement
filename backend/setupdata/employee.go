@@ -1,3 +1,4 @@
+// backend/setupdata/employee.go
 package setupdata
 
 import (
@@ -5,16 +6,21 @@ import (
 	"time"
 
 	"github.com/PanuAutawo/CarTentManagement/backend/entity"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 func InsertMockEmployees(db *gorm.DB) {
+	// Hash password
+	hashedPassword1, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
+	hashedPassword2, _ := bcrypt.GenerateFromPassword([]byte("abcdef"), bcrypt.DefaultCost)
+
 	employees := []entity.Employee{
 		{
 			ProfileImage: "employee1.jpg",
 			FirstName:    "Somchai",
 			LastName:     "Sukjai",
-			Password:     "123456",
+			Password:     string(hashedPassword1),
 			Email:        "somchai@example.com",
 			PhoneNumber:  "0812345678",
 			Address:      "Bangkok, Thailand",
@@ -27,20 +33,19 @@ func InsertMockEmployees(db *gorm.DB) {
 			ProfileImage: "employee2.jpg",
 			FirstName:    "Suda",
 			LastName:     "Thongdee",
-			Password:     "abcdef",
+			Password:     string(hashedPassword2),
 			Email:        "suda@example.com",
 			PhoneNumber:  "0899998888",
 			Address:      "Chiang Mai, Thailand",
 			Birthday:     time.Date(1995, 11, 20, 0, 0, 0, 0, time.UTC),
 			Sex:          "Female",
-			Position:     "Manager",
+			Position:     "Programmer",
 			Jobtype:      time.Now(),
 		},
 	}
 
-	for _, emp := range employees {
-		db.FirstOrCreate(&emp, entity.Employee{Email: emp.Email})
+	for _, e := range employees {
+		db.FirstOrCreate(&e, entity.Employee{Email: e.Email})
 	}
-
-	fmt.Println("Inserted mock employees successfully!")
+	fmt.Println("Inserted mock Employees successfully!")
 }

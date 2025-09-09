@@ -3,19 +3,25 @@ package setupdata
 import (
 	"log"
 	"time"
-
+	"golang.org/x/crypto/bcrypt"
 	"github.com/PanuAutawo/CarTentManagement/backend/entity"
 	"gorm.io/gorm"
 )
 
 // InsertMockInspections สร้างข้อมูลจำลองสำหรับสัญญาและการนัดตรวจสภาพรถ
 func InsertMockInspections(db *gorm.DB) {
+	// Hash password (เปลี่ยน "123456" เป็น "password123")
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatalf("failed to hash password: %v", err)
+	}
+
 	// --- 1. สร้างข้อมูลลูกค้า (ถ้ายังไม่มี) ---
 	customer := entity.Customer{
 		FirstName:     "สมหญิง",
 		LastName:     "สมหญิง",
 		Email:    "somying.jj@example.com",
-		Password: "password123", // ในระบบจริงควรเข้ารหัสผ่าน
+		Password: string(hashedPassword), // ในระบบจริงควรเข้ารหัสผ่าน
 		Phone:      "0887654321",
 	}
 	// ตรวจสอบว่ามีลูกค้านี้หรือยัง ถ้าไม่มีให้สร้าง
@@ -44,7 +50,7 @@ func InsertMockInspections(db *gorm.DB) {
 				Note:            "นัดตรวจเช็คสภาพก่อนรับรถตามสัญญา",
 				DateTime:        time.Now().Add(72 * time.Hour), // นัดล่วงหน้า 3 วัน
 				SalesContractID: salesContract.ID,
-				InspectionStatus: "นัดหมายแล้ว",
+				InspectionStatus: "กำลังดำเนินการ",
 			}
 			db.Create(&appointment)
 

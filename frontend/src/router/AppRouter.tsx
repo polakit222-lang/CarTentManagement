@@ -12,7 +12,9 @@ import EmployeeLayout from '../layout/EmployeeLayout';
 import LoginPage from '../pages/login/LoginPage';
 import RegisterPage from '../pages/customer/register/RegisterPage';
 import BuyCar from '../pages/customer/buycar/BuyCar';
+import BuyCarDetailPage from '../pages/customer/buycar/BuyCarDetail';
 import RentCarPage from '../pages/customer/rentcar/RentCarPage';
+import RentCarDetailPage from '../pages/customer/rentcar/RentCarDetailPage';
 import CusProfilePage from '../pages/customer/profile/ProfilePage';
 import PaymentPage from '../pages/customer/payment/PaymentPage';
 import BuyInsurancePage from '../pages/customer/insurance/BuyInsurancePage';
@@ -48,23 +50,26 @@ import AppointmentAll from '../pages/employee/pickup-delivery/AppointmentAll';
 import InspectionPage from '../pages/employee/inspection/InspectionPage';
 import SummaryPage from '../pages/employee/sell-summary/SummaryPage'
 import EmpProfilePage from '../pages/employee/profile/EmployeeDashboard'
-// --- vvvvv --- THIS IS THE FIX --- vvvvv ---
+
 interface ProtectedRouteProps {
     allowedRoles: string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
-    const { user } = useAuth(); // Change from userRole to user
+    const { user, role, loading } = useAuth();
 
-    if (!user) {
-        // If no user is logged in, redirect to the login page
+    // Show a loading state until authentication check is complete
+    if (loading) {
+        return <div>กำลังโหลด...</div>;
+    }
+
+    if (!user || !role) {
+        // If there's no user or no role after loading, redirect to the login page.
         return <Navigate to="/login" replace />;
     }
 
-    // Check if the user's role is in the list of allowed roles
-    return allowedRoles.includes(user.role) ? <Outlet /> : <Navigate to="/login" replace />;
+    return allowedRoles.includes(role) ? <Outlet /> : <Navigate to="/login" replace />;
 };
-// --- ^^^^^ --- END OF FIX --- ^^^^^ ---
 
 const AppRouter: React.FC = () => {
     return (
@@ -115,7 +120,9 @@ const AppRouter: React.FC = () => {
             <Route element={<CustomerLayout />}>
                 <Route path="/" element={<Navigate to="/buycar" />} />
                 <Route path="/buycar" element={<BuyCar />} />
+                    <Route path="/buycar-details/:id" element={<BuyCarDetailPage />} />
                 <Route path="/rentcar" element={<RentCarPage />} />
+                    <Route path="/rentcar-details/:id" element={<RentCarDetailPage />} />
                 <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
                     <Route path="/Cus-profile" element={<CusProfilePage />} />
                     <Route path="/payment" element={<PaymentPage />} />

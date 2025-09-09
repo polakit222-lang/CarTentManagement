@@ -10,6 +10,9 @@ import (
 
 var DB *gorm.DB
 
+// SECRET_KEY for JWT
+const SECRET_KEY = "your_secret_key"
+
 func ConnectDatabase(dbName string) {
 	database, err := gorm.Open(sqlite.Open(dbName), &gorm.Config{})
 	if err != nil {
@@ -38,7 +41,6 @@ func ConnectDatabase(dbName string) {
 		&entity.InspectionSystem{},
 		&entity.PickupDelivery{},
 		&entity.TypeInformation{},
-		&entity.Province{},
 		&entity.District{},
 		&entity.SubDistrict{},
 	)

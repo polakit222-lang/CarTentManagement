@@ -18,7 +18,7 @@ const Navbar: React.FC = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   // --- vvv แก้ไข vvv ---
-  const { user, logout } = useAuth(); // เปลี่ยนมาใช้ user object
+  const { user, logout, role } = useAuth(); // เปลี่ยนมาใช้ user object
   // --- ^^^ แก้ไข ^^^ ---
 
   const showDrawer = () => setOpen(true);
@@ -29,13 +29,13 @@ const Navbar: React.FC = () => {
 
     // --- vvv แก้ไข vvv ---
     // ตรวจสอบจาก user object และ user.role
-    if (user && user.role === 'customer') {
+    if (user && role === 'customer') {
       // --- ^^^ แก้ไข ^^^ ---
       menu.push(
         { key: 'payment', label: 'การชำระเงิน', path: '/payment' },
         { key: 'buy-insurance', label: 'ซื้อประกัน', path: '/buy-insurance' },
-        { key: 'inspection', label: 'นัดตรวจสภาพรถ', path: '/inspection-car' },
-        { key: 'pickup-car', label: 'นัดรับ-ส่งรถ', path: '/pickup-car' },
+        { key: 'inspection', label: 'นัดตรวจสภาพรถยนต์', path: '/inspection-car' },
+        { key: 'pickup-car', label: 'นัดรับ-ส่งรถยนต์', path: '/pickup-car' },
         { type: 'divider' },
         { key: 'profile', label: 'ข้อมูลของฉัน', icon: <UserOutlined />, path: '/Cus-profile' },
         { key: 'logout', label: 'ออกจากระบบ', icon: <LogoutOutlined /> }
@@ -75,8 +75,8 @@ const Navbar: React.FC = () => {
            zIndex: 1,
            width: '100%'}}>
         <Row align="middle" justify="space-between" style={{ height: '100%' }}>
-          <Col><span style={{ fontSize: '24px', fontWeight: 'bold' }}>SA เต็นท์รถ</span></Col>
-          <Col><Button type="text" onClick={showDrawer} icon={<MenuOutlined style={{ fontSize: '24px', color: 'black' }} />} /></Col>
+          <Col><span style={{ fontSize: '24px', fontWeight: 'bold' ,color : ' #FFD700'}}>SA เต็นท์รถ</span></Col>
+          <Col><Button type="text" onClick={showDrawer} icon={<MenuOutlined style={{ fontSize: '24px', color: '#FFD700' }} />} /></Col>
         </Row>
       </Header>
       <Drawer title="เมนู" placement="right" onClose={onClose} open={open} style={{ background: '#262626' }}>

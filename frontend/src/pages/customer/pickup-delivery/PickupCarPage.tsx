@@ -1,220 +1,285 @@
-// src/pages/customer/pickup-delivery/PickupCarPage.tsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Button, Card, Row, Col, Space, Modal,
-    Typography, Divider, message, Empty
+    Typography, Divider, message, Empty, Select,
+    Spin
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
     PlusCircleOutlined, EditOutlined, CalendarOutlined,
     ClockCircleOutlined, UserOutlined, EnvironmentOutlined, CloseCircleOutlined,
-    CheckCircleOutlined, LoadingOutlined
+    CheckCircleOutlined, LoadingOutlined, SortAscendingOutlined, SortDescendingOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import 'dayjs/locale/th';
+import buddhistEra from 'dayjs/plugin/buddhistEra';
+import utc from 'dayjs/plugin/utc';
+import { useAuth } from '../../../hooks/useAuth';
+
+dayjs.locale('th');
+dayjs.extend(buddhistEra);
+dayjs.extend(utc);
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 interface PickupBooking {
-    id: number;
-    contractNumber: string;
-    appointmentDate: string;
-    appointmentTime: string;
-    employee: string | undefined;
-    appointmentMethod: string | undefined;
-    address?: string;
-    province?: string;
-    district?: string;
-    subdistrict?: string;
-    status?: string;
+    ID: number;
+    Customer: {
+        FirstName: string;
+        LastName: string;
+    };
+    SalesContract: {
+        ID: number;
+    };
+    DateTime: string;
+    Address: string;
+    Province: {
+        ProvinceName: string;
+    };
+    District: {
+        DistrictName: string;
+    };
+    SubDistrict: {
+        SubDistrictName: string;
+    };
+    Employee: {
+        first_name: string;
+        last_name: string;
+    };
+    status: string;
 }
 
-const PickupCarPage: React.FC = () => {
 
+const PickupCarPage: React.FC = () => {
     const navigate = useNavigate();
     const [bookingHistory, setBookingHistory] = useState<PickupBooking[]>([]);
+    const [statusFilter, setStatusFilter] = useState<string>('ทั้งหมด');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState<PickupBooking | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const { user, token } = useAuth();
 
-    useEffect(() => {
-        const storedBookings = localStorage.getItem('pickupBookings');
-        if (storedBookings) {
-            setBookingHistory(JSON.parse(storedBookings));
-        }
-    }, []);
-
-    const handleCreateNewBooking = () => navigate('/pickup-car/create');
-
-    const isActionDisabled = (booking: PickupBooking) => {
-        if (booking.status === 'เสร็จสิ้น' || booking.status === 'ยกเลิก') {
-            return true;
-        }
-        const appointmentDateTime = dayjs(`${booking.appointmentDate} ${booking.appointmentTime.split(' ')[0]}`, 'DD MMMM YYYY HH:mm', 'th');
-        const now = dayjs();
-        const diffInMinutes = appointmentDateTime.diff(now, 'minute');
-        return diffInMinutes <= 60;
-    };
-
-    const handleEditBooking = (booking: PickupBooking) => {
-        if (isActionDisabled(booking)) {
-            message.error('ไม่สามารถแก้ไขการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาที หรือสถานะเป็น เสร็จสิ้น/ยกเลิก ได้');
+    const fetchBookings = async () => {
+        if (!user || !user.ID || !token) {
+            setLoading(false);
+            console.error('User not logged in or ID is missing');
+            message.error('กรุณาเข้าสู่ระบบเพื่อดูประวัติการนัดหมาย');
             return;
         }
-        navigate(`/pickup-car/create?id=${booking.id}`);
+    
+        setLoading(true);
+        try {
+            const response = await fetch(`http://localhost:8080/pickup-deliveries/customer/${user.ID}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (response.ok) {
+                const responseData = await response.json();
+                setBookingHistory(responseData.data || []);
+            } else {
+                setBookingHistory([]);
+                message.error('ไม่สามารถดึงประวัติการนัดรับรถได้');
+            }
+        } catch (error) {
+            console.error('Failed to fetch pickup/delivery appointments:', error);
+            message.error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchBookings();
+    }, [user, token]);
+
+    const filteredAndSortedBookings = useMemo(() => {
+        const filtered = statusFilter === 'ทั้งหมด'
+            ? bookingHistory
+            : bookingHistory.filter(b => b.status === statusFilter);
+
+        return filtered.sort((a, b) => {
+            const dateA = dayjs(a.DateTime);
+            const dateB = dayjs(b.DateTime);
+            if (sortOrder === 'asc') {
+                return dateA.isAfter(dateB) ? 1 : -1;
+            } else {
+                return dateA.isBefore(dateB) ? 1 : -1;
+            }
+        });
+    }, [bookingHistory, statusFilter, sortOrder]);
+
+    const handleCreateNewBooking = () => {
+        navigate('/pickup-car/create');
+    };
+
+    const handleEditBooking = (id: number) => {
+        navigate(`/pickup-car/create?id=${id}`);
     };
 
     const handleCancelBooking = (booking: PickupBooking) => {
-        if (isActionDisabled(booking)) {
-            message.error('ไม่สามารถยกเลิกการนัดหมายที่เหลือเวลาน้อยกว่า 60 นาที หรือสถานะเป็น เสร็จสิ้น/ยกเลิก ได้');
-            return;
-        }
         setBookingToCancel(booking);
         setIsModalOpen(true);
     };
 
-    // --- vvvvv --- นี่คือส่วนที่แก้ไข --- vvvvv ---
-    const handleConfirmCancel = () => {
+    const handleConfirmCancel = async () => {
         if (bookingToCancel) {
-            const updatedBookings = bookingHistory.map(b =>
-                b.id === bookingToCancel.id ? { ...b, status: 'ยกเลิก' } : b
-            );
-            setBookingHistory(updatedBookings);
-            localStorage.setItem('pickupBookings', JSON.stringify(updatedBookings));
-            setIsModalOpen(false);
-            setBookingToCancel(null);
-            message.success('ยกเลิกการนัดหมายสำเร็จ!');
+            try {
+                const response = await fetch(`http://localhost:8080/pickup-deliveries/${bookingToCancel.ID}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pickup_delivery_status: 'ยกเลิก' }),
+                });
+
+                if (response.ok) {
+                    message.success('ยกเลิกการนัดหมายสำเร็จ!');
+                    fetchBookings();
+                } else {
+                    const errorData = await response.json();
+                    message.error(`ไม่สามารถยกเลิกการนัดหมายได้: ${errorData.error}`);
+                }
+            } catch (error) {
+                console.error('Failed to cancel pickup/delivery appointment:', error);
+                message.error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์เพื่อยกเลิกการนัดหมายได้');
+            } finally {
+                setIsModalOpen(false);
+                setBookingToCancel(null);
+            }
         }
     };
-    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 
     const handleModalClose = () => {
         setIsModalOpen(false);
         setBookingToCancel(null);
     };
 
-    const getStatusColor = (status?: string) => {
+    const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'อนุมัติ':
-            case 'เสร็จสิ้น':
-                return '#389e0d'; // Green
-            case 'ปฏิเสธ':
+            case 'รอดำเนินการ':
+                return <LoadingOutlined style={{ color: '#1890ff' }} />;
+            case 'สำเร็จ':
+                return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
             case 'ยกเลิก':
-                return '#cf1322'; // Red
-            case 'รอตรวจสอบ':
+                return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
             default:
-                return '#d4b106'; // Yellow
+                return null;
         }
     };
 
-    const getStatusIcon = (status?: string) => {
-        const style = { fontSize: '24px', color: getStatusColor(status), marginRight: '16px' };
-        switch (status) {
-            case 'เสร็จสิ้น':
-                return <CheckCircleOutlined style={style} />;
-            case 'ยกเลิก':
-                return <CloseCircleOutlined style={style} />;
-            case 'รอตรวจสอบ':
-            case 'อนุมัติ':
-            case 'ปฏิเสธ':
-            default:
-                return <LoadingOutlined style={style} />;
-        }
-    };
+    if (loading) {
+        return (
+            <div style={{ textAlign: 'center', marginTop: '100px' }}>
+                <Spin size="large" />
+                <p style={{ color: 'white', marginTop: '20px' }}>กำลังดึงข้อมูล...</p>
+            </div>
+        );
+    }
 
     return (
-        <div style={{ padding: '0 48px' }}>
-            <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
-                <Row align="middle" justify="space-between">
-                    <Col><Title level={2} style={{ color: 'white', marginBottom: 0 }}>ประวัติการนัดหมายรับรถ</Title></Col>
-                    <Col>
-                        <Button type="primary" icon={<PlusCircleOutlined />} style={{ background: 'linear-gradient(45deg, #FFD700, #FFA500)', color: 'black', border: 'none', fontWeight: 'bold' }} onClick={handleCreateNewBooking}>
-                            สร้างการนัดหมายใหม่
-                        </Button>
-                    </Col>
-                </Row>
-                <Divider style={{ borderColor: '#424242' }} />
-
-                {bookingHistory.length > 0 ? (
-                    <Row gutter={[0, 24]} justify="center">
-                        <Col xs={24} sm={20} md={16} lg={12}>
-                            {bookingHistory.map((booking) => (
+        
+        <div style={{ padding: '24px 48px' }}>
+             <style>{`
+                .ant-select-selector, .ant-select-dropdown {
+                    color: white !important;
+                }
+                .ant-select-item-option-content {
+                    color: white;
+                }
+                .ant-select-item-option-selected .ant-select-item-option-content {
+                    color: black;
+                }
+            `}</style>
+            <Title level={2} style={{ color: 'white' }}>ประวัติการนัดรับ-ส่งรถยนต์</Title>
+            <Divider style={{ borderColor: '#424242' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <Space>
+                    <Text style={{ color: 'white' }}>สถานะ:</Text>
+                    <Select
+                        defaultValue="ทั้งหมด"
+                        style={{ width: 120, backgroundColor: '#424242', color: 'white' }}
+                        onChange={value => setStatusFilter(value)}
+                        dropdownStyle={{ backgroundColor: '#424242' }}
+                    >
+                        <Option value="ทั้งหมด" style={{ backgroundColor: '#424242', color: 'white' }}>ทั้งหมด</Option>
+                        <Option value="รอดำเนินการ" style={{ backgroundColor: '#424242', color: 'white' }}>รอดำเนินการ</Option>
+                        <Option value="สำเร็จ" style={{ backgroundColor: '#424242', color: 'white' }}>สำเร็จ</Option>
+                        <Option value="ยกเลิก" style={{ backgroundColor: '#424242', color: 'white' }}>ยกเลิก</Option>
+                    </Select>
+                    <Button onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} style={{
+                        background: '#424242', color: 'white', borderColor: '#555'
+                    }}>
+                        เรียงตามวันที่ {sortOrder === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
+                    </Button>
+                </Space>
+                <Button
+                    type="primary"
+                    style={{ background: 'linear-gradient(45deg, #FFD700, #FFA500)', color: 'black', border: 'none', fontWeight: 'bold' }}
+                    onClick={handleCreateNewBooking}
+                >
+                    <PlusCircleOutlined /> สร้างการนัดหมาย
+                </Button>
+            </div>
+            <div style={{ minHeight: 'calc(100vh - 280px)' }}>
+                {filteredAndSortedBookings.length > 0 ? (
+                    <Row gutter={[24, 24]}>
+                        {filteredAndSortedBookings.map(booking => (
+                            <Col xs={24} md={12} lg={8} key={booking.ID}>
                                 <Card
-                                    key={booking.id}
                                     style={{
-                                        width: '100%',
-                                        backgroundColor: '#363636',
-                                        color: 'white',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                                        marginBottom: '24px',
-                                        border: '1px solid #f1d846ff',
+                                        width: '100%', backgroundColor: '#363636', color: 'white', borderRadius: '12px',
+                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)', marginBottom: '24px', border: '1px solid #f1d846ff'
                                     }}
+                                    hoverable
                                 >
-                                    <Title level={5} style={{ color: 'white', marginBottom: '24px' }}>
-                                        หมายเลขสัญญาซื้อขาย: <Text style={{ color: '#f1d430ff' }}>{booking.contractNumber}</Text>
+                                    <Title level={4} style={{ color: '#f1d430ff', marginBottom: '16px' }}>
+                                        {`นัดรับ-ส่งรถยนต์ #${booking.ID}`}
                                     </Title>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '30px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            {getStatusIcon(booking.status)}
-                                            <div>
-                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>สถานะ</Text>
-                                                <Text style={{ color: getStatusColor(booking.status), fontWeight: 'bold' }}>{booking.status || 'รอตรวจสอบ'}</Text>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <CalendarOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
-                                            <div>
-                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>วันนัดหมาย</Text>
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>{booking.appointmentDate}</Text>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <ClockCircleOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
-                                            <div>
-                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>เวลานัดหมาย</Text>
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>{booking.appointmentTime}</Text>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <UserOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
-                                            <div>
-                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>พนักงาน</Text>
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>{booking.employee}</Text>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <EnvironmentOutlined style={{ fontSize: '24px', color: '#f1d430ff', marginRight: '16px' }} />
-                                            <div>
-                                                <Text style={{ color: '#aaaaaa', display: 'block' }}>วิธีการรับรถ</Text>
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>{booking.appointmentMethod}</Text>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {!isActionDisabled(booking) && (
-                                        <Space style={{ width: '100%', justifyContent: 'center' }}>
-                                            <Button
-                                                icon={<EditOutlined />}
-                                                style={{ backgroundColor: '#f1d430ff', color: 'black', border: 'none' }}
-                                                onClick={() => handleEditBooking(booking)}
-                                            >
+                                    <Space direction="vertical" style={{ width: '100%' }}>
+                                        <Text style={{ color: 'white' }}>
+                                            <CalendarOutlined /> วันที่นัดหมาย: {dayjs(booking.DateTime).locale('th').format('DD MMMM BBBB')}
+                                        </Text>
+                                        {/* --- vvvvv --- ส่วนที่แก้ไข --- vvvvv --- */}
+                                        <Text style={{ color: 'white' }}>
+                                            {/* ✅ เอา .utc ออกเพื่อให้ dayjs แสดงเวลาตามโซนเวลาท้องถิ่น */}
+                                            <ClockCircleOutlined /> เวลา: {dayjs(booking.DateTime).format('HH:mm')} น.
+                                        </Text>
+                                        {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
+                                        <Text style={{ color: 'white' }}>
+                                            <UserOutlined /> พนักงาน: {booking.Employee?.first_name} {booking.Employee?.last_name}
+                                        </Text>
+                                        <Text style={{ color: 'white' }}>
+                                            <EnvironmentOutlined /> สถานที่: {booking.Address} {booking.SubDistrict?.SubDistrictName} {booking.District?.DistrictName} {booking.Province?.ProvinceName}
+                                        </Text>
+                                        <Text style={{ color: 'white' }}>
+                                            สถานะ: {getStatusIcon(booking.status)} {booking.status}
+                                        </Text>
+                                    </Space>
+                                    <Space style={{ marginTop: '20px' }}>
+                                        {booking.status !== 'ยกเลิก' && booking.status !== 'สำเร็จ' && (
+                                            <Button icon={<EditOutlined />} onClick={() => handleEditBooking(booking.ID)} style={{ background: '#5e5e5e', color: 'white', borderColor: '#777' }}>
                                                 แก้ไข
                                             </Button>
-                                            <Button
-                                                icon={<CloseCircleOutlined />}
-                                                danger
-                                                onClick={() => handleCancelBooking(booking)}
-                                            >
+                                        )}
+                                        {booking.status !== 'ยกเลิก' && booking.status !== 'สำเร็จ' && (
+                                            <Button icon={<CloseCircleOutlined />} danger onClick={() => handleCancelBooking(booking)}>
                                                 ยกเลิก
                                             </Button>
-                                        </Space>
-                                    )}
+                                        )}
+                                    </Space>
                                 </Card>
-                            ))}
-                        </Col>
+                            </Col>
+                        ))}
                     </Row>
                 ) : (
                     <div style={{ textAlign: 'center', marginTop: '100px' }}>
-                        <Empty description={<Text style={{ color: '#777' }}>ยังไม่มีประวัติการนัดหมาย</Text>}>
+                        <Empty description={<Text style={{ color: '#777' }}>{statusFilter === 'ทั้งหมด' ? 'ยังไม่มีประวัติการนัดหมาย' : 'ไม่พบรายการนัดหมายตามสถานะที่เลือก'}</Text>}>
                             <Button type="primary" style={{ background: 'linear-gradient(45deg, #FFD700, #FFA500)', color: 'black', border: 'none', fontWeight: 'bold' }} onClick={handleCreateNewBooking}>สร้างการนัดหมายแรกของคุณ</Button>
                         </Empty>
                     </div>
