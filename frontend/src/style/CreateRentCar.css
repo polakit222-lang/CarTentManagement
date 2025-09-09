@@ -185,3 +185,21 @@
   transform: scale(1.2);
   transform-origin: top left;
 }
+
+.custom-dark-calendar .ant-picker-panel {
+  background-color: #1a1a1a;
+}
+
+.custom-dark-calendar .ant-picker-cell-inner {
+  color: rgb(4, 4, 4);
+}
+
+.custom-dark-calendar .ant-picker-header-view,
+.custom-dark-calendar .ant-picker-month-btn,
+.custom-dark-calendar .ant-picker-year-btn {
+  color: rgb(0, 0, 0);
+}
+
+.custom-dark-calendar .ant-picker-cell-disabled .ant-picker-cell-inner {
+  color: #555;
+}

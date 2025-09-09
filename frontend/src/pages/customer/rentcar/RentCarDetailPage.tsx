@@ -15,7 +15,9 @@ import {
 import { PushpinOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import { carList } from "../../../data/carList";
-import RentDateRange from "../../../components/CusRentDateRange";
+
+import CusRentDateRange from "../../../components/CusRentDateRange";
+// import type { RentPeriod } from "../../../components/CusRentDateRange";
 
 import mainCar from "../../../assets/rentCar1/carMain.jpg";
 import thumb1 from "../../../assets/rentCar1/thumb1.jpg";
@@ -31,7 +33,7 @@ const RentCarDetailPage: React.FC = () => {
   const [form] = Form.useForm();
   const [rentModalVisible, setRentModalVisible] = useState(false);
 
-  const [selectedRentRange, setSelectedRentRange] = useState<[Dayjs, Dayjs] | null>(null);
+  const [selectedRentRange, setSelectedRentRange] = useState<dayjs.Dayjs[]>([]);
 
   const car = carList.find((c) => c.id === Number(id));
   if (!car) return <div>ไม่พบรถที่ต้องการ</div>;
@@ -41,8 +43,8 @@ const RentCarDetailPage: React.FC = () => {
   }, []);
 
   const handleFormSubmit = (values: any) => {
-    if (!values.rentRange) {
-      message.error("โปรดเลือกช่วงเวลาที่ต้องการเชิม");
+    if (!values.rentRange || values.rentRange.length === 0) {
+      message.error("โปรดเลือกช่วงเวลาที่ต้องการเช่า");
       return;
     }
     setSelectedRentRange(values.rentRange);
@@ -52,7 +54,8 @@ const RentCarDetailPage: React.FC = () => {
   const handleConfirmRent = () => {
     message.success("ทำการจองเรียบร้อยแล้ว!");
     setRentModalVisible(false);
-    navigate('/rent');
+    form.resetFields(["rentRange"]); // ✅ reset ค่า rentRange ในฟอร์ม
+    navigate("/rent");
   };
 
   return (
@@ -119,25 +122,40 @@ const RentCarDetailPage: React.FC = () => {
               <p>รุ่น: {car.model}</p>
               <p>ปี: {car.yearManufactured}</p>
               <p>เลขไมล์: {car.mileage?.toLocaleString()} กม.</p>
-              <p>เกียร์: </p>
               <p>สี: </p>
             </div>
 
             <Divider style={{ borderColor: "rgba(255, 215, 0, 0.3)" }} />
 
+            {/* รายละเอียดพนักงาน */}
+            <div style={{ color: "#fff", lineHeight: "1.8em" }}>
+              <Title level={4} style={{ color: "gold", marginTop: "-10px" }}>
+                ติดต่อพนักงาน
+              </Title>
+              <p>ชื่อ: Lung Tuu</p>
+              <p>เบอร์โทร: 09888866</p>
+            </div>
+
+            <Divider style={{ borderColor: "rgba(255, 215, 0, 0.3)" }} />
+
             {/* ปฏิทินเลือกวันที่ */}
-            <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleFormSubmit} // ✅ ต้องมี
+            >
               <Form.Item
                 name="rentRange"
                 label={<span style={{ color: "white", fontWeight: "bold" }}>เลือกช่วงเช่า</span>}
                 rules={[{ required: true, message: "โปรดเลือกช่วงเวลาที่ต้องการเช่า" }]}
               >
-                <RentDateRange />
+                <CusRentDateRange />
               </Form.Item>
 
               <Button
                 icon={<PushpinOutlined />}
                 block
+                htmlType="submit" // ✅ ต้องมี
                 style={{
                   backgroundColor: "gold",
                   color: "black",
@@ -154,10 +172,10 @@ const RentCarDetailPage: React.FC = () => {
                   e.currentTarget.style.backgroundColor = "gold";
                   e.currentTarget.style.color = "black";
                 }}
-                htmlType="submit"
               >
                 สั่งเช่า
               </Button>
+            </Form>
 
               {/* Modal ที่ถูกลบเนื้อหาตรงกลางออก */}
               <Modal
@@ -206,9 +224,14 @@ const RentCarDetailPage: React.FC = () => {
                   borderRadius: "0 0 8px 8px", 
                 }}
               >
+                {selectedRentRange.length === 2 && (
+                  <div style={{ color: "#000000ff" }}>
+                    <p>วันเริ่ม: {selectedRentRange[0].format("DD/MM/YYYY")}</p>
+                    <p>วันสิ้นสุด: {selectedRentRange[1].format("DD/MM/YYYY")}</p>
+                  </div>
+                )}
                 {/* เนื้อหาส่วนนี้ถูกลบออกไปแล้ว */}
               </Modal>
-            </Form>
           </Card>
         </Col>
       </Row>

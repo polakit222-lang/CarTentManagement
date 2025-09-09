@@ -116,7 +116,6 @@ const BuyCarDetailPage: React.FC = () => {
               <p>รุ่น: Yaris Ativ</p>
               <p>ปี: 2020</p>
               <p>เลขไมล์: 50,000 กม.</p>
-              <p>เกียร์: ออโต้</p>
               <p>สี: ดำ</p>
             </div>
 

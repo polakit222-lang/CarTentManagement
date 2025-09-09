@@ -1,8 +1,7 @@
-// RentDateRange.tsx
-import  { useState } from "react";
+import { useState } from "react";
 import { DatePicker, InputNumber, Button, Space, List } from "antd";
 import type { RangePickerProps } from "antd/es/date-picker";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import "../style/CreateRentCar.css";
 
 const { RangePicker } = DatePicker;
@@ -20,11 +19,16 @@ interface Props {
 }
 
 export default function RentDateRange({ value = [], onChange }: Props) {
-  const [dates, setDates] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+  const [dates, setDates] = useState<[Dayjs, Dayjs] | undefined>(undefined);
   const [price, setPrice] = useState<number>(2000);
 
+  // ✅ ปิดวันก่อน "วันนี้"
+  const disabledDate: RangePickerProps["disabledDate"] = (current) => {
+    return current && current < dayjs().startOf("day");
+  };
+
   const addPeriod = () => {
-    if (dates && price) {
+    if (dates && dates[0] && dates[1] && price > 0) {
       const newPeriod: RentPeriod = {
         id: Date.now(),
         start: dates[0].format("DD/MM/YYYY"),
@@ -33,7 +37,7 @@ export default function RentDateRange({ value = [], onChange }: Props) {
       };
       const newValue = [...value, newPeriod];
       onChange?.(newValue);
-      setDates(null);
+      setDates(undefined); // ✅ รีเซ็ตค่า
     }
   };
 
@@ -43,21 +47,54 @@ export default function RentDateRange({ value = [], onChange }: Props) {
   };
 
   return (
-    <div className="rent-page-root" style={{ maxWidth: 500 }}>
+    <div
+      className="rent-page-root"
+      style={{
+        maxWidth: 500,
+        backgroundColor: "#000",
+        padding: "16px",
+        borderRadius: 10,
+      }}
+    >
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <RangePicker
-          value={dates as RangePickerProps["value"]}
-          onChange={(val) => setDates(val as [dayjs.Dayjs, dayjs.Dayjs] | null)}
+          value={dates}
+          onChange={(val) => setDates(val as [Dayjs, Dayjs] | undefined)}
           format="DD/MM/YYYY"
+          disabledDate={disabledDate} // ✅ ผูกตรงนี้
+          style={{
+            width: "100%",
+            backgroundColor: "#1a1a1a",
+            border: "2px solid gold",
+            color: "white",
+            borderRadius: 8,
+          }}
+          popupClassName="custom-dark-calendar"
         />
+
         <InputNumber
           min={0}
           value={price}
           onChange={(val) => setPrice(val ?? 0)}
           addonAfter="บาท/วัน"
-          style={{ width: "100%" }}
+          style={{
+            width: "100%",
+            backgroundColor: "#1a1a1a",
+            color: "white",
+            border: "2px solid gold",
+            borderRadius: 8,
+          }}
         />
-        <Button type="dashed" onClick={addPeriod} block>
+
+        <Button
+          type="dashed"
+          onClick={addPeriod}
+          block
+          style={{
+            color: "gold",
+            borderColor: "gold",
+          }}
+        >
           + เพิ่มช่วงปล่อยเช่า
         </Button>
 
@@ -65,8 +102,10 @@ export default function RentDateRange({ value = [], onChange }: Props) {
           style={{
             maxHeight: 200,
             overflowY: "auto",
-            border: "1px solid #d9d9d9",
-            borderRadius: 4,
+            border: "1px solid gold",
+            borderRadius: 8,
+            backgroundColor: "#1a1a1a",
+            color: "white",
           }}
         >
           <List
@@ -74,12 +113,14 @@ export default function RentDateRange({ value = [], onChange }: Props) {
             dataSource={value}
             renderItem={(item) => (
               <List.Item
+                style={{ color: "white" }}
                 actions={[
                   <Button
                     type="link"
                     danger
                     onClick={() => removePeriod(item.id)}
-                  >ลบ
+                  >
+                    ลบ
                   </Button>,
                 ]}
               >
