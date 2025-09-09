@@ -53,6 +53,7 @@ func main() {
 	customerController := controllers.NewCustomerController(configs.DB)
 	managerController := controllers.NewManagerController(configs.DB)
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
+	leaveController := controllers.NewLeaveController(configs.DB) // ✅ เพิ่ม
 
 	// --- Routes ---
 
@@ -135,16 +136,23 @@ func main() {
 		pickupDeliveryRoutes.DELETE("/:id", pickupDeliveryController.DeletePickupDelivery)
 	}
 
-	// Public Employee Routes (for admin or other uses)
+	// Public Employee Routes
 	employeePublicRoutes := r.Group("/employees")
 	{
 		employeePublicRoutes.GET("", employeeController.GetEmployees)
 		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
 	}
 
-	// Admin-Only Routes
-	
+	// Leave Routes (เพิ่มตาม LeaveController)
+	apiRoutes := r.Group("/api")
+	{
+		apiRoutes.GET("/leaves", leaveController.ListLeaves)
+		apiRoutes.GET("/employees/:id/leaves", leaveController.ListLeavesByEmployee)
+		apiRoutes.POST("/leaves", leaveController.CreateLeave)
+		apiRoutes.PUT("/leaves/:id/status", leaveController.UpdateLeaveStatus)
+	}
 
+	// Admin-Only Routes
 	adminCustomerRoutes := r.Group("/admin/customers")
 	{
 		adminCustomerRoutes.GET("/:id", customerController.GetCustomerByID)
