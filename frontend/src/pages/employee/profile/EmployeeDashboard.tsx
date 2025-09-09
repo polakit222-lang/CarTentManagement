@@ -32,10 +32,9 @@ const EmployeeDashboard: React.FC = () => {
     const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [showLeaveForm, setShowLeaveForm] = useState(false);
     const { user, token } = useAuth() as { user: AuthenticatedUser | null, token: string | null, logout: () => void };
-  
+   
 
     useEffect(() => {
-        // --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
         // ดึงข้อมูลพนักงานจาก localStorage
         const data = localStorage.getItem('currentEmployee');
         if (data) {
@@ -52,8 +51,7 @@ const EmployeeDashboard: React.FC = () => {
             // ถ้าไม่พบข้อมูลใน localStorage อาจจะ redirect ไปหน้า login
             // navigate('/login');
         }
-        // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
-    }, []); // ให้ useEffect ทำงานแค่ครั้งเดียวตอน mount
+    }, []);
 
     const showNotification = (notif: { type: "success" | "error"; message: string }) => {
         setNotification(notif);
@@ -131,7 +129,7 @@ const EmployeeDashboard: React.FC = () => {
             employeeID: employee.id.toString(), 
             firstName: employee.first_name,
             lastName: employee.last_name,
-            Phone: employee.phone_number,
+            phoneNumber: employee.phone_number,
             birthday: employee.start_date, // ใช้ start_date เป็น birthday
         };
     };

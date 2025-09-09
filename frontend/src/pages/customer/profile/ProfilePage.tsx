@@ -1,20 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import {
   Card, Avatar, Descriptions, Button, Row, Col, Typography, message,
-  Form, Input, DatePicker
+  Form, Input, DatePicker, Spin, Divider
 } from 'antd';
 import { 
-  UserOutlined, EditOutlined, LockOutlined, MailOutlined, PhoneOutlined, 
-  SaveOutlined, CloseCircleOutlined 
+  UserOutlined, EditOutlined, SaveOutlined, CloseCircleOutlined 
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import locale from 'antd/es/date-picker/locale/th_TH';
 import 'dayjs/locale/th';
-import ChangePasswordModal from '../../../components/ChangePasswordModal';
+import { useAuth } from '../../../hooks/useAuth';
+
+const { Title } = Typography;
 
 interface Customer {
-  id: number;
+  ID: number;
   FirstName: string;
   LastName: string;
   Email: string;
@@ -26,170 +28,174 @@ interface Customer {
 const CusProfilePage: React.FC = () => {
   const [customerData, setCustomerData] = useState<Customer | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const { user, token, logout } = useAuth();
 
   useEffect(() => {
-    const data = localStorage.getItem('currentCustomer');
-    if (data) {
-      const parsedData = JSON.parse(data);
-      setCustomerData(parsedData);
-      form.setFieldsValue({
-        ...parsedData,
-        Birthday: parsedData.Birthday ? dayjs(parsedData.Birthday) : null,
-      });
-    }
-  }, [form]);
+    const fetchCustomerData = async () => {
+      if (!user?.ID || !token) {
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const response = await fetch(`http://localhost:8080/admin/customers/${user.ID}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
 
-  // ฟังก์ชันสำหรับอัปเดตข้อมูลใน customerData array หลัก
-  const updateMainCustomerList = (updatedCustomer: Customer) => {
-    const allCustomersData = localStorage.getItem('customerData');
-    if (allCustomersData) {
-      let allCustomers = JSON.parse(allCustomersData);
-      allCustomers = allCustomers.map((cust: Customer) => 
-        cust.id === updatedCustomer.id ? updatedCustomer : cust
-      );
-      localStorage.setItem('customerData', JSON.stringify(allCustomers));
-    }
-  };
-  
-  const handleEdit = () => setIsEditMode(true);
-  
-  const handleCancel = () => {
-    if (customerData) {
-      form.setFieldsValue({
-        ...customerData,
-        Birthday: customerData.Birthday ? dayjs(customerData.Birthday) : null,
-      });
-    }
-    setIsEditMode(false);
-  };
+        if (!response.ok) {
+          throw new Error('Failed to fetch customer data');
+        }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onFinishEdit = (values: any) => {
-    if (!customerData) return;
-    const updatedData: Customer = {
-      ...customerData,
-      FirstName: values.FirstName,
-      LastName: values.LastName,
-      Email: values.Email,
-      Phone: values.Phone,
-      Birthday: values.Birthday.toISOString(),
+        const data = await response.json();
+        const mappedData: Customer = {
+          ID: data.ID,
+          FirstName: data.FirstName,
+          LastName: data.LastName,
+          Email: data.Email,
+          Phone: data.Phone,
+          Birthday: data.Birthday,
+        };
+        setCustomerData(mappedData);
+        form.setFieldsValue({
+            firstName: mappedData.FirstName,
+            lastName: mappedData.LastName,
+            email: mappedData.Email,
+            phone: mappedData.Phone,
+            birthday: dayjs(mappedData.Birthday),
+        });
+      } catch (error) {
+        console.error("Error fetching customer data:", error);
+        message.error('ไม่สามารถดึงข้อมูลลูกค้าได้');
+        logout();
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    localStorage.setItem('currentCustomer', JSON.stringify(updatedData));
-    updateMainCustomerList(updatedData); // อัปเดตข้อมูลใน Array หลัก
-    
-    setCustomerData(updatedData);
-    setIsEditMode(false);
-    message.success('บันทึกข้อมูลสำเร็จ!');
+
+    fetchCustomerData();
+  }, [user, token, form, logout]);
+
+  const handleEdit = () => {
+    setIsEditMode(true);
   };
 
-  const customInputStyle = { backgroundColor: '#363636', color: 'white', borderColor: '#f1d846ff' };
-  const customCardStyle: React.CSSProperties = { backgroundColor: '#363636', color: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)', border: '1px solid #f1d846ff' };
+  const handleCancel = () => {
+    setIsEditMode(false);
+    if (customerData) {
+        form.setFieldsValue({
+            firstName: customerData.FirstName,
+            lastName: customerData.LastName,
+            email: customerData.Email,
+            phone: customerData.Phone,
+            birthday: dayjs(customerData.Birthday),
+        });
+    }
+  };
 
-  if (!customerData) {
-    return (
-      <div style={{ padding: '50px', textAlign: 'center' }}>
-        <Typography.Title level={2} style={{color: 'white'}}>ไม่พบข้อมูลผู้ใช้</Typography.Title>
-        <Typography.Text style={{color: 'white'}}>กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</Typography.Text>
-        <br />
-        <Button style={{ marginTop: '20px', background: 'linear-gradient(45deg, #FFD700, #FFA500)', color: 'black', border: 'none' }} onClick={() => navigate('/login')}>
-          กลับไปหน้าเข้าสู่ระบบ
-        </Button>
-      </div>
-    );
-  }
+  const onFinish = async (values: any) => {
+    if (!customerData || !token) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8080/admin/customers/${customerData.ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          first_name: values.firstName,
+          last_name: values.lastName,
+          email: values.email,
+          phone: values.phone,
+          birthday: values.birthday.format('YYYY-MM-DDTHH:mm:ssZ'),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update customer data');
+      }
+
+      const updatedData = await response.json();
+      setCustomerData(updatedData);
+      setIsEditMode(false);
+      message.success('บันทึกข้อมูลสำเร็จ!');
+    } catch (error) {
+      console.error("Error updating customer data:", error);
+      message.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div style={{ padding: '24px 48px' }}>
-      <Typography.Title level={2} style={{ color: ' #FFD700', marginBottom: 24 }}>
-        {isEditMode ? "แก้ไขข้อมูลส่วนตัว" : "ข้อมูลของฉัน"}
-      </Typography.Title>
+    <div style={{ padding: '20px', backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
       <Row justify="center">
-        <Col xs={24} sm={20} md={16} lg={14}>
-          <Card style={customCardStyle}>
-            <Row gutter={[32, 24]} align="top">
-              <Col xs={24} md={8} style={{ textAlign: 'center' }}>
-                <Avatar size={128} icon={<UserOutlined />} style={{ backgroundColor: '#f1d430ff', color: 'black' }}/>
-                <h2 style={{ marginTop: '16px', color: 'white' }}>{`${customerData.FirstName} ${customerData.LastName}`}</h2>
-              </Col>
-              <Col xs={24} md={16}>
-                {isEditMode ? (
-                  <Form form={form} layout="vertical" onFinish={onFinishEdit}>
-                     <Form.Item
-        name="FirstName"
-        label={<span style={{ color: '#aaaaaa' }}>ชื่อจริง</span>}
-        rules={[
-          { required: true, message: 'กรุณากรอกชื่อจริง' },
-          {
-            validator: (_, value) => {
-              if (!value || /^[a-zA-Zก-๙\s]+$/.test(value)) {
-                return Promise.resolve();
-              }
-              return Promise.reject(new Error('กรุณากรอกเฉพาะตัวอักษรเท่านั้น!'));
-            }
-          }
-        ]}
-      >
-        <Input prefix={<UserOutlined />} style={customInputStyle} />
-      </Form.Item>
-      <Form.Item
-        name="LastName"
-        label={<span style={{ color: '#aaaaaa' }}>นามสกุล</span>}
-        rules={[
-          { required: true, message: 'กรุณากรอกนามสกุล' },
-          {
-            validator: (_, value) => {
-              if (!value || /^[a-zA-Zก-๙\s]+$/.test(value)) {
-                return Promise.resolve();
-              }
-              return Promise.reject(new Error('กรุณากรอกเฉพาะตัวอักษรเท่านั้น!'));
-            }
-          }
-        ]}
-      >
-        <Input prefix={<UserOutlined />} style={customInputStyle} />
-      </Form.Item>
-      <Form.Item
-        name="Email"
-        label={<span style={{ color: '#aaaaaa' }}>อีเมล</span>}
-        rules={[{ required: true, type: 'email', message: 'รูปแบบอีเมลไม่ถูกต้อง' }]}
-      >
-        <Input prefix={<MailOutlined />} style={customInputStyle} />
-      </Form.Item>
-      <Form.Item
-        name="Phone"
-        label={<span style={{ color: '#aaaaaa' }}>เบอร์โทรศัพท์</span>}
-        rules={[
-          { required: true, message: 'กรุณากรอกเบอร์โทรศัพท์' },
-          {
-            validator: (_, value) => {
-              if (!value || /^\d{10}$/.test(value)) {
-                return Promise.resolve();
-              }
-              return Promise.reject(new Error('กรุณากรอกเบอร์โทรศัพท์ 10 หลักให้ถูกต้อง!'));
-            }
-          }
-        ]}
-      >
-        <Input prefix={<PhoneOutlined />} style={customInputStyle} />
-      </Form.Item>
-      {/* --- ^^^^^ --- จบส่วนที่อัปเดต --- ^^^^^ --- */}
-      <Form.Item name="Birthday" label={<span style={{color: '#aaaaaa'}}>วันเกิด</span>}><DatePicker locale={locale} format="DD MMMM BBBB" style={{ width: '100%', ...customInputStyle }} /></Form.Item>
-                  </Form>
-                ) : (
-                  <Descriptions bordered column={1} size="middle" labelStyle={{backgroundColor: '#4a4a4a', color: '#aaaaaa', borderColor: '#555'}} contentStyle={{backgroundColor: '#363636', color: 'white', borderColor: '#555'}}>
-                    <Descriptions.Item label="ชื่อจริง">{customerData.FirstName}</Descriptions.Item>
-                    <Descriptions.Item label="นามสกุล">{customerData.LastName}</Descriptions.Item>
-                    <Descriptions.Item label="อีเมล">{customerData.Email}</Descriptions.Item>
-                    <Descriptions.Item label="เบอร์โทรศัพท์">{customerData.Phone}</Descriptions.Item>
-                    <Descriptions.Item label="วันเกิด">{new Date(customerData.Birthday).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</Descriptions.Item>
-                  </Descriptions>
-                )}
-              </Col>
-            </Row>
+        <Col xs={24} sm={20} md={18} lg={16} xl={12}>
+          <Card
+            bordered={false}
+            style={{ borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}
+          >
+            {loading ? (
+                <div style={{ textAlign: 'center', padding: '50px' }}>
+                    <Spin size="large" />
+                    <Title level={4} style={{ marginTop: '20px' }}>กำลังโหลดข้อมูล...</Title>
+                </div>
+            ) : (
+              <Row gutter={[16, 16]} justify="center">
+                <Col style={{ textAlign: 'center' }}>
+                  <Avatar size={128} icon={<UserOutlined />} style={{ backgroundColor: '#f1d430ff', color: 'black' }} />
+                  <Title level={3} style={{ marginTop: '16px' }}>{customerData?.FirstName} {customerData?.LastName}</Title>
+                </Col>
+                <Col xs={24}>
+                  <Divider orientation="left" style={{ borderTopColor: '#f1d430ff' }}>
+                    <Title level={5}>ข้อมูลส่วนตัว</Title>
+                  </Divider>
+                  {isEditMode ? (
+                    <Form
+                      form={form}
+                      layout="vertical"
+                      onFinish={onFinish}
+                      initialValues={customerData ? {
+                        firstName: customerData.FirstName,
+                        lastName: customerData.LastName,
+                        email: customerData.Email,
+                        phone: customerData.Phone,
+                        birthday: dayjs(customerData.Birthday),
+                      } : {}}
+                    >
+                      <Form.Item name="firstName" label="ชื่อ" rules={[{ required: true, message: 'กรุณากรอกชื่อ' }]}>
+                        <Input />
+                      </Form.Item>
+                      <Form.Item name="lastName" label="นามสกุล" rules={[{ required: true, message: 'กรุณากรอกนามสกุล' }]}>
+                        <Input />
+                      </Form.Item>
+                      <Form.Item name="email" label="อีเมล" rules={[{ required: true, message: 'กรุณากรอกอีเมล' }]}>
+                        <Input />
+                      </Form.Item>
+                      <Form.Item name="phone" label="เบอร์โทรศัพท์">
+                        <Input />
+                      </Form.Item>
+                      <Form.Item name="birthday" label="วันเกิด">
+                        <DatePicker locale={locale} format="DD MMMM YYYY" style={{ width: '100%' }} />
+                      </Form.Item>
+                    </Form>
+                  ) : (
+                    <Descriptions bordered column={1} size="middle" labelStyle={{ fontWeight: 'bold' }}>
+                      <Descriptions.Item label="ชื่อ-นามสกุล">{customerData?.FirstName} {customerData?.LastName}</Descriptions.Item>
+                      <Descriptions.Item label="อีเมล">{customerData?.Email}</Descriptions.Item>
+                      <Descriptions.Item label="เบอร์โทรศัพท์">{customerData?.Phone}</Descriptions.Item>  
+                      <Descriptions.Item label="วันเกิด">{customerData?.Birthday ? dayjs(customerData.Birthday).locale('th').format('D MMMM YYYY') : 'N/A'}</Descriptions.Item>
+                    </Descriptions>
+                  )}
+                </Col>
+              </Row>
+            )}
             <Row justify="end" style={{ marginTop: '32px' }} gutter={16}>
               {isEditMode ? (
                 <>
@@ -198,7 +204,6 @@ const CusProfilePage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Col><Button onClick={() => setIsModalVisible(true)} icon={<LockOutlined />}>เปลี่ยนรหัสผ่าน</Button></Col>
                   <Col><Button type="primary" icon={<EditOutlined />} onClick={handleEdit} style={{ background: '#f1d430ff', color: 'black', border: 'none' }}>แก้ไขข้อมูล</Button></Col>
                 </>
               )}
@@ -206,7 +211,6 @@ const CusProfilePage: React.FC = () => {
           </Card>
         </Col>
       </Row>
-      <ChangePasswordModal visible={isModalVisible} onCancel={() => setIsModalVisible(false)} onSuccess={() => setIsModalVisible(false)}/>
     </div>
   );
 };
