@@ -2,7 +2,7 @@
 export type Sex = 'male' | 'female' | 'other';
 
 export interface Employee {
-  id: number;
+  ID: number;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
