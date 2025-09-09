@@ -51,7 +51,6 @@ func (ctrl *CustomerController) GetCustomerByID(c *gin.Context) {
 	c.JSON(http.StatusOK, customer)
 }
 
-// (ใช้ในหน้าแอดมินที่ main.go ผูก)
 func (ctrl *CustomerController) GetAllCustomers(c *gin.Context) {
 	var customers []entity.Customer
 	if err := ctrl.DB.Find(&customers).Error; err != nil {

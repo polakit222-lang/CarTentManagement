@@ -3,11 +3,13 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-	"time"
-
+	//"time"
+	//"github.com/PanuAutawo/CarTentManagement/backend/configs"
+	"github.com/PanuAutawo/CarTentManagement/backend/entity"
 	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
 	"github.com/PanuAutawo/CarTentManagement/backend/services"
 	"github.com/gin-gonic/gin"
+	//"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -19,6 +21,10 @@ type EmployeeController struct {
 func NewEmployeeController(db *gorm.DB) *EmployeeController {
 	return &EmployeeController{svc: services.NewEmployeeService(db)}
 }
+
+// ===========================
+// 📌 Public Endpoints
+// ===========================
 
 // GET /employees
 func (ctl *EmployeeController) GetEmployees(c *gin.Context) {
@@ -46,6 +52,10 @@ func (ctl *EmployeeController) GetEmployeeByID(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
+// ===========================
+// 📌 Auth
+// ===========================
+
 // POST /employee/login
 func (ctl *EmployeeController) LoginEmployee(c *gin.Context) {
 	var body struct {
@@ -63,17 +73,26 @@ func (ctl *EmployeeController) LoginEmployee(c *gin.Context) {
 		return
 	}
 
+	// ✅ ใช้ middleware.GenerateToken (employeeID + role)
 	tokenStr, err := middleware.GenerateToken(emp.EmployeeID, "employee")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to sign token"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"token": tokenStr, "employee": emp})
+
+	c.JSON(http.StatusOK, gin.H{
+		"token":    tokenStr,
+		"employee": emp,
+	})
 }
 
-// GET /employees/me   (protected)
+// ===========================
+// 📌 Protected (Employee self)
+// ===========================
+
+// GET /employees/me
 func (ctl *EmployeeController) GetCurrentEmployee(c *gin.Context) {
-	val, ok := c.Get("userID")
+	val, ok := c.Get("employeeID")
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -91,9 +110,9 @@ func (ctl *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
-// PUT /employees/me   (protected)
+// PUT /employees/me
 func (ctl *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
-	val, ok := c.Get("userID")
+	val, ok := c.Get("employeeID")
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -104,52 +123,55 @@ func (ctl *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 		return
 	}
 
-	var dto struct {
-		ProfileImage *string `json:"profileImage"`
-		FirstName    *string `json:"firstName"`
-		LastName     *string `json:"lastName"`
-		Email        *string `json:"email"`
-		Phone        *string `json:"phone"`
-		Address      *string `json:"address"`
-		Birthday     *string `json:"birthday"`
-		Sex          *string `json:"sex"`
-		Position     *string `json:"position"`
-		JobType      *string `json:"jobType"`
-		TotalSales   *string `json:"totalSales"`
-	}
-	if err := c.ShouldBindJSON(&dto); err != nil {
+	var emp entity.Employee
+	if err := c.ShouldBindJSON(&emp); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	patch := map[string]any{}
-	if dto.ProfileImage != nil { patch["profileImage"] = *dto.ProfileImage }
-	if dto.FirstName != nil    { patch["firstName"] = *dto.FirstName }
-	if dto.LastName != nil     { patch["lastName"]  = *dto.LastName }
-	if dto.Email != nil        { patch["email"]     = *dto.Email }
-	if dto.Phone != nil        { patch["phone"]     = *dto.Phone }
-	if dto.Address != nil      { patch["address"]   = *dto.Address }
-	if dto.Sex != nil          { patch["sex"]       = *dto.Sex }
-	if dto.Position != nil     { patch["position"]  = *dto.Position }
-	if dto.JobType != nil      { patch["jobType"]   = *dto.JobType }
-	if dto.TotalSales != nil   { patch["totalSales"]= *dto.TotalSales }
-	if dto.Birthday != nil {
-		if t, err := time.Parse(time.RFC3339, *dto.Birthday); err == nil {
-			patch["birthday"] = t
-		} else if t2, err2 := time.Parse("2006-01-02", *dto.Birthday); err2 == nil {
-			patch["birthday"] = t2
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid birthday format"})
-			return
-		}
-	}
-
-	updated, err := ctl.svc.Update(id, patch)
+	updated, err := ctl.svc.Update(id, map[string]any{
+		"profile_image": emp.ProfileImage,
+		"first_name":    emp.FirstName,
+		"last_name":     emp.LastName,
+		"email":         emp.Email,
+		"phone":         emp.Phone,
+		"address":       emp.Address,
+		"sex":           emp.Sex,
+		"position":      emp.Position,
+		"job_type":      emp.JobType,
+		"total_sales":   emp.TotalSales,
+		"birthday":      emp.Birthday,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile", "detail": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, updated)
+}
+
+// ===========================
+// 📌 Manager actions (CRUD)
+// ===========================
+
+// POST /api/employees
+func (ctl *EmployeeController) CreateEmployee(c *gin.Context) {
+	var emp entity.Employee
+	if err := c.ShouldBindJSON(&emp); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// set default password if missing
+	if emp.Password == "" {
+		hash, _ := bcrypt.GenerateFromPassword([]byte("123456"), 10)
+		emp.Password = string(hash)
+	}
+
+	if err := ctl.svc.Create(&emp); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, emp)
 }
 
 // PUT /api/employees/:id
@@ -161,50 +183,43 @@ func (ctl *EmployeeController) UpdateEmployeeByID(c *gin.Context) {
 		return
 	}
 
-	var dto struct {
-		ProfileImage *string `json:"profileImage"`
-		FirstName    *string `json:"firstName"`
-		LastName     *string `json:"lastName"`
-		Email        *string `json:"email"`
-		Phone        *string `json:"phone"`
-		Address      *string `json:"address"`
-		Birthday     *string `json:"birthday"`
-		Sex          *string `json:"sex"`
-		Position     *string `json:"position"`
-		JobType      *string `json:"jobType"`
-		TotalSales   *string `json:"totalSales"`
-	}
-	if err := c.ShouldBindJSON(&dto); err != nil {
+	var emp entity.Employee
+	if err := c.ShouldBindJSON(&emp); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	patch := map[string]any{}
-	if dto.ProfileImage != nil { patch["profileImage"] = *dto.ProfileImage }
-	if dto.FirstName != nil    { patch["firstName"] = *dto.FirstName }
-	if dto.LastName != nil     { patch["lastName"]  = *dto.LastName }
-	if dto.Email != nil        { patch["email"]     = *dto.Email }
-	if dto.Phone != nil        { patch["phone"]     = *dto.Phone }
-	if dto.Address != nil      { patch["address"]   = *dto.Address }
-	if dto.Sex != nil          { patch["sex"]       = *dto.Sex }
-	if dto.Position != nil     { patch["position"]  = *dto.Position }
-	if dto.JobType != nil      { patch["jobType"]   = *dto.JobType }
-	if dto.TotalSales != nil   { patch["totalSales"]= *dto.TotalSales }
-	if dto.Birthday != nil {
-		if t, err := time.Parse(time.RFC3339, *dto.Birthday); err == nil {
-			patch["birthday"] = t
-		} else if t2, err2 := time.Parse("2006-01-02", *dto.Birthday); err2 == nil {
-			patch["birthday"] = t2
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid birthday format"})
-			return
-		}
-	}
-
-	updated, err := ctl.svc.Update(uint(idInt), patch)
+	updated, err := ctl.svc.Update(uint(idInt), map[string]any{
+		"profile_image": emp.ProfileImage,
+		"first_name":    emp.FirstName,
+		"last_name":     emp.LastName,
+		"email":         emp.Email,
+		"phone":         emp.Phone,
+		"address":       emp.Address,
+		"sex":           emp.Sex,
+		"position":      emp.Position,
+		"job_type":      emp.JobType,
+		"total_sales":   emp.TotalSales,
+		"birthday":      emp.Birthday,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update employee", "detail": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, updated)
+}
+
+// DELETE /api/employees/:id
+func (ctl *EmployeeController) DeleteEmployeeByID(c *gin.Context) {
+	idStr := c.Param("id")
+	idInt, err := strconv.Atoi(idStr)
+	if err != nil || idInt <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	if err := ctl.svc.Delete(uint(idInt)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete employee"})
+		return
+	}
+	c.Status(http.StatusNoContent)
 }

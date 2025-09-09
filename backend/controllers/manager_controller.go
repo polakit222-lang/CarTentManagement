@@ -3,8 +3,8 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
 	"github.com/PanuAutawo/CarTentManagement/backend/entity"
+	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -42,7 +42,6 @@ func (ctrl *ManagerController) LoginManager(c *gin.Context) {
 		return
 	}
 
-	// ✅ ใช้ middleware.GenerateToken
 	tokenString, err := middleware.GenerateToken(manager.ID, "manager")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create token"})

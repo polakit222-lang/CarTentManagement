@@ -137,13 +137,14 @@ func main() {
 	}
 
 	// Public Employee Routes
+	
 	employeePublicRoutes := r.Group("/employees")
 	{
 		employeePublicRoutes.GET("", employeeController.GetEmployees)
 		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
 	}
 
-	// Leave Routes (ตาม LeaveController)
+	// Leave & Employee Admin APIs (สำหรับหน้า Manager)
 	apiRoutes := r.Group("/api")
 	{
 		apiRoutes.GET("/leaves", leaveController.ListLeaves)
@@ -151,10 +152,11 @@ func main() {
 		apiRoutes.POST("/leaves", leaveController.CreateLeave)
 		apiRoutes.PUT("/leaves/:id/status", leaveController.UpdateLeaveStatus)
 
-		// ✅ เพิ่ม PUT ให้แก้ไขพนักงานได้
 		apiRoutes.GET("/employees", employeeController.GetEmployees)
 		apiRoutes.GET("/employees/:id", employeeController.GetEmployeeByID)
+		apiRoutes.POST("/employees", employeeController.CreateEmployee)              // เพิ่ม
 		apiRoutes.PUT("/employees/:id", employeeController.UpdateEmployeeByID)
+		apiRoutes.DELETE("/employees/:id", employeeController.DeleteEmployeeByID)    // เพิ่ม
 	}
 
 	// Admin-Only Routes

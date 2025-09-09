@@ -14,7 +14,7 @@ const isManager = (user: User): user is Manager => {
   return (user as Manager).Username !== undefined;
 };
 
-// Helper function to check if a user is an Employee based on a unique property like 'position'
+// Helper function to check if a user is an Employee based on a unique property
 const isEmployee = (user: User): user is Employee => {
   return (user as Employee).position !== undefined;
 };
@@ -25,84 +25,83 @@ const isCustomer = (user: User): user is Customer => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [customer, setCustomer] = useState<Customer | null>(null);
-    const [employee, setEmployee] = useState<Employee | null>(null);
-    const [manager, setManager] = useState<Manager | null>(null);
-    const [token, setToken] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [manager, setManager] = useState<Manager | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        try {
-            const storedToken = localStorage.getItem('token');
-            const storedCustomer = localStorage.getItem('currentCustomer');
-            const storedEmployee = localStorage.getItem('currentEmployee');
-            const storedManager = localStorage.getItem('currentManager');
+  useEffect(() => {
+    try {
+      const storedToken = localStorage.getItem('token');
+      const storedCustomer = localStorage.getItem('currentCustomer');
+      const storedEmployee = localStorage.getItem('currentEmployee');
+      const storedManager = localStorage.getItem('currentManager');
 
-            if (storedToken) setToken(storedToken);
-            if (storedCustomer) setCustomer(JSON.parse(storedCustomer));
-            if (storedEmployee) setEmployee(JSON.parse(storedEmployee));
-            if (storedManager) setManager(JSON.parse(storedManager));
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-    
-    const login = (userData: User, userToken: string) => {
-        setToken(userToken);
-        localStorage.setItem('token', userToken);
+      if (storedToken) setToken(storedToken);
+      if (storedCustomer) setCustomer(JSON.parse(storedCustomer));
+      if (storedEmployee) setEmployee(JSON.parse(storedEmployee));
+      if (storedManager) setManager(JSON.parse(storedManager));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        if (isManager(userData)) {
-            setManager(userData);
-            setEmployee(null);
-            setCustomer(null);
-            localStorage.setItem('currentManager', JSON.stringify(userData));
-            localStorage.removeItem('currentEmployee');
-            localStorage.removeItem('currentCustomer');
-        } else if (isEmployee(userData)) {
-            setEmployee(userData);
-            setCustomer(null);
-            setManager(null);
-            localStorage.setItem('currentEmployee', JSON.stringify(userData));
-            localStorage.removeItem('currentCustomer');
-            localStorage.removeItem('currentManager');
-        } else if (isCustomer(userData)) { 
-            setCustomer(userData as Customer);
-            setEmployee(null);
-            setManager(null);
-            localStorage.setItem('currentCustomer', JSON.stringify(userData));
-            localStorage.removeItem('currentEmployee');
-            localStorage.removeItem('currentManager');
-        } else {
-            console.error('Unknown user data type');
-        }
-    };
+  const login = (userData: User, userToken: string) => {
+    setToken(userToken);
+    localStorage.setItem('token', userToken);
 
-    const logout = () => {
-        setToken(null);
-        setCustomer(null);
-        setEmployee(null);
-        setManager(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('currentCustomer');
-        localStorage.removeItem('currentEmployee');
-        localStorage.removeItem('currentManager');
-    };
+    if (isManager(userData)) {
+      setManager(userData);
+      setEmployee(null);
+      setCustomer(null);
+      localStorage.setItem('currentManager', JSON.stringify(userData));
+      localStorage.removeItem('currentEmployee');
+      localStorage.removeItem('currentCustomer');
+    } else if (isEmployee(userData)) {
+      setEmployee(userData);
+      setCustomer(null);
+      setManager(null);
+      localStorage.setItem('currentEmployee', JSON.stringify(userData));
+      localStorage.removeItem('currentCustomer');
+      localStorage.removeItem('currentManager');
+    } else if (isCustomer(userData)) {
+      setCustomer(userData);
+      setEmployee(null);
+      setManager(null);
+      localStorage.setItem('currentCustomer', JSON.stringify(userData));
+      localStorage.removeItem('currentEmployee');
+      localStorage.removeItem('currentManager');
+    } else {
+      console.error('Unknown user data type');
+    }
+  };
 
-    const user = customer || employee || manager;
-    const role = manager ? 'manager' : (employee ? 'employee' : (customer ? 'customer' : null));
+  const logout = () => {
+    setToken(null);
+    setCustomer(null);
+    setEmployee(null);
+    setManager(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentCustomer');
+    localStorage.removeItem('currentEmployee');
+    localStorage.removeItem('currentManager');
+  };
 
-    const value: AuthContextType = {
-      user,
-      role: role as 'customer' | 'employee' | 'manager' | undefined | null,
-      token,
-      loading,
-      login,
-      logout,
-    };
+  const role = manager ? 'manager' : (employee ? 'employee' : (customer ? 'customer' : null));
 
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+  const value: AuthContextType = {
+    user: customer || employee || manager, // ✅ ใช้งานจริง ไม่มี warning
+    role: role as 'customer' | 'employee' | 'manager' | undefined | null,
+    token,
+    loading,
+    login,
+    logout,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

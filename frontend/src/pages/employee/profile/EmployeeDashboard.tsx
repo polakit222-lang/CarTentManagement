@@ -7,14 +7,15 @@ import LeaveHistory from "../../../components/EmployeeDashboard/LeaveHistory";
 import LeaveRequestForm from "../../../components/EmployeeDashboard/LeaveRequestForm";
 import Notification from "../../../components/common/Notification";
 
-import { fetchEmployee, updateEmployee } from "../../../services/employeeService";
+import { getMyEmployee, updateEmployee } from "../../../services/employeeService";
 import { getLeavesByEmployee, createLeave } from "../../../services/leaveService";
-import { validateAll } from "../../../utils/validation";
+import { useAuth } from "../../../hooks/useAuth";
 
 import type { Employee } from "../../../types/employee";
 import type { Leave, LeaveType } from "../../../types/leave";
 
 const EmployeeDashboard: React.FC = () => {
+  const { token } = useAuth(); // ✅ ใช้ token จาก AuthContext
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,20 +25,20 @@ const EmployeeDashboard: React.FC = () => {
   const [showLeaveForm, setShowLeaveForm] = useState(false);
   const [leaveHistory, setLeaveHistory] = useState<Leave[]>([]);
 
-  // ✅ โหลดข้อมูลพนักงาน (ใช้ employeeID = 1 เป็น default)
+  // ✅ โหลดข้อมูลพนักงานจาก token
   useEffect(() => {
+    if (!token) return;
     setLoading(true);
-    fetchEmployee(1) // ใช้ number ไม่ใช่ "001"
+    getMyEmployee(token)
       .then(data => setFormData(data))
       .catch(() => showNotification({ type: "error", message: "เกิดข้อผิดพลาดในการโหลดข้อมูล" }))
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
-  // ✅ โหลดประวัติการลาหลังจากได้ employeeID
+  // ✅ โหลดประวัติการลา
   useEffect(() => {
-    const id = formData?.employeeID; // ✅ ป้องกัน TS error
-    if (!id) return;
-    getLeavesByEmployee(id)
+    if (!formData?.employeeID) return;
+    getLeavesByEmployee(formData.employeeID)
       .then(leaves => setLeaveHistory(leaves))
       .catch(() => showNotification({ type: "error", message: "โหลดประวัติการลาไม่สำเร็จ" }));
   }, [formData?.employeeID]);
@@ -48,7 +49,7 @@ const EmployeeDashboard: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // ✅ แก้ไขฟอร์ม
+  // ✅ จัดการแก้ไขฟอร์ม
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (!formData) return;
     const { id, value } = e.target;
@@ -63,13 +64,6 @@ const EmployeeDashboard: React.FC = () => {
   // ✅ บันทึกข้อมูลพนักงาน
   const handleSave = async () => {
     if (!formData) return;
-    const validationErrors = validateAll(formData);
-    // if (Object.keys(validationErrors).length > 0) {
-    //   setErrors(validationErrors);
-    //   showNotification({ type: "error", message: "กรุณาตรวจสอบฟิลด์ที่ระบุ" });
-    //   return;
-    // }
-
     try {
       setLoading(true);
       const updated = await updateEmployee(formData);
@@ -87,11 +81,11 @@ const EmployeeDashboard: React.FC = () => {
   // ✅ ส่งคำขอลา
   const handleLeaveSubmit = async (data: { startDate: string; endDate: string; type: LeaveType }) => {
     if (!formData) return;
-    const { employeeID } = formData; // ✅ ยกออกมาเพื่อให้ TS ไม่ฟ้องแดง
+    const { employeeID } = formData;
 
     try {
       const leave = await createLeave({
-        employeeID,
+        employeeID, // ✅ ตอนนี้เป็น number แล้ว
         startDate: data.startDate,
         endDate: data.endDate,
         type: data.type,

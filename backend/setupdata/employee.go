@@ -44,7 +44,7 @@ func InsertMockEmployees(db *gorm.DB) {
 	}
 
 	for _, e := range employees {
-		// ✅ จะสร้างเฉพาะถ้าไม่เจอ email นี้
+		// จะสร้างเฉพาะถ้าไม่เจอ email นี้
 		db.FirstOrCreate(&e, entity.Employee{Email: e.Email})
 	}
 

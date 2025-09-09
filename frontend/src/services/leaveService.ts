@@ -1,32 +1,43 @@
-import axios from "axios";
-import type { Leave, LeaveStatus, LeaveType } from "../types/leave";
+import type { Leave, LeaveType } from "../types/leave";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+const API = "http://localhost:8080/api/leaves";
 
-export async function getLeavesByEmployee(employeeID: string): Promise<Leave[]> {
-  const res = await axios.get(`${API}/employees/${employeeID}/leaves`);
-  return res.data;
+// ✅ ดึงคำขอลารออนุมัติ
+export async function getPendingLeaves(): Promise<Leave[]> {
+  const res = await fetch(`${API}?status=pending`);
+  if (!res.ok) throw new Error(`getPendingLeaves failed: ${res.status}`);
+  return res.json();
 }
 
-export async function createLeave(payload: {
-  employeeID: string;
-  LeaveID: string;
+// ✅ ดึงคำขอลาทั้งหมดของพนักงาน
+export async function getLeavesByEmployee(employeeID: number): Promise<Leave[]> {
+  const res = await fetch(`${API.replace("/leaves", "")}/employees/${employeeID}/leaves`);
+  if (!res.ok) throw new Error(`getLeavesByEmployee failed: ${res.status}`);
+  return res.json();
+}
+
+// ✅ สร้างคำขอลา
+export async function createLeave(data: {
+  employeeID: number;   // ✅ เปลี่ยนจาก string → number
   startDate: string;
   endDate: string;
   type: LeaveType;
 }): Promise<Leave> {
-  const res = await axios.post(`${API}/leaves`, payload);
-  return res.data;
+  const res = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`createLeave failed: ${res.status}`);
+  return res.json();
 }
 
-export async function getPendingLeaves(): Promise<Leave[]> {
-  const res = await axios.get(`${API}/leaves?status=pending`);
-  return res.data;
-}
-
-export async function updateLeaveStatus(
-  leaveID: string,
-  status: LeaveStatus
-): Promise<void> {
-  await axios.put(`${API}/leaves/${leaveID}/status`, { status });
+// ✅ อัปเดตสถานะคำขอลา
+export async function updateLeaveStatus(leaveID: number, status: "approved" | "denied"): Promise<void> {
+  const res = await fetch(`${API}/${leaveID}/status`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) throw new Error(`updateLeaveStatus failed: ${res.status}`);
 }
