@@ -90,6 +90,7 @@ const BuyRentFillter: React.FC<Props> = ({
   const priceMinDefault = 0;
   const priceMaxDefault = 9999999;
 
+  
   const yearNumbers = carList.map((c) => Number(c.yearManufactured ?? 0)).filter((n) => !Number.isNaN(n));
   const yearMinDefault = safeMin(yearNumbers, 1990);
   const yearMaxDefault = safeMax(yearNumbers, new Date().getFullYear());
