@@ -32,6 +32,9 @@ func main() {
 
 	// 3. Create router
 	r := gin.Default()
+	// ✅ stop trusted proxies warning
+	r.SetTrustedProxies(nil)
+
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -53,7 +56,7 @@ func main() {
 	customerController := controllers.NewCustomerController(configs.DB)
 	managerController := controllers.NewManagerController(configs.DB)
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
-	leaveController := controllers.NewLeaveController(configs.DB) // ✅ เพิ่ม
+	leaveController := controllers.NewLeaveController(configs.DB)
 
 	// --- Routes ---
 
@@ -143,13 +146,18 @@ func main() {
 		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
 	}
 
-	// Leave Routes (เพิ่มตาม LeaveController)
+	// Leave + API alias Routes
 	apiRoutes := r.Group("/api")
 	{
+		// Leaves
 		apiRoutes.GET("/leaves", leaveController.ListLeaves)
 		apiRoutes.GET("/employees/:id/leaves", leaveController.ListLeavesByEmployee)
 		apiRoutes.POST("/leaves", leaveController.CreateLeave)
 		apiRoutes.PUT("/leaves/:id/status", leaveController.UpdateLeaveStatus)
+
+		// ✅ Alias ให้ /api/employees ใช้ handler เดิม
+		apiRoutes.GET("/employees", employeeController.GetEmployees)
+		apiRoutes.GET("/employees/:id", employeeController.GetEmployeeByID)
 	}
 
 	// Admin-Only Routes

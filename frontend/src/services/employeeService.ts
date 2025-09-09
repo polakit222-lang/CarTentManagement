@@ -1,26 +1,26 @@
+// src/services/employeeService.ts
 import type { Employee } from "../types/employee";
 
-export const mockEmployeeData: Employee = {
-  employeeID: "001",
-  profileImage: "",
-  firstName: "Ponlakit",
-  lastName: "S.",
-  email: "ponlakit@example.com",
-  phone: "0812345678",
-  address: "Nakhon Ratchasima, Thailand",
-  sex: "male",
-  birthday: "1995-08-20",
-  position: "Frontend Developer",
-  jobType: "Full-time",
-  totalSales: "120000",
-};
+const API = "http://localhost:8080/api/employees";
 
-export const fetchEmployee = async (): Promise<Employee> => {
-  await new Promise(res => setTimeout(res, 500));
-  return mockEmployeeData;
-};
+export async function fetchEmployee(id: number): Promise<Employee> {
+  const res = await fetch(`${API}/${id}`);
+  if (!res.ok) {
+    throw new Error(`fetchEmployee failed: ${res.status}`);
+  }
+  return res.json();
+}
 
-export const updateEmployee = async (data: Employee): Promise<Employee> => {
-  await new Promise(res => setTimeout(res, 500));
-  return data;
-};
+export async function updateEmployee(employee: Employee): Promise<Employee> {
+  const res = await fetch(`${API}/${employee.employeeID}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(employee),
+  });
+  if (!res.ok) {
+    throw new Error(`updateEmployee failed: ${res.status}`);
+  }
+  return res.json();
+}
