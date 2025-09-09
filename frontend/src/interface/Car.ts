@@ -1,68 +1,86 @@
+// interface/Car.ts
+
+// ---- Picture ----
 export interface CarPicture {
   ID: number;
-  title: string;
   path: string;
+  title: string;   // path ของรูปจาก backend
   car_id: number;
 }
-
-export type CarType = 'sale' | 'rent' | 'noUse';
-
-export interface BaseCar {
-  ID: number;
-  car_name: string;
-  purchase_date: string | null;
-  purchase_price: number;
-  year_manufacture: number;
-  mileage: number;
-  condition: string;
-  color: string;
-  pictures: CarPicture[];
-  detail?: {
-    Brand?: { brand_name: string };
-    CarModel?: { ModelName: string };
-    SubModel?: { SubModelName: string };
-  };
-}
-
-export interface SaleList {
-  car?: BaseCar | null; // เผื่อ JSON บางตัวไม่มี car
+export interface SaleInfo {
   sale_price: number;
 }
 
-export interface RentList {
-  car?: BaseCar | null;
+export interface RentInfo {
   rent_price: number;
-  rent_start_date?: string;
-  rent_end_date?: string;
+  rent_start_date: string;
+  rent_end_date: string;
+}
+// ---- Brand / Model / Submodel ----
+export interface Brand {
+  ID: number;
+  brandName: string;
 }
 
-export interface NoUseList {
-  car?: BaseCar | null;
+export interface CarModel {
+  ID: number;
+  modelName: string;
+  brandID: number;
 }
+
+export interface SubModel {
+  ID: number;
+  submodelName: string;
+  carModelID: number;
+}
+
+// ---- Province ----
+export interface Province {
+  ID: number;
+  provinceName: string;
+}
+
+// ---- Car Info ----
+export type CarType = 'sale' | 'rent' | 'noUse';
 
 export interface CarInfo {
-  type: CarType;
-  car: BaseCar;
-  sale_list?: SaleList; // optional เผื่อไม่ใช่ sale
-  rent_list?: RentList; // optional เผื่อไม่ใช่ rent
-  sale_price?: number;  // shortcut สำหรับ sale
-  rent_price?: number;  // shortcut สำหรับ rent
-  rent_start_date?: string;
-  rent_end_date?: string;
+  ID: number;
+  carName: string;
+  yearManufacture: number;
+  purchasePrice: number;
+  startUseDate: string; // ISO string
+  color: string;
+
+  // optional relations
+  brand?: Brand;
+  model?: CarModel;
+  submodel?: SubModel;
+  province?: Province;
+  pictures?: CarPicture[];
+
+  // field เพิ่มเติม
+  mileage?: number;
+  condition?: string;
+  type?: CarType;
+
+  sale_list?: SaleInfo[];
+  rent_list?: RentInfo[];
 }
 
+// ---- Filter ----
 export interface FilterValues {
   type?: CarType;
   priceRange?: [number, number];
-  ageRange?: [number, number];
+  ageRange?: [number, number]; // ใช้ yearManufacture หรือ startUseDate
   mileageMax?: number;
   conditions?: string[];
   brand?: string;
   model?: string;
   subModel?: string;
+  province?: string;
 }
 
-// Sort option สำหรับ Sorter
+// ---- Sort ----
 export type SortOption =
   | 'priceAsc'
   | 'priceDesc'
@@ -71,3 +89,10 @@ export type SortOption =
   | 'condition'
   | 'yearUsedAsc'
   | 'yearUsedDesc';
+
+export type SortField = 'condition' | 'price' | 'mileage' | 'year';
+
+export interface SortConfig {
+  fields: SortField[];            // ลำดับ priority ของการ sort
+  orders?: ('asc' | 'desc')[];   // order ของแต่ละ field, default เป็น asc
+}

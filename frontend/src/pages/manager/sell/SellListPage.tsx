@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import CarGrid from '../../../components/CarGrid';
-import Filter from '../../../components/Filter/Filter';
+import Filter from '../../../components/Filter';
 import Sorter, { type SortOption } from '../../../components/Sorter';
 import { Button } from 'antd';
 import { Link } from 'react-router-dom';
-import type { CarInfo, FilterValues} from '../../../interface/Car';
+import type { CarInfo, FilterValues } from '../../../interface/Car';
 
 const conditionOrder = ['ดี', 'ปานกลาง', 'แย่'];
 
@@ -15,7 +15,6 @@ const SellListPage: React.FC = () => {
   const [sortOption, setSortOption] = useState<SortOption | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
-  // ดึงข้อมูลจาก API จริง
   useEffect(() => {
     axios.get<CarInfo[]>('http://localhost:8080/cars/filter?type=sale')
       .then(res => setCarList(res.data))
@@ -28,12 +27,8 @@ const SellListPage: React.FC = () => {
     return new Date().getFullYear() - new Date(purchase_date).getFullYear();
   };
 
-  // Filter & Sort
   const filteredCars = useMemo(() => {
-    let result = carList;
-
-    // Filter
-    result = result.filter(c => {
+    let result = carList.filter(c => {
       const car = c.car;
       if (filters.brand && car.detail?.Brand?.brand_name !== filters.brand) return false;
       if (filters.model && car.detail?.CarModel?.ModelName !== filters.model) return false;
@@ -43,15 +38,9 @@ const SellListPage: React.FC = () => {
         if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
       }
       if (filters.mileageMax && car.mileage > filters.mileageMax) return false;
-      if (filters.ageRange && car.purchase_date) {
-        const age = getCarAge(car.purchase_date);
-        if (age < filters.ageRange[0] || age > filters.ageRange[1]) return false;
-      }
-      if (filters.conditions && !filters.conditions.includes(car.condition)) return false;
       return true;
     });
 
-    // Sort
     if (sortOption) {
       result = [...result].sort((a, b) => {
         const carA = a.car;
@@ -62,8 +51,6 @@ const SellListPage: React.FC = () => {
           case 'mileageAsc': return (carA.mileage ?? 0) - (carB.mileage ?? 0);
           case 'mileageDesc': return (carB.mileage ?? 0) - (carA.mileage ?? 0);
           case 'condition': return conditionOrder.indexOf(carA.condition) - conditionOrder.indexOf(carB.condition);
-          case 'yearUsedAsc': return getCarAge(carA.purchase_date) - getCarAge(carB.purchase_date);
-          case 'yearUsedDesc': return getCarAge(carB.purchase_date) - getCarAge(carA.purchase_date);
           default: return 0;
         }
       });
@@ -76,11 +63,7 @@ const SellListPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', width: '100%', marginTop: 5, padding: 10 }}>
-      <Filter
-        cars={carList}
-        onApply={setFilters}
-        onClear={() => setFilters({})}
-      />
+      <Filter cars={carList} onApply={setFilters} onClear={() => setFilters({})} />
       <div style={{ marginLeft: 280, marginTop: 45, width: '100%' }}>
         <div style={{
           height: 80,
@@ -100,10 +83,7 @@ const SellListPage: React.FC = () => {
           </Link>
         </div>
         <div style={{ paddingTop: 80, paddingLeft: 30 }}>
-          <CarGrid
-            cars={filteredCars} // ส่งเฉพาะ BaseCar
-            type="sale"
-          />
+          <CarGrid cars={filteredCars} type="sale" />
         </div>
       </div>
     </div>

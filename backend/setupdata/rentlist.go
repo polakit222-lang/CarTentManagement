@@ -39,7 +39,7 @@ func InsertMockRentList(db *gorm.DB) {
 	rand.Seed(time.Now().UnixNano())
 
 	// จำกัดสูงสุด 20 คัน
-	limit := 20
+	limit := 10
 	if len(cars) < limit {
 		limit = len(cars)
 	}

@@ -18,7 +18,7 @@ type Car struct {
 
 	Pictures []CarPicture `gorm:"foreignKey:CarID" json:"pictures"`
 
-	ProvinceID uint      `json:"province_id"`
+	ProvinceID uint      `gorm:"column:province_id" json:"province_id"`
 	Province   *Province `gorm:"foreignKey:ProvinceID" json:"province"`
 
 	EmployeeID uint

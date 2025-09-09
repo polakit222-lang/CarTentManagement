@@ -3,7 +3,7 @@ import { carList } from '../../../data/carList';
 import CarGrid from '../../../components/CarGrid';
 import { carRentList } from '../../../data/carRentList';
 // FIX: Import 'FilterValues' type
-import Filter, { type FilterValues } from '../../../components/Filter/Filter';
+import Filter, { type FilterValues } from '../../../components/Filter';
 import { Button } from 'antd';
 import { Link } from 'react-router-dom';
 // FIX: Import 'SortOption' type

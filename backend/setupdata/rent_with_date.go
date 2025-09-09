@@ -34,7 +34,7 @@ func InsertMockRentListWithDates(db *gorm.DB) {
 
 	rand.Seed(time.Now().UnixNano())
 
-	limit := 20
+	limit := 10
 	if len(cars) < limit {
 		limit = len(cars)
 	}

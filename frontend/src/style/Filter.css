@@ -1,84 +1,73 @@
-/* Sidebar */
+/* Filter.css */
+
+/* Sidebar filter */
 .filter-sidebar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 300px;
-  height: 100vh;
-  background: #111; /* พื้นหลังดำ */
+  width: 280px;
+  height: 100%;
   padding: 20px;
-  box-shadow: 3px 0 15px rgba(0, 0, 0, 0.8);
-  z-index: 1000;
+  background-color: #000000; /* พื้นหลังดำ */
   overflow-y: auto;
-  margin-top: 53px;
+  z-index: 1000;
+  margin-top: 70px;
 }
 
-/* Card */
+/* Card ของ Filter เป็นสีเหลือง ตัวหนังสือขาว */
 .filter-sidebar .ant-card {
-  background: #1a1a1a;
-  border: 1px solid #d4af37; /* ทอง */
-  border-radius: 12px;
-  color: #fff;
+  background-color: transparent; /* เหลืองทอง */
+  color: #fffb0a; /* ตัวอักษรขาว */
+  border-radius: 8px;
+  border-color: #FFD700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
-.filter-sidebar .ant-card-head-title {
-  color: #d4af37; /* ทอง */
-  font-weight: bold;
-  text-transform: uppercase;
-}
+/* ตัวหนังสือใน Card เป็นขาว */
 
-/* Label */
-.filter-sidebar label {
-  color: #f5f5f5;
-  font-weight: 500;
-  margin-bottom: 6px;
-  display: block;
-}
-
-/* Select, InputNumber */
+.filter-sidebar .ant-card-body,
 .filter-sidebar .ant-select-selector,
-.filter-sidebar .ant-input-number {
-  background: #222 !important;
-  border: 1px solid #444 !important;
-  border-radius: 8px !important;
-  color: #fff !important;
+.filter-sidebar .ant-input-number,
+.filter-sidebar .ant-btn,
+.filter-sidebar .ant-select-selection-item {
+  color: #000000 !important;
 }
 
-.filter-sidebar .ant-select-arrow {
-  color: #d4af37 !important;
-}
 
-.filter-sidebar .ant-input-number-input {
-  color: #fff !important;
-}
-
-/* Placeholder */
-.filter-sidebar .ant-select-selection-placeholder,
-.filter-sidebar .ant-input-number-input::placeholder {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-/* Buttons */
-.filter-sidebar .ant-btn-primary {
-  background: linear-gradient(135deg, #d4af37, #b8860b);
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  color: #111;
-  transition: 0.3s;
-}
-
-.filter-sidebar .ant-btn-primary:hover {
-  background: linear-gradient(135deg, #ffd700, #d4af37);
-  color: #000;
-}
-
+/* spacing สำหรับ Select/Input/Buttons */
+.filter-sidebar .ant-select,
+.filter-sidebar .ant-input-number,
 .filter-sidebar .ant-btn {
-  border-radius: 10px;
-  font-weight: 500;
+  width: 100%;
+  margin-bottom: 10px;
+  
 }
-.filter-card .filter-title {
-  color: #d4af37 !important; /* ทอง */
-  font-weight: bold;
-  margin: 0;
+
+/* ปุ่ม toggle (ถ้ามี) */
+.filter-toggle-btn {
+  display: none; /* ซ่อนปุ่มแล้วเพราะ fix Sidebar */
+}
+
+/* Scrollbar โทนทอง */
+.filter-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-sidebar::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+.filter-sidebar::-webkit-scrollbar-thumb {
+  background-color: #FFD700;
+  border-radius: 3px;
+}
+/* กล่อง Filter */
+.filter-card {
+  background-color: #FFD700; /* สีเหลือง */
+  color: white;
+}
+
+/* เปลี่ยนสีหัว Filter */
+.filter-title {
+  color: #FFD700 !important;
 }
