@@ -185,7 +185,7 @@ const CusProfilePage: React.FC = () => {
                         <Input />
                       </Form.Item>
                       <Form.Item name="birthday" label="วันเกิด">
-                        <DatePicker locale={locale} format="DD MMMM YYYY" style={{ width: '100%' }} />
+                        <DatePicker locale={locale} format="DD MMMM BBBB" style={{ width: '100%' }} />
                       </Form.Item>
                     </Form>
                   ) : (
