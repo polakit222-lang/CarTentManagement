@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"fmt"
+	"fmt"      // ✅ ใช้ใน fmt.Errorf
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
+	//"github.com/PanuAutawo/CarTentManagement/backend/configs"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -56,6 +56,7 @@ func CustomerAuthMiddleware() gin.HandlerFunc {
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				// ✅ ใช้ fmt.Errorf ดังนั้น import fmt ไม่ unused
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return hmacSampleSecret, nil
@@ -94,6 +95,7 @@ func EmployeeAuthMiddleware() gin.HandlerFunc {
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				// ✅ ใช้ fmt.Errorf เช่นกัน
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return hmacSampleSecret, nil
