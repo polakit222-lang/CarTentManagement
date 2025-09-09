@@ -20,6 +20,7 @@ dayjs.locale('th');
 
 const { Title, Text } = Typography;
 
+// --- Interfaces ---
 interface Employee {
   ID: number;
   first_name: string;
@@ -63,6 +64,16 @@ interface PickupDeliveryForEdit {
     SubDistrict?: SubDistrict;
 }
 
+interface DistrictFromAPI {
+  ID: number;
+  DistrictName: string;
+}
+interface SubDistrictFromAPI {
+  ID: number;
+  SubDistrictName: string;
+}
+
+
 const PickupCarCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -86,6 +97,9 @@ const PickupCarCreatePage: React.FC = () => {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [selectedSubdistrict, setSelectedSubdistrict] = useState<string | null>(null);
+
+  const [districtsFromApi, setDistrictsFromApi] = useState<DistrictFromAPI[]>([]);
+  const [subDistrictsFromApi, setSubDistrictsFromApi] = useState<SubDistrictFromAPI[]>([]);
 
   const inputStyle = {
     backgroundColor: '#4A4A4A',
@@ -224,6 +238,56 @@ const PickupCarCreatePage: React.FC = () => {
   }, [selectedDate, editingId]);
 
 
+  useEffect(() => {
+    if (selectedMethodId === 2) {
+      setSelectedDistrict(null);
+      setSelectedSubdistrict(null);
+      setSubDistrictsFromApi([]);
+      
+      setSelectedProvince("Bangkok");
+      const fetchBangkokDistricts = async () => {
+        try {
+            const response = await fetch('http://localhost:8080/districts/by-province/1');
+            if (!response.ok) throw new Error('Failed to fetch districts');
+            const data = await response.json();
+            setDistrictsFromApi(data || []);
+        } catch (error) {
+            console.error(error);
+            message.error("ไม่สามารถดึงข้อมูลอำเภอของกรุงเทพมหานครได้");
+        }
+      };
+      fetchBangkokDistricts();
+    } else {
+      setSelectedProvince(null);
+      setSelectedDistrict(null);
+      setSelectedSubdistrict(null);
+      setDistrictsFromApi([]);
+      setSubDistrictsFromApi([]);
+    }
+  }, [selectedMethodId]);
+
+  useEffect(() => {
+    if (selectedDistrict && selectedMethodId === 2) {
+        const district = districtsFromApi.find(d => d.DistrictName === selectedDistrict);
+        if (district) {
+            setSelectedSubdistrict(null);
+            const fetchSubDistricts = async () => {
+                try {
+                    const response = await fetch(`http://localhost:8080/sub-districts/by-district/${district.ID}`);
+                    if (!response.ok) throw new Error('Failed to fetch sub-districts');
+                    const data = await response.json();
+                    setSubDistrictsFromApi(data || []);
+                } catch (error) {
+                    console.error(error);
+                    message.error("ไม่สามารถดึงข้อมูลตำบลได้");
+                }
+            };
+            fetchSubDistricts();
+        }
+    }
+  }, [selectedDistrict, selectedMethodId, districtsFromApi]);
+
+
   const handleSave = async () => {
     if (!customerId) {
         message.error("ข้อมูลผู้ใช้ไม่ถูกต้อง กรุณาลองเข้าสู่ระบบใหม่อีกครั้ง");
@@ -296,28 +360,32 @@ const PickupCarCreatePage: React.FC = () => {
     );
   }
 
-  // --- vvvvv --- เพิ่ม CSS สำหรับ Placeholder --- vvvvv ---
   const customCss = `
     .ant-select-selection-placeholder {
-        color: #a9a9a9 !important; /* สีเทาเข้ม */
+        color: #a9a9a9 !important;
     }
     .ant-input::placeholder {
-        color: #a9a9a9 !important; /* สีเทาเข้ม */
+        color: #a9a9a9 !important;
     }
   `;
-  // --- ^^^^^ --- จบส่วนที่เพิ่ม --- ^^^^^ ---
 
   return (
     <div style={{ padding: '24px 48px' }}>
-      {/* --- vvvvv --- เพิ่ม Tag Style เพื่อให้ CSS ทำงาน --- vvvvv --- */}
       <style>{customCss}</style>
        <style>{`
         .ant-select-selection-item {
           color: #FFFFFF !important;
         }
-        
+        .custom-dropdown-theme .ant-select-item-option-content {
+          color: #FFFFFF; 
+        }
+        .custom-dropdown-theme .ant-select-item-option-active .ant-select-item-option-content {
+           color: #FFFFFF; 
+        }
+        .custom-dropdown-theme .ant-select-item-option-selected .ant-select-item-option-content {
+          color: #FFFFFF;
+        }
       `}</style>
-      {/* --- ^^^^^ --- จบส่วนที่เพิ่ม --- ^^^^^ --- */}
       <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
         <Row justify="center">
           <Col xs={24} sm={22} md={20} lg={18} xl={16}>
@@ -365,17 +433,35 @@ const PickupCarCreatePage: React.FC = () => {
                 <Row gutter={[16, 16]}>
                   {timeOptions.map((time, index) => {
                     const isBooked = bookedTimeSlots.includes(time);
+                    
+                    // --- vvvvv --- START: โค้ดเงื่อนไขเวลาที่ถูกต้อง --- vvvvv ---
+                    let isTimeDisabled = false;
+                    const now = dayjs();
+                    if (selectedDate && selectedDate.isSame(now, 'day')) {
+                      if (now.hour() >= 12) {
+                        isTimeDisabled = true;
+                      } else {
+                        const [hour, minute] = time.split(':').map(Number);
+                        const timeSlotForToday = now.hour(hour).minute(minute);
+                        if (now.isAfter(timeSlotForToday)) {
+                          isTimeDisabled = true;
+                        }
+                      }
+                    }
+                    const isDisabled = isBooked || isTimeDisabled;
+                    // --- ^^^^^ --- END: จบส่วนที่ถูกต้อง --- ^^^^^ ---
+
                     return (
                       <Col xs={12} sm={8} md={6} key={index}>
                         <Button
-                          disabled={isBooked}
+                          disabled={isDisabled}
                           style={{
                             width: '100%',
                             height: '50px',
                             background: selectedTime === time ? '#f1d430ff' : 'transparent',
-                            color: selectedTime === time ? 'black' : isBooked ? '#888' : 'white',
-                            borderColor: selectedTime === time ? '#f1d430ff' : isBooked ? '#555' : '#ddd',
-                            cursor: isBooked ? 'not-allowed' : 'pointer',
+                            color: selectedTime === time ? 'black' : (isDisabled) ? '#888' : 'white',
+                            borderColor: selectedTime === time ? '#f1d430ff' : (isDisabled) ? '#555' : '#ddd',
+                            cursor: (isDisabled) ? 'not-allowed' : 'pointer',
                           }}
                           onClick={() => setSelectedTime(time)}
                         >
@@ -397,17 +483,49 @@ const PickupCarCreatePage: React.FC = () => {
 
                   <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>จังหวัด</Text></Col>
                   <Col xs={24} sm={16}>
-                    <Select showSearch placeholder="เลือกจังหวัด" value={selectedProvince} style={{ width: '100%' }} onChange={setSelectedProvince} options={provinces.map(p => ({ value: p.name_th, label: p.name_th }))} />
+                    <Select 
+                      placeholder="เลือกจังหวัด" 
+                      value={selectedProvince} 
+                      style={{ width: '100%' }} 
+                      disabled={selectedMethodId === 2}
+                      options={selectedMethodId === 2 
+                                ? [{ value: 'Bangkok', label: 'กรุงเทพมหานคร' }]
+                                : provinces.map(p => ({ value: p.name_th, label: p.name_th }))
+                              }
+                      onChange={setSelectedProvince}
+                    />
                   </Col>
 
                   <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>อำเภอ/เขต</Text></Col>
                   <Col xs={24} sm={16}>
-                    <Select showSearch placeholder="เลือกอำเภอ/เขต" value={selectedDistrict} style={{ width: '100%' }} onChange={setSelectedDistrict} disabled={!selectedProvince} options={districtOptions} />
+                    <Select 
+                      showSearch 
+                      placeholder="เลือกอำเภอ/เขต" 
+                      value={selectedDistrict} 
+                      style={{ width: '100%' }} 
+                      onChange={setSelectedDistrict} 
+                      disabled={!selectedProvince} 
+                      options={selectedMethodId === 2
+                                ? districtsFromApi.map(d => ({ value: d.DistrictName, label: d.DistrictName }))
+                                : districtOptions
+                              }
+                    />
                   </Col>
 
                   <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>ตำบล/แขวง</Text></Col>
                   <Col xs={24} sm={16}>
-                    <Select showSearch placeholder="เลือกตำบล/แขวง" value={selectedSubdistrict} style={{ width: '100%' }} onChange={setSelectedSubdistrict} disabled={!selectedDistrict} options={subdistrictOptions} />
+                    <Select 
+                      showSearch 
+                      placeholder="เลือกตำบล/แขวง" 
+                      value={selectedSubdistrict} 
+                      style={{ width: '100%' }} 
+                      onChange={setSelectedSubdistrict} 
+                      disabled={!selectedDistrict} 
+                       options={selectedMethodId === 2
+                                ? subDistrictsFromApi.map(s => ({ value: s.SubDistrictName, label: s.SubDistrictName }))
+                                : subdistrictOptions
+                              }
+                    />
                   </Col>
                 </Row>
               </>
