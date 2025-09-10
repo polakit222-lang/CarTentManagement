@@ -14,24 +14,14 @@ type Employee struct {
 	Birthday     time.Time `json:"birthday"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
-<<<<<<< HEAD
-	Jobtype      string    `json:"jobtype"`
-	TotalSales   string    `json:"total_sales"`
-=======
 	JobType      string    `json:"jobType"`
 	TotalSales   string    `json:"totalSales"`
->>>>>>> upstream/main
+
 
 	// ❌ ไม่เก็บใน DB แต่ส่งไป frontend ได้
 	LeaveRequests  []LeaveRequest   `json:"leaves" gorm:"-"`
 	PickupDelivery []PickupDelivery `gorm:"foreignKey:EmployeeID"`
 	Car            []Car            `gorm:"foreignKey:EmployeeID"`
-<<<<<<< HEAD
-	SaleList      []SaleList      `gorm:"foreignKey:EmployeeID"`
-	SalesContract []SalesContract `gorm:"foreignKey:EmployeeID"`
-	LeaveRequest  []LeaveRequest  `gorm:"foreignKey:EmployeeID"`
-=======
 	SaleList       []SaleList       `gorm:"foreignKey:EmployeeID"`
 	SalesContract  []SalesContract  `gorm:"foreignKey:EmployeeID"`
->>>>>>> upstream/main
 }
