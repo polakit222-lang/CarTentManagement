@@ -27,7 +27,6 @@ func InsertMockEmployees(db *gorm.DB) {
 			Birthday:     time.Date(1990, 5, 10, 0, 0, 0, 0, time.UTC),
 			Sex:          "Male",
 			Position:     "Sales",
-			Jobtype:      time.Now(),
 		},
 		{
 			ProfileImage: "employee2.jpg",
@@ -40,7 +39,6 @@ func InsertMockEmployees(db *gorm.DB) {
 			Birthday:     time.Date(1995, 11, 20, 0, 0, 0, 0, time.UTC),
 			Sex:          "Female",
 			Position:     "Programmer",
-			Jobtype:      time.Now(),
 		},
 	}
 

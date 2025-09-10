@@ -1,107 +1,75 @@
-import { useParams, useNavigate } from "react-router-dom";
-import CarGrid from "../../../components/CarGrid";
-import { carList } from "../../../data/carList";
-import "../../../style/CreateSellCarPage.css";
-import RentDateRange from "../../../components/RentDateRange";
-import { carRentList } from "../../../data/carRentList"; // 👈 1. Import carRentList
-import {
-  Button,
-  Form,
-  Input,
-} from 'antd';
-import "../../../style/CreateRentCar.css";
+import React, { useEffect, useState } from 'react';
+import { fetchRentPeriods } from '../../services/rentService';
+import RentPeriodInput from '../../../components/RentPeriodInput';
+import type { RentPeriod, RentListRequest } from '../../../services/rentService';
+import type { CarInfo } from '../../../interface/Car';
 
-const formItemLayout = {
-  labelCol: {
-    xs: { span: 24 },
-    sm: { span: 6 },
-  },
-  wrapperCol: {
-    xs: { span: 24 },
-    sm: { span: 30 },
-  },
-};
+const CreateRentCarPage: React.FC = () => {
+  const [carList, setCarList] = useState<CarInfo[]>([]);
+  const [selectedCar, setSelectedCar] = useState<CarInfo | null>(null);
+  const [periods, setPeriods] = useState<RentPeriod[]>([]);
 
-function CreateRentCarPage() {
-  const { id } = useParams();
-  const navigate = useNavigate(); // 👈 2. เรียกใช้ useNavigate hook
-  const [form] = Form.useForm();
-  const variant = Form.useWatch('variant', form);
+  useEffect(() => {
+    // ดึง list รถทั้งหมดจาก backend
+    fetchCars().then(setCarList); // fetchCars อยู่ใน carService
+  }, []);
 
-  const car = carList.find(c => c.id === Number(id));
+  useEffect(() => {
+    if (selectedCar) {
+      // ถ้ามีรถที่เลือก ให้ตั้ง periods เริ่มต้นจาก rent_list ของรถ
+      setPeriods(selectedCar.rent_list?.map(r => ({
+        start_date: r.rent_start_date,
+        end_date: r.rent_end_date,
+        price: r.rent_price
+      })) || []);
+    } else {
+      setPeriods([]);
+    }
+  }, [selectedCar]);
 
-  if (!car) {
-    return <div>ไม่พบรถที่ต้องการ</div>;
-  }
+  const handleSubmit = () => {
+    if (!selectedCar) return;
 
-  // 👇 3. สร้างฟังก์ชันสำหรับ handle การ submit
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleFormSubmit = (values: any) => {
-    // สร้างข้อมูลการเช่าใหม่
-    const newRentEntry = {
-      id: Number(id), // ID ของรถที่เลือก
-      description: values.TextArea, // คำอธิบายจากฟอร์ม
-      periods: values.rentPeriods, // ช่วงเวลาและราคาที่เช่า
+    const request: RentListRequest = {
+      carID: selectedCar.ID,
+      periods: periods
     };
 
-    // เพิ่มข้อมูลใหม่ลงใน carRentList (ในการใช้งานจริง ส่วนนี้จะเป็นการส่งข้อมูลไปที่ API)
-    carRentList.push(newRentEntry);
-
-    console.log("Form submitted:", values);
-    console.log("New rent entry added:", newRentEntry);
-    console.log("Updated carRentList:", carRentList);
-
-    // หลังจากบันทึกเสร็จ ให้ redirect กลับไปที่หน้ารายการเช่า
-    navigate('/rent');
+    // call API เพื่อบันทึก rent periods ของรถ
+    saveRentList(request)
+      .then(() => alert('Saved successfully'))
+      .catch(err => console.error(err));
   };
 
   return (
-    <>
-      <div className="rent-page-root" style={{  minHeight: '110vh' }}>
-        <h1 style={{ marginTop: 90, marginLeft: 30 }}>กรอกข้อมูลการเช่าเพิ่มเติม</h1>
-        <div style={{ display: "flex", paddingRight: 10, paddingLeft: 10, width: '100%' }}>
-          <div style={{ marginTop: 20 }}>
-            <div className="showCar">
-              <CarGrid cars={[car]} />
-            </div>
-          </div>
-          <div style={{ marginLeft: 150, width: '100%', marginTop: 40 }}>
-            <Form
-              {...formItemLayout}
-              form={form}
-              variant={variant || "outlined"}
-              style={{ maxWidth: 500 }}
-              initialValues={{ variant: "outlined" }}
-              onFinish={handleFormSubmit} // 👈 4. เรียกใช้ฟังก์ชันที่สร้างขึ้น
-            >
-              <Form.Item
-                name="TextArea"
-                rules={[{ required: true, message: "โปรดป้อนคำอธิบาย" }]}
-              >
-                <Input.TextArea
-                  placeholder="กรอกคำอธิบายเพิ่มเติม..."
-                  size="large"
-                />
-              </Form.Item>
+    <div>
+      <h2>Create Rent Car</h2>
 
-              <Form.Item
-                name="rentPeriods"
-                valuePropName="value"
-              >
-                <RentDateRange />
-              </Form.Item>
+      <select
+        value={selectedCar?.ID || ''}
+        onChange={e => {
+          const car = carList.find(c => c.ID === Number(e.target.value)) || null;
+          setSelectedCar(car);
+        }}
+      >
+        <option value="">-- Select Car --</option>
+        {carList.map(car => (
+          <option key={car.ID} value={car.ID}>
+            {car.carName} ({car.yearManufacture})
+          </option>
+        ))}
+      </select>
 
-              <Form.Item wrapperCol={{ offset: 6, span: 16 }}>
-                <Button type="primary" htmlType="submit" size="large">
-                  Submit
-                </Button>
-              </Form.Item>
-            </Form>
-          </div>
+      {selectedCar && (
+        <div style={{ marginTop: 16 }}>
+          <RentPeriodInput periods={periods} setPeriods={setPeriods} />
+          <button onClick={handleSubmit} style={{ marginTop: 16 }}>
+            Save Rent Periods
+          </button>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
-}
+};
 
 export default CreateRentCarPage;

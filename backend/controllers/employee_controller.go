@@ -16,7 +16,7 @@ type EmployeeController struct {
 	DB *gorm.DB
 }
 
-// สร้าง Struct ใหม่สำหรับ Response ให้ตรงกับ entity.Employee และใช้ snake_case สำหรับ JSON
+// Struct สำหรับ Response
 type EmployeeResponse struct {
 	ID           uint      `json:"id"`
 	CreatedAt    time.Time `json:"createdAt"`
@@ -28,9 +28,9 @@ type EmployeeResponse struct {
 	PhoneNumber  string    `json:"phone_number"`
 	Address      string    `json:"address"`
 	Birthday     time.Time `json:"start_date"`
+	Birthday     time.Time `json:"birthday"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
-	Jobtype      time.Time `json:"jobtype"`
 }
 
 func NewEmployeeController(db *gorm.DB) *EmployeeController {
@@ -72,7 +72,6 @@ func (e *EmployeeController) LoginEmployee(c *gin.Context) {
 		return
 	}
 
-	// สร้าง response struct จาก entity
 	response := EmployeeResponse{
 		ID:           employee.ID,
 		CreatedAt:    employee.CreatedAt,
@@ -86,7 +85,6 @@ func (e *EmployeeController) LoginEmployee(c *gin.Context) {
 		Birthday:     employee.Birthday,
 		Sex:          employee.Sex,
 		Position:     employee.Position,
-		Jobtype:      employee.Jobtype,
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -96,7 +94,6 @@ func (e *EmployeeController) LoginEmployee(c *gin.Context) {
 	})
 }
 
-// GET /employees/me (Protected)
 func (e *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 	employeeID, exists := c.Get("userID")
 	if !exists {
@@ -110,7 +107,6 @@ func (e *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 		return
 	}
 
-	// แปลงข้อมูลเป็น Response Struct ใหม่ (ซึ่งตอนนี้เป็น snake_case แล้ว)
 	response := EmployeeResponse{
 		ID:           employee.ID,
 		CreatedAt:    employee.CreatedAt,
@@ -124,12 +120,11 @@ func (e *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 		Birthday:     employee.Birthday,
 		Sex:          employee.Sex,
 		Position:     employee.Position,
-		Jobtype:      employee.Jobtype,
 	}
 	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
-// PUT /employees/me (Protected)
+// PUT /employees/me
 func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 	employeeID, exists := c.Get("userID")
 	if !exists {
@@ -149,10 +144,9 @@ func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 		LastName     string `json:"last_name"`
 		PhoneNumber  string `json:"phone_number"`
 		Address      string `json:"address"`
-		Birthday     string `json:"start_date"`
+		Birthday     string `json:"birthday"`
 		Sex          string `json:"sex"`
 		Position     string `json:"position"`
-		Jobtype      string `json:"jobtype"`
 	}
 
 	if err := c.ShouldBindJSON(&updatedInfo); err != nil {
@@ -167,13 +161,13 @@ func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 	employee.Address = updatedInfo.Address
 	employee.Sex = updatedInfo.Sex
 	employee.Position = updatedInfo.Position
+	employee.JobType = updatedInfo.JobType
 
 	if err := e.DB.Save(&employee).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update employee data"})
 		return
 	}
 
-	// แปลงข้อมูลที่อัปเดตแล้วเป็น Response Struct ใหม่
 	response := EmployeeResponse{
 		ID:           employee.ID,
 		CreatedAt:    employee.CreatedAt,
@@ -187,7 +181,6 @@ func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 		Birthday:     employee.Birthday,
 		Sex:          employee.Sex,
 		Position:     employee.Position,
-		Jobtype:      employee.Jobtype,
 	}
 	c.JSON(http.StatusOK, gin.H{"data": response})
 }

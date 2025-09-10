@@ -53,6 +53,7 @@ func main() {
 	customerController := controllers.NewCustomerController(configs.DB)
 	managerController := controllers.NewManagerController(configs.DB)
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
+	rentListController := controllers.NewRentListController(configs.DB)
 
 	// --- Routes ---
 
@@ -146,6 +147,12 @@ func main() {
 		adminCustomerRoutes.PUT("/:id", customerController.UpdateCustomer)
 		adminCustomerRoutes.DELETE("/:id", customerController.DeleteCustomer)
 	}
+
+	r.POST("/api/rentlists", rentListController.CreateRentList)
+	r.GET("/api/rentlists", rentListController.GetAllRentLists)
+	r.GET("/api/rentlists/:id", rentListController.GetRentListByID)
+	r.PUT("/api/rentlists/:id", rentListController.UpdateRentList)
+	r.DELETE("/api/rentlists/:id", rentListController.DeleteRentList)
 
 	// Start server
 	if err := r.Run(":8080"); err != nil {
