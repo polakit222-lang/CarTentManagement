@@ -9,6 +9,7 @@ import (
 	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
 	"github.com/PanuAutawo/CarTentManagement/backend/setupdata"
 	"github.com/gin-contrib/cors"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,7 +23,6 @@ func main() {
 	setupdata.InsertProvinces(configs.DB)
 	setupdata.InsertHardcodedAddressData(configs.DB)
 	setupdata.InsertCarsFromCSV(configs.DB, "car_full_data.csv")
-	setupdata.InsertMockPictures(configs.DB)
 	setupdata.InsertMockSaleList(configs.DB)
 	setupdata.InsertMockRentListWithDates(configs.DB)
 	setupdata.InsertCarSystems(configs.DB)
@@ -63,12 +63,8 @@ func main() {
 	r.POST("/manager/login", managerController.LoginManager)
 
 	// Car Routes
-	carRoutes := r.Group("/cars")
-	{
-		carRoutes.GET("", carController.GetCars)
-		carRoutes.GET("/:id", carController.GetCarByID)
-	}
-
+	r.GET("/cars", carController.GetAllCars)
+	r.Static("/images/cars", "./public/images/cars")
 	// Address Routes
 	provinceRoutes := r.Group("/provinces")
 	{
@@ -143,7 +139,6 @@ func main() {
 	}
 
 	// Admin-Only Routes
-	
 
 	adminCustomerRoutes := r.Group("/admin/customers")
 	{

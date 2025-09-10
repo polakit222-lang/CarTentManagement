@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 dayjs.locale('th');
 
 // src/data/carList.ts
-import type { CarInfo, Brand, Model, SubModel, ProvinceInfo, Car } from '../interface/Car';
+import type { CarInfo} from '../interface/Car';
 
 /**
  * ปรับ yearUsed: เป็นจำนวนปีที่ใช้งาน (years of use)

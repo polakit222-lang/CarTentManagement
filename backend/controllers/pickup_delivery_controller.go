@@ -38,9 +38,10 @@ func (controller *PickupDeliveryController) CreatePickupDelivery(c *gin.Context)
 
 	var provinceID, districtID, subDistrictID *uint
 
+	// --- vvvvv --- START: แก้ไขชื่อคอลัมน์ในการค้นหา --- vvvvv ---
 	if payload.Province != "" {
 		var province entity.Province
-		if err := controller.DB.Where("name_th = ?", payload.Province).First(&province).Error; err != nil {
+		if err := controller.DB.Where("province_name = ?", payload.Province).First(&province).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Province not found"})
 			return
 		}
@@ -49,7 +50,7 @@ func (controller *PickupDeliveryController) CreatePickupDelivery(c *gin.Context)
 
 	if payload.District != "" && provinceID != nil {
 		var district entity.District
-		if err := controller.DB.Where("name_th = ? AND province_id = ?", payload.District, *provinceID).First(&district).Error; err != nil {
+		if err := controller.DB.Where("district_name = ? AND province_id = ?", payload.District, *provinceID).First(&district).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "District not found"})
 			return
 		}
@@ -58,12 +59,13 @@ func (controller *PickupDeliveryController) CreatePickupDelivery(c *gin.Context)
 
 	if payload.Subdistrict != "" && districtID != nil {
 		var subDistrict entity.SubDistrict
-		if err := controller.DB.Where("name_th = ? AND district_id = ?", payload.Subdistrict, *districtID).First(&subDistrict).Error; err != nil {
+		if err := controller.DB.Where("sub_district_name = ? AND district_id = ?", payload.Subdistrict, *districtID).First(&subDistrict).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "SubDistrict not found"})
 			return
 		}
 		subDistrictID = &subDistrict.ID
 	}
+	// --- ^^^^^ --- END: จบส่วนที่แก้ไข --- ^^^^^ ---
 
 	var salesContract entity.SalesContract
 	if err := controller.DB.Where("id = ?", payload.SalesContractNumber).First(&salesContract).Error; err != nil {
@@ -175,11 +177,11 @@ func (controller *PickupDeliveryController) UpdatePickupDelivery(c *gin.Context)
 		return
 	}
 	
-	// ค้นหา ID ของที่อยู่ (เหมือนตอน Create)
+	// --- vvvvv --- START: แก้ไขชื่อคอลัมน์ในการค้นหา --- vvvvv ---
 	var provinceID, districtID, subDistrictID *uint
 	if payload.Province != "" {
 		var province entity.Province
-		if err := controller.DB.Where("name_th = ?", payload.Province).First(&province).Error; err != nil {
+		if err := controller.DB.Where("province_name = ?", payload.Province).First(&province).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Province not found"})
 			return
 		}
@@ -187,7 +189,7 @@ func (controller *PickupDeliveryController) UpdatePickupDelivery(c *gin.Context)
 	}
 	if payload.District != "" && provinceID != nil {
 		var district entity.District
-		if err := controller.DB.Where("name_th = ? AND province_id = ?", payload.District, *provinceID).First(&district).Error; err != nil {
+		if err := controller.DB.Where("district_name = ? AND province_id = ?", payload.District, *provinceID).First(&district).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "District not found"})
 			return
 		}
@@ -195,12 +197,13 @@ func (controller *PickupDeliveryController) UpdatePickupDelivery(c *gin.Context)
 	}
 	if payload.Subdistrict != "" && districtID != nil {
 		var subDistrict entity.SubDistrict
-		if err := controller.DB.Where("name_th = ? AND district_id = ?", payload.Subdistrict, *districtID).First(&subDistrict).Error; err != nil {
+		if err := controller.DB.Where("sub_district_name = ? AND district_id = ?", payload.Subdistrict, *districtID).First(&subDistrict).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "SubDistrict not found"})
 			return
 		}
 		subDistrictID = &subDistrict.ID
 	}
+	// --- ^^^^^ --- END: จบส่วนที่แก้ไข --- ^^^^^ ---
 
 	// ค้นหาสัญญา
 	var salesContract entity.SalesContract
@@ -249,9 +252,7 @@ func (controller *PickupDeliveryController) UpdatePickupDeliveryStatus(c *gin.Co
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	// --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
-	// 1. หลังจากบันทึกสำเร็จ ให้ดึงข้อมูลทั้งหมดมาอีกครั้ง
+	
 	var updatedPickupDelivery entity.PickupDelivery
 	if err := controller.DB.Preload("Customer").
 		Preload("Employee").
@@ -261,13 +262,10 @@ func (controller *PickupDeliveryController) UpdatePickupDeliveryStatus(c *gin.Co
 		Preload("District").
 		Preload("SubDistrict").
 		First(&updatedPickupDelivery, id).Error; err != nil {
-		// ถ้าหาไม่เจอจริงๆ ก็ส่งข้อมูลเก่ากลับไปก่อน
 		c.JSON(http.StatusOK, gin.H{"data": pickupDelivery})
 		return
 	}
-	// 2. ส่งข้อมูลที่สมบูรณ์กลับไปให้ Frontend
 	c.JSON(http.StatusOK, gin.H{"data": updatedPickupDelivery})
-	// --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 }
 
 // DELETE /pickup-deliveries/:id
@@ -279,4 +277,3 @@ func (controller *PickupDeliveryController) DeletePickupDelivery(c *gin.Context)
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "PickupDelivery deleted successfully"})
 }
-
