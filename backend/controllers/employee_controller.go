@@ -15,24 +15,7 @@ import (
 )
 
 type EmployeeController struct {
-	DB *gorm.DB
-}
-
-// สร้าง Struct ใหม่สำหรับ Response ให้ตรงกับ entity.Employee และใช้ snake_case สำหรับ JSON
-type EmployeeResponse struct {
-	ID           uint      `json:"id"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	ProfileImage string    `json:"profile_image"`
-	FirstName    string    `json:"first_name"`
-	LastName     string    `json:"last_name"`
-	Email        string    `json:"email"`
-	PhoneNumber  string    `json:"phone_number"`
-	Address      string    `json:"address"`
-	Birthday     time.Time `json:"start_date"`
-	Sex          string    `json:"sex"`
-	Position     string    `json:"position"`
-	Jobtype      time.Time `json:"jobtype"`
+	svc *services.EmployeeService
 }
 
 func NewEmployeeController(db *gorm.DB) *EmployeeController {

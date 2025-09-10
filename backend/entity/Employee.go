@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type Employee struct {
-	EmployeeID   uint      `json:"employeeID" gorm:"primaryKey;autoIncrement"`
+	EmployeeID   uint   `gorm:"primaryKey;autoIncrement" json:"employeeID"`
 	ProfileImage string    `json:"profileImage"`
 	FirstName    string    `json:"firstName"`
 	LastName     string    `json:"lastName"`
