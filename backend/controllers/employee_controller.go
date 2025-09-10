@@ -27,10 +27,10 @@ type EmployeeResponse struct {
 	Email        string    `json:"email"`
 	PhoneNumber  string    `json:"phone_number"`
 	Address      string    `json:"address"`
-	Birthday     time.Time `json:"start_date"`
 	Birthday     time.Time `json:"birthday"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
+	JobType      string    `json:"job_type"`
 }
 
 func NewEmployeeController(db *gorm.DB) *EmployeeController {
@@ -85,6 +85,7 @@ func (e *EmployeeController) LoginEmployee(c *gin.Context) {
 		Birthday:     employee.Birthday,
 		Sex:          employee.Sex,
 		Position:     employee.Position,
+		JobType:      employee.JobType,
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -94,6 +95,7 @@ func (e *EmployeeController) LoginEmployee(c *gin.Context) {
 	})
 }
 
+// GET /employees/me
 func (e *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 	employeeID, exists := c.Get("userID")
 	if !exists {
@@ -120,6 +122,7 @@ func (e *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 		Birthday:     employee.Birthday,
 		Sex:          employee.Sex,
 		Position:     employee.Position,
+		JobType:      employee.JobType,
 	}
 	c.JSON(http.StatusOK, gin.H{"data": response})
 }
@@ -147,6 +150,7 @@ func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 		Birthday     string `json:"birthday"`
 		Sex          string `json:"sex"`
 		Position     string `json:"position"`
+		JobType      string `json:"job_type"`
 	}
 
 	if err := c.ShouldBindJSON(&updatedInfo); err != nil {
@@ -181,6 +185,7 @@ func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 		Birthday:     employee.Birthday,
 		Sex:          employee.Sex,
 		Position:     employee.Position,
+		JobType:      employee.JobType,
 	}
 	c.JSON(http.StatusOK, gin.H{"data": response})
 }

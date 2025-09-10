@@ -16,15 +16,13 @@ type Employee struct {
 	Email        string    `json:"email" gorm:"uniqueIndex"`
 	PhoneNumber  string    `json:"phone_number"`
 	Address      string    `json:"address"`
-	Birthday     time.Time `json:"start_date"`
 	Birthday     time.Time `json:"birthday"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
+	JobType      time.Time    `json:"job_type"` // แก้เป็น string
 
 	TotalSales Status `json:"total_sales" gorm:"-"` // ไม่ map ลง DB
 
-	PickupDelivery []PickupDelivery `gorm:"foreignKey:EmployeeID"`
-	Car            []Car            `gorm:"foreignKey:EmployeeID"`
 	PickupDelivery []PickupDelivery `gorm:"foreignKey:EmployeeID" json:"pickup_deliveries"`
 	Cars           []Car            `gorm:"foreignKey:EmployeeID" json:"cars"`
 
