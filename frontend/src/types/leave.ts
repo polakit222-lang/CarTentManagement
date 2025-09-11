@@ -3,7 +3,7 @@ export type LeaveType = "sick" | "vacation" | "personal";
 
 export interface Leave {
   leaveID: number;
-  employeeID: number;   // ✅ จาก string → number
+  employeeID: number;
   startDate: string;
   endDate: string;
   type: LeaveType;

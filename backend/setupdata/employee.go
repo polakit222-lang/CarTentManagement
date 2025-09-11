@@ -27,6 +27,7 @@ func InsertMockEmployees(db *gorm.DB) {
 			Sex:          "Male",
 			Position:     "Sales",
 			JobType:      "full-time",
+			TotalSales:   "500000",
 		},
 		{
 			ProfileImage: "employee2.jpg",
@@ -40,6 +41,7 @@ func InsertMockEmployees(db *gorm.DB) {
 			Sex:          "Female",
 			Position:     "Programmer",
 			JobType:      "full-time",
+			TotalSales:   "300000",
 		},
 	}
 

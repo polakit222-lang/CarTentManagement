@@ -4,7 +4,7 @@ export type Sex = ""|"male" | "female" | "other";
 export type JobType = ""|"Full-time" | "Part-time" | "Contract";
 
 export interface Employee {
-  employeeID: number;   // ✅ เปลี่ยนจาก string → number
+  employeeID: number;
   profileImage: string;
   firstName: string;
   lastName: string;
