@@ -44,7 +44,6 @@ func ConnectDatabase(dbName string) {
 		&entity.District{},
 		&entity.SubDistrict{},
 		&entity.Payment{},
-		&entity.LeaveRequest{}, // ✅ เพิ่ม
 		&entity.LeaveRequest{},
 
 	)
