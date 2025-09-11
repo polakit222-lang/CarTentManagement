@@ -54,6 +54,7 @@ func main() {
 	managerController := controllers.NewManagerController(configs.DB)
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
 	rentListController := controllers.NewRentListController(configs.DB)
+	customerByCarController := controllers.NewCustomerByCarController(configs.DB)
 
 	// --- Routes ---
 
@@ -155,6 +156,7 @@ func main() {
 		rentListRoutes.DELETE("/date/:dateId", rentListController.DeleteRentDate)
 
 	}
+	r.GET("/customer-bycar/:id", customerByCarController.GetCustomerByCar)
 
 	// Start server
 	if err := r.Run(":8080"); err != nil {

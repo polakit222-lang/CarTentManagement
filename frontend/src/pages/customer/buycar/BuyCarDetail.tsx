@@ -4,7 +4,6 @@ import { Row, Col, Card, Typography, Image, Button, Divider, Space, Modal } from
 import { ShoppingCartOutlined, PushpinOutlined } from "@ant-design/icons";
 
 import { carList } from "../../../data/carList";
-import { carSellList } from "../../../data/carSellList";
 
 import mainCar from "../../../assets/burCar1/carMain.jpg";
 import thumb1 from "../../../assets/burCar1/thumb1.jpg";
