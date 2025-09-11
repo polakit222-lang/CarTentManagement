@@ -22,46 +22,34 @@ func NewRentListController(db *gorm.DB) *RentListController {
 func (rc *RentListController) GetRentListsByCar(c *gin.Context) {
 	carId := c.Param("carId")
 
-	var rentList entity.RentList
-	if err := rc.DB.Preload("RentAbleDates.DateforRent").
-		Where("car_id = ?", carId).
-		First(&rentList).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "RentList not found"})
-		return
-	}
-
-	// ดึงข้อมูลรถพร้อม SaleList และ Pictures
+	// ดึงข้อมูลรถก่อน
 	var car entity.Car
-	if err := rc.DB.Preload("SaleList").Preload("Pictures").First(&car, rentList.CarID).Error; err != nil {
+	if err := rc.DB.Preload("Pictures").
+		First(&car, carId).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Car not found"})
 		return
 	}
 
-	// Flatten rent_able_dates → rent_list
-	var rentPeriods []entity.RentPeriod
-	for _, rad := range rentList.RentAbleDates {
-		date := rad.DateforRent
-		rentPeriods = append(rentPeriods, entity.RentPeriod{
-			ID:            date.ID,
-			RentPrice:     date.RentPrice,
-			RentStartDate: date.OpenDate.Format("2006-01-02"),
-			RentEndDate:   date.CloseDate.Format("2006-01-02"),
-		})
+	// ดึง rent list ของรถ (ถ้ามี)
+	var rentList entity.RentList
+	err := rc.DB.Preload("RentAbleDates.DateforRent").
+		Where("car_id = ?", carId).
+		First(&rentList).Error
+
+	rentPeriods := []entity.RentPeriod{}
+	if err == nil {
+		for _, rad := range rentList.RentAbleDates {
+			date := rad.DateforRent
+			rentPeriods = append(rentPeriods, entity.RentPeriod{
+				ID:            date.ID,
+				RentPrice:     date.RentPrice,
+				RentStartDate: date.OpenDate.Format("2006-01-02"),
+				RentEndDate:   date.CloseDate.Format("2006-01-02"),
+			})
+		}
 	}
 
-	// Flatten SaleList
-	var sales []entity.SaleEntry
-	for _, s := range car.SaleList {
-		sales = append(sales, entity.SaleEntry{SalePrice: s.SalePrice})
-	}
-
-	// Flatten Pictures
-	var pictures []entity.CarPicture
-	for _, p := range car.Pictures {
-		pictures = append(pictures, p)
-	}
-
-	// สร้าง CarResponse
+	// สร้าง response
 	response := entity.CarResponse{
 		ID:              car.ID,
 		CarName:         car.CarName,
@@ -69,9 +57,9 @@ func (rc *RentListController) GetRentListsByCar(c *gin.Context) {
 		Color:           car.Color,
 		Mileage:         car.Mileage,
 		Condition:       car.Condition,
-		SaleList:        sales,
-		RentList:        rentPeriods,
-		Pictures:        pictures,
+		SaleList:        nil,         // ถ้ามีสามารถ preload
+		RentList:        rentPeriods, // array ว่างได้
+		Pictures:        car.Pictures,
 	}
 
 	c.JSON(http.StatusOK, response)
