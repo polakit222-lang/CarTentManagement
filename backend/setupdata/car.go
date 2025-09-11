@@ -66,6 +66,11 @@ func InsertCarsFromCSV(db *gorm.DB, filepath string) {
 		employeeID := 0
 		fmt.Sscanf(row[9], "%d", &employeeID)
 
+		mileage := 0
+		fmt.Sscanf(row[10], "%d", &mileage)
+
+		condition := row[11]
+
 		car := entity.Car{
 			CarName:         row[3],
 			YearManufacture: yearManufacture,
@@ -75,24 +80,17 @@ func InsertCarsFromCSV(db *gorm.DB, filepath string) {
 			ProvinceID:      uint(provinceID),
 			DetailID:        detail.ID,
 			EmployeeID:      uint(employeeID),
+			Mileage:         mileage,
+			Condition:       condition,
 		}
 
 		db.Create(&car)
-	}
 
-	fmt.Println("Inserted CSV Car data successfully!")
-}
-func InsertMockPictures(db *gorm.DB) {
-	// ดึงรถทั้งหมด
-	var cars []entity.Car
-	db.Find(&cars)
-
-	for _, car := range cars {
-		// สร้างรูป mock 3 รูปสำหรับแต่ละคัน
+		// สร้างรูปภาพ 3 มุมจาก CSV
 		pictures := []entity.CarPicture{
-			{Title: "Front view", Path: "/mockimages/car_front.jpg", CarID: car.ID},
-			{Title: "Side view", Path: "/mockimages/car_side.jpg", CarID: car.ID},
-			{Title: "Interior", Path: "/mockimages/car_interior.jpg", CarID: car.ID},
+			{Title: "Front view", Path: row[12], CarID: car.ID},
+			{Title: "Side view", Path: row[13], CarID: car.ID},
+			{Title: "Interior", Path: row[14], CarID: car.ID},
 		}
 
 		for _, pic := range pictures {
@@ -100,5 +98,5 @@ func InsertMockPictures(db *gorm.DB) {
 		}
 	}
 
-	fmt.Println("Inserted mock pictures for all cars successfully!")
+	fmt.Println("Inserted CSV Car data successfully with Mileage, Condition, and Pictures!")
 }

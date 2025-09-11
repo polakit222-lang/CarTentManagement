@@ -1,49 +1,41 @@
-brand_name,model_name,submodel_name,car_name,year_manufacture,purchase_price,purchase_date,color,province_id,employee_id
-Toyota,Corolla,Corolla Altis,Toyota Corolla Altis,2020,750000,2020-03-15,White,1,1
-Toyota,Corolla,Corolla LE,Toyota Corolla LE,2021,770000,2021-05-10,Black,2,2
-Toyota,Corolla,Corolla G,Toyota Corolla G,2019,730000,2019-07-20,Silver,3,3
-Toyota,Camry,Camry SE,Toyota Camry SE,2020,1200000,2020-01-25,Blue,1,1
-Toyota,Camry,Camry XLE,Toyota Camry XLE,2021,1250000,2021-06-12,Gray,2,2
-Toyota,Camry,Camry Hybrid,Toyota Camry Hybrid,2022,1350000,2022-02-18,White,3,3
-Toyota,RAV4,RAV4 LE,Toyota RAV4 LE,2019,1100000,2019-11-05,Red,1,1
-Toyota,RAV4,RAV4 XLE,Toyota RAV4 XLE,2020,1150000,2020-08-22,Black,2,2
-Toyota,RAV4,RAV4 Limited,Toyota RAV4 Limited,2021,1250000,2021-09-30,White,3,3
-Honda,Civic,Civic RS,Honda Civic RS,2020,900000,2020-04-15,Red,1,1
-Honda,Civic,Civic EX,Honda Civic EX,2021,920000,2021-05-25,Black,2,2
-Honda,Civic,Civic LX,Honda Civic LX,2019,880000,2019-06-18,Blue,3,3
-Honda,Accord,Accord LX,Honda Accord LX,2020,1300000,2020-07-10,White,1,1
-Honda,Accord,Accord Sport,Honda Accord Sport,2021,1350000,2021-08-12,Gray,2,2
-Honda,Accord,Accord EX-L,Honda Accord EX-L,2022,1400000,2022-03-05,Black,3,3
-Honda,CR-V,CR-V LX,Honda CR-V LX,2019,1000000,2019-09-14,Blue,1,1
-Honda,CR-V,CR-V EX,Honda CR-V EX,2020,1050000,2020-10-20,White,2,2
-Honda,CR-V,CR-V Touring,Honda CR-V Touring,2021,1150000,2021-11-18,Black,3,3
-Ford,Focus,Focus Titanium,Ford Focus Titanium,2020,800000,2020-01-30,Red,1,1
-Ford,Focus,Focus SE,Ford Focus SE,2021,780000,2021-02-25,Blue,2,2
-Ford,Focus,Focus ST,Ford Focus ST,2019,850000,2019-03-12,Black,3,3
-Ford,Ranger,Ranger XLT,Ford Ranger XLT,2020,1100000,2020-04-18,White,1,1
-Ford,Ranger,Ranger XL,Ford Ranger XL,2021,1080000,2021-05-10,Gray,2,2
-Ford,Ranger,Ranger Limited,Ford Ranger Limited,2022,1150000,2022-06-05,Black,3,3
-Nissan,Navara,Navara EL,Nissan Navara EL,2019,950000,2019-07-25,Red,1,1
-Nissan,Navara,Navara VL,Nissan Navara VL,2020,1000000,2020-08-12,White,2,2
-Nissan,Navara,Navara PRO-4X,Nissan Navara PRO-4X,2021,1100000,2021-09-01,Black,3,3
-Nissan,Almera,Almera XL,Nissan Almera XL,2020,550000,2020-02-15,Silver,1,1
-Nissan,Almera,Almera VL,Nissan Almera VL,2021,570000,2021-03-10,White,2,2
-Nissan,Almera,Almera EL,Nissan Almera EL,2019,530000,2019-04-18,Blue,3,3
-Mazda,CX-5,CX-5 Sport,Mazda CX-5 Sport,2020,1100000,2020-05-12,Red,1,1
-Mazda,CX-5,CX-5 Touring,Mazda CX-5 Touring,2021,1150000,2021-06-18,Black,2,2
-Mazda,CX-5,CX-5 Grand Touring,Mazda CX-5 Grand Touring,2022,1250000,2022-07-22,White,3,3
-Mazda,3,Mazda 3 Hatchback,Mazda 3 Hatchback,2019,780000,2019-08-05,Blue,1,1
-Mazda,3,Mazda 3 Sedan,Mazda 3 Sedan,2020,800000,2020-09-12,Gray,2,2
-Mazda,3,Mazda 3 Premium,Mazda 3 Premium,2021,850000,2021-10-20,White,3,3
-Mitsubishi,Pajero,Pajero Sport,Mitsubishi Pajero Sport,2020,1400000,2020-03-15,Black,1,1
-Mitsubishi,Pajero,Pajero GLX,Mitsubishi Pajero GLX,2021,1350000,2021-04-10,White,2,2
-Mitsubishi,Pajero,Pajero Ultimate,Mitsubishi Pajero Ultimate,2022,1500000,2022-05-12,Red,3,3
-Mitsubishi,Outlander,Outlander ES,Mitsubishi Outlander ES,2019,1100000,2019-06-18,Blue,1,1
-Mitsubishi,Outlander,Outlander SE,Mitsubishi Outlander SE,2020,1150000,2020-07-22,Black,2,2
-Mitsubishi,Outlander,Outlander GT,Mitsubishi Outlander GT,2021,1250000,2021-08-30,White,3,3
-BMW,3 Series,320i,BMW 320i,2020,1800000,2020-01-10,White,1,1
-BMW,3 Series,330i,BMW 330i,2021,1850000,2021-02-18,Black,2,2
-BMW,3 Series,340i,BMW 340i,2022,1900000,2022-03-22,Blue,3,3
-BMW,5 Series,520i,BMW 520i,2020,2200000,2020-04-15,Gray,1,1
-BMW,5 Series,530i,BMW 530i,2021,2300000,2021-05-18,White,2,2
-BMW,5 Series,540i,BMW 540i,2022,2400000,2022-06-20,Black,3,3
+brand_name,model_name,submodel_name,car_name,year_manufacture,purchase_price,purchase_date,color,province_id,employee_id,mileage,condition,car_front,car_side,car_interior
+Toyota,Corolla,Corolla Altis,Toyota Corolla Altis,2020,750000,2020-03-15,White,1,1,45200,ดี,car1_front.jpg,car1_side.jpg,car1_interior.jpg
+Toyota,Corolla,Corolla LE,Toyota Corolla LE,2021,770000,2021-05-10,Black,2,2,38500,ปานกลาง,car2_front.jpg,car2_side.jpg,car2_interior.jpg
+Toyota,Corolla,Corolla G,Toyota Corolla G,2019,730000,2019-07-20,Silver,3,3,61800,แย่,car3_front.jpg,car3_side.jpg,car3_interior.jpg
+Toyota,Camry,Camry SE,Toyota Camry SE,2020,1200000,2020-01-25,Blue,1,1,70200,ดี,car4_front.jpg,car4_side.jpg,car4_interior.jpg
+Toyota,Camry,Camry XLE,Toyota Camry XLE,2021,1250000,2021-06-12,Gray,2,2,32000,ปานกลาง,car5_front.jpg,car5_side.jpg,car5_interior.jpg
+Toyota,Camry,Camry Hybrid,Toyota Camry Hybrid,2022,1350000,2022-02-18,White,3,3,25000,แย่,car6_front.jpg,car6_side.jpg,car6_interior.jpg
+Toyota,RAV4,RAV4 LE,Toyota RAV4 LE,2019,1100000,2019-11-05,Red,1,1,87000,ดี,car7_front.jpg,car7_side.jpg,car7_interior.jpg
+Toyota,RAV4,RAV4 XLE,Toyota RAV4 XLE,2020,1150000,2020-08-22,Black,2,2,64000,ปานกลาง,car8_front.jpg,car8_side.jpg,car8_interior.jpg
+Toyota,RAV4,RAV4 Limited,Toyota RAV4 Limited,2021,1250000,2021-09-30,White,3,3,54000,แย่,car9_front.jpg,car9_side.jpg,car9_interior.jpg
+Honda,Civic,Civic RS,Honda Civic RS,2020,900000,2020-04-15,Red,1,1,33000,ดี,car10_front.jpg,car10_side.jpg,car10_interior.jpg
+Honda,Civic,Civic EX,Honda Civic EX,2021,920000,2021-05-25,Black,2,2,47000,ปานกลาง,car11_front.jpg,car11_side.jpg,car11_interior.jpg
+Honda,Civic,Civic LX,Honda Civic LX,2019,880000,2019-06-18,Blue,3,3,99000,แย่,car12_front.jpg,car12_side.jpg,car12_interior.jpg
+Honda,Accord,Accord LX,Honda Accord LX,2020,1300000,2020-07-10,White,1,1,58000,ดี,car13_front.jpg,car13_side.jpg,car13_interior.jpg
+Honda,Accord,Accord Sport,Honda Accord Sport,2021,1350000,2021-08-12,Gray,2,2,43000,ปานกลาง,car14_front.jpg,car14_side.jpg,car14_interior.jpg
+Honda,Accord,Accord EX-L,Honda Accord EX-L,2022,1400000,2022-03-05,Black,3,3,31000,แย่,car15_front.jpg,car15_side.jpg,car15_interior.jpg
+Honda,CR-V,CR-V LX,Honda CR-V LX,2019,1000000,2019-09-14,Blue,1,1,76000,ดี,car16_front.jpg,car16_side.jpg,car16_interior.jpg
+Honda,CR-V,CR-V EX,Honda CR-V EX,2020,1050000,2020-10-20,White,2,2,69000,ปานกลาง,car17_front.jpg,car17_side.jpg,car17_interior.jpg
+Honda,CR-V,CR-V Touring,Honda CR-V Touring,2021,1150000,2021-11-18,Black,3,3,39000,แย่,car18_front.jpg,car18_side.jpg,car18_interior.jpg
+Ford,Focus,Focus Titanium,Ford Focus Titanium,2020,800000,2020-01-30,Red,1,1,52000,ดี,car19_front.jpg,car19_side.jpg,car19_interior.jpg
+Ford,Focus,Focus SE,Ford Focus SE,2021,780000,2021-02-25,Blue,2,2,35000,ปานกลาง,car20_front.jpg,car20_side.jpg,car20_interior.jpg
+Ford,Focus,Focus ST,Ford Focus ST,2019,850000,2019-03-12,Black,3,3,87000,แย่,car21_front.jpg,car21_side.jpg,car21_interior.jpg
+Ford,Ranger,Ranger XLT,Ford Ranger XLT,2020,1100000,2020-04-18,White,1,1,62000,ดี,car22_front.jpg,car22_side.jpg,car22_interior.jpg
+Ford,Ranger,Ranger XL,Ford Ranger XL,2021,1080000,2021-05-10,Gray,2,2,33000,ปานกลาง,car23_front.jpg,car23_side.jpg,car23_interior.jpg
+Ford,Ranger,Ranger Limited,Ford Ranger Limited,2022,1150000,2022-06-05,Black,3,3,27000,แย่,car24_front.jpg,car24_side.jpg,car24_interior.jpg
+Nissan,Navara,Navara EL,Nissan Navara EL,2019,950000,2019-07-25,Red,1,1,78000,ดี,car25_front.jpg,car25_side.jpg,car25_interior.jpg
+Nissan,Navara,Navara VL,Nissan Navara VL,2020,1000000,2020-08-12,White,2,2,57000,ปานกลาง,car26_front.jpg,car26_side.jpg,car26_interior.jpg
+Nissan,Navara,Navara PRO-4X,Nissan Navara PRO-4X,2021,1100000,2021-09-01,Black,3,3,49000,แย่,car27_front.jpg,car27_side.jpg,car27_interior.jpg
+Nissan,Almera,Almera XL,Nissan Almera XL,2020,550000,2020-02-15,Silver,1,1,36000,ดี,car28_front.jpg,car28_side.jpg,car28_interior.jpg
+Nissan,Almera,Almera VL,Nissan Almera VL,2021,570000,2021-03-10,White,2,2,42000,ปานกลาง,car29_front.jpg,car29_side.jpg,car29_interior.jpg
+Nissan,Almera,Almera EL,Nissan Almera EL,2019,530000,2019-04-18,Blue,3,3,82000,แย่,car30_front.jpg,car30_side.jpg,car30_interior.jpg
+Mazda,CX-5,CX-5 Sport,Mazda CX-5 Sport,2020,1100000,2020-05-12,Red,1,1,66000,ดี,car31_front.jpg,car31_side.jpg,car31_interior.jpg
+Mazda,CX-5,CX-5 Touring,Mazda CX-5 Touring,2021,1150000,2021-06-18,Black,2,2,37000,ปานกลาง,car32_front.jpg,car32_side.jpg,car32_interior.jpg
+Mazda,CX-5,CX-5 Grand Touring,Mazda CX-5 Grand Touring,2022,1250000,2022-07-22,White,3,3,28000,แย่,car33_front.jpg,car33_side.jpg,car33_interior.jpg
+Mazda,3,Mazda 3 Hatchback,Mazda 3 Hatchback,2019,780000,2019-08-05,Blue,1,1,94000,ดี,car34_front.jpg,car34_side.jpg,car34_interior.jpg
+Mazda,3,Mazda 3 Sedan,Mazda 3 Sedan,2020,800000,2020-09-12,Gray,2,2,71000,ปานกลาง,car35_front.jpg,car35_side.jpg,car35_interior.jpg
+Mazda,3,Mazda 3 Premium,Mazda 3 Premium,2021,850000,2021-10-20,White,3,3,49000,แย่,car36_front.jpg,car36_side.jpg,car36_interior.jpg
+Mitsubishi,Pajero,Pajero Sport,Mitsubishi Pajero Sport,2020,1400000,2020-03-15,Black,1,1,53000,ดี,car37_front.jpg,car37_side.jpg,car37_interior.jpg
+Mitsubishi,Pajero,Pajero GLX,Mitsubishi Pajero GLX,2021,1350000,2021-04-10,White,2,2,34000,ปานกลาง,car38_front.jpg,car38_side.jpg,car38_interior.jpg
+Mitsubishi,Pajero,Pajero Ultimate,Mitsubishi Pajero Ultimate,2022,1500000,2022-05-12,Red,3,3,21000,แย่,car39_front.jpg,car39_side.jpg,car39_interior.jpg
+Mitsubishi,Outlander,Outlander ES,Mitsubishi Outlander ES,2019,1100000,2019-06-18,Blue,1,1,87000,ดี,car40_front.jpg,car40_side.jpg,car40_interior.jpg

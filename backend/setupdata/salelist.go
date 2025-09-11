@@ -64,7 +64,7 @@ func InsertMockSaleList(db *gorm.DB) {
 			CarID:      car.ID,
 			Status:     status,
 			ManagerID:  manager.ID,
-			EmployeeID: emp.ID,
+			EmployeeID: emp.EmployeeID,
 		}
 
 		db.Create(&sale)

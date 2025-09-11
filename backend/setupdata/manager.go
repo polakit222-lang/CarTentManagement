@@ -18,7 +18,8 @@ func InsertMockManagers(db *gorm.DB) {
 
 	managers := []entity.Manager{
 		{
-			Username:  "manager1",
+			Username: "manager1",
+
 			Email:     "manager1@example.com",
 			Password:  string(hashedPassword1),
 			FirstName: "Anan",

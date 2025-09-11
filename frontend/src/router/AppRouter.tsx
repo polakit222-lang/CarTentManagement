@@ -24,7 +24,7 @@ import PickupCarPage from '../pages/customer/pickup-delivery/PickupCarPage';
 import PickupCarCreatePage from '../pages/customer/pickup-delivery/PickupCarPageCreate';
 
 // Manager Pages
-import HomePage from '../pages/manager/stock/HomePage';
+import AllCarPage from '../pages/manager/stock/AllCarPage';
 import AddnewCarPage from '../pages/manager/stock/AddnewCarPage';
 import EditCarTentPage from '../pages/manager/stock/EditCarTentPage';
 import AddRentPage from '../pages/manager/rent/AddRentPage';
@@ -32,7 +32,7 @@ import EditRentPage from '../pages/manager/rent/EditRentPage';
 import CreateRentCarPage from '../pages/manager/rent/CreateRentCarPage';
 import RentListPage from '../pages/manager/rent/RentListPage';
 import AddSellPage from '../pages/manager/sell/AddSellPage';
-import CreateSellCarPage from '../pages/manager/sell/CreateSellCarPage';
+// import CreateSellCarPage from '../pages/manager/sell/CreateSellCarPage';
 import EditSellPage from '../pages/manager/sell/EditSellPage';
 import SellListPage from '../pages/manager/sell/SellListPage';
 import ManagerInsurancePage from '../pages/manager/insurance/ManagerInsurance'
@@ -80,7 +80,7 @@ const AppRouter: React.FC = () => {
             {/* --- Manager Routes --- */}
             <Route element={<ProtectedRoute allowedRoles={['manager']} />}>
                 <Route element={<ManagerLayout />}>
-                    <Route path="/home" element={<HomePage />} />
+                    <Route path="/home" element={<AllCarPage />} />
                     <Route path="/add-car" element={<AddnewCarPage />} />
                     <Route path="/edit-car/:id" element={<EditCarTentPage />} />
                     <Route path="/rent" element={<RentListPage />} />
@@ -89,7 +89,7 @@ const AppRouter: React.FC = () => {
                     <Route path="/add-rent" element={<AddRentPage />} />
                     <Route path="/sell" element={<SellListPage />} />
                     <Route path="/edit-sell/:id" element={<EditSellPage />} />
-                    <Route path="/add-sell/:id" element={<CreateSellCarPage />} />
+                    {/* <Route path="/add-sell/:id" element={<CreateSellCarPage />} /> */}
                     <Route path="/add-sell" element={<AddSellPage />} />
 
                     {/* blank page  */}

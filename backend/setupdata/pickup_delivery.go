@@ -53,9 +53,11 @@ func InsertMockPickupDelivery(db *gorm.DB) {
 	pickup := entity.PickupDelivery{
 		CustomerID:        customer.ID,
 		TypeInformationID: typeInfo.ID,
+
 		SalesContractID:   salesContractID, // ใช้ SalesContract ที่ดึงมา
 		DateTime:          appointmentTime, // นัดอีก 5 วันข้างหน้า
-		EmployeeID:        employee.ID,
+		EmployeeID:        employee.EmployeeID,
+
 		Address:           "123/45 อาคารสยามสแควร์วัน",
 		SubDistrictID:     &subDistrict.ID,
 		DistrictID:        &district.ID,
