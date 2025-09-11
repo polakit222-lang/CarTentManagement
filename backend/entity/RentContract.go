@@ -9,7 +9,7 @@ import (
 type RentContract struct {
 	gorm.Model
 
-	PriceAgree float64   `json:"price_agree"`
+	// PriceAgree float64   `json:"price_agree"`
 	DateStart  time.Time `json:date_start`
 	DateEnd    time.Time `json:date_end`
 

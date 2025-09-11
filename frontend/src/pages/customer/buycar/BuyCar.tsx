@@ -12,9 +12,6 @@ import Sorter, { type SortOption } from '../../../components/Sorter';
 // FIX: Removed unused 'Button' and 'Link' imports
 
 const conditionOrder = ['ดี', 'ปานกลาง', 'แย่'];
-
-
-
 const { Title } = Typography;
 
 const BuyCarPage: React.FC = () => {
@@ -107,7 +104,7 @@ const BuyCarPage: React.FC = () => {
       paddingBottom: "6px",
       }}
     >
-      เลือกรถยนต์ที่คุต้องการซื้อ
+      เลือกรถยนต์ที่คุณต้องการซื้อ
     </Title>
     {/* Container หลักแบบ Flex */}
     <div style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}>
@@ -117,7 +114,7 @@ const BuyCarPage: React.FC = () => {
         <Filter
           carList={carList}
           width={300}
-          enabledFilters={['brand', 'model', 'price', 'year']} // เลือกได้ว่าจะให้มี filter อะไรบ้าง
+          enabledFilters={['brand', 'model', 'price', 'year', 'usage']} // เลือกได้ว่าจะให้มี filter อะไรบ้าง
           onApply={(v) => setFilters(v)}
           onClear={() => setFilters(null)}
         />

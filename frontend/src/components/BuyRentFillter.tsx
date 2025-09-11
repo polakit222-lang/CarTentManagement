@@ -249,7 +249,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>ยี่ห้อ</label>
         <Select
           placeholder="เลือกแบรนด์"
@@ -271,7 +271,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>รุ่น</label>
         <Select
           placeholder="เลือกรุ่น"
@@ -294,7 +294,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>ราคา (฿)</label>
       <Slider
         range
@@ -373,7 +373,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>อายุการใช้งาน (ปี)</label>
         <Slider
           range
@@ -415,7 +415,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>สภาพรถ</label>
         <Checkbox.Group
           options={[
@@ -438,7 +438,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>สิ่งอำนวยความสะดวก</label>
         <Checkbox.Group
           options={[
@@ -461,7 +461,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>สถานะรถยนต์</label>
         <Checkbox.Group
           options={[
@@ -469,6 +469,7 @@ const BuyRentFillter: React.FC<Props> = ({
             { label: 'กำลังให้เช่า', value: 'กำลังให้เช่า' },
             { label: 'ยังไม่ดำเนินการ', value: 'ยังไม่ดำเนินการ' },
           ]}
+          
           value={status}
           onChange={(checkedValues) => setStatus(checkedValues.map(v => String(v)))}
           style={{ color: 'white' }}

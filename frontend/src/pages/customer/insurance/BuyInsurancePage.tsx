@@ -423,7 +423,7 @@ const BuyInsurancePage: React.FC = () => {
                 <div style={{ color: 'white' }}>
                     
                     <h4 style={{ marginTop: '15px', color: '#f1d430ff' }}>ข้อมูลลูกค้า</h4>
-                    <p>ชื่อ-นามสกุล: {selectedSalecontract.customer_id?.first_name} {selectedSalecontract.customer_id?.last_name}</p>
+                    <p>ชื่อ-นามสกุล: {selectedSalecontract.customer_id?.first_name} {selectedSalecontract.customer_id?.last_name} </p>
                     <p>หมายเลขรายการซื้อรถยนต์: <strong style={{ color: '#f1d430ff' }}>{contractNumber}</strong></p>
 
                     <h4 style={{ marginTop: '15px', color: '#f1d430ff' }}>รายละเอียดรถ</h4>

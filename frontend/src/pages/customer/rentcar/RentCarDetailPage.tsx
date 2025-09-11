@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Row,
   Col,
@@ -12,12 +12,14 @@ import {
   Modal,
   message,
 } from "antd";
-import { PushpinOutlined } from "@ant-design/icons";
+import { PushpinOutlined, } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import { carList } from "../../../data/carList";
 
 import CusRentDateRange from "../../../components/CusRentDateRange";
 // import type { RentPeriod } from "../../../components/CusRentDateRange";
+
+import { useAuth } from "../../../hooks/useAuth";
 
 import mainCar from "../../../assets/rentCar1/carMain.jpg";
 import thumb1 from "../../../assets/rentCar1/thumb1.jpg";
@@ -31,6 +33,9 @@ const RentCarDetailPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const { user } = useAuth(); //add
+  const location = useLocation();
+
   const [rentModalVisible, setRentModalVisible] = useState(false);
 
   const [selectedRentRange, setSelectedRentRange] = useState<dayjs.Dayjs[]>([]);
@@ -44,6 +49,10 @@ const RentCarDetailPage: React.FC = () => {
 
   const handleFormSubmit = (values: any) => {
     if (!values.rentRange || values.rentRange.length === 0) {
+      if (!user) {
+        // ถ้ายังไม่ล็อกอิน → ไปหน้า login พร้อมส่ง path ปัจจุบัน + flag ว่าต้องเปิด modal
+        navigate("/login", { state: { from: location.pathname, openModal: "rent" } });
+      }
       message.error("โปรดเลือกช่วงเวลาที่ต้องการเช่า");
       return;
     }
@@ -51,15 +60,55 @@ const RentCarDetailPage: React.FC = () => {
     setRentModalVisible(true);
   };
 
+  // const handleConfirmRent = () => {
+  //   setRentModalVisible(false); // ✅ ปิด modal ก่อน
+  //   if (user) {
+  //     navigate("/payment");
+  //   } else {
+  //     navigate("/login", { state: { from: "/payment" } });
+  //   }
+  // };
+
+  useEffect(() => {
+    if (user && location.state?.openModal === "rent") {
+      setRentModalVisible(true);
+      navigate(location.pathname, { replace: true });
+    }
+  }, [user, location, navigate]);
+
+  // ฟังก์ชันกดปุ่มสั่งซื้อ
+  // const handleRentClick = () => {
+  //   if (!user) {
+  //     // ถ้ายังไม่ล็อกอิน → ไปหน้า login พร้อมส่ง path ปัจจุบัน + flag ว่าต้องเปิด modal
+  //     navigate("/login", { state: { from: location.pathname, openModal: "rent" } });
+  //   } else {
+  //     setRentModalVisible(true);
+  //   }
+  // };
+
+  // ฟังก์ชันยืนยันสั่งซื้อ
   const handleConfirmRent = () => {
-    message.success("ทำการจองเรียบร้อยแล้ว!");
     setRentModalVisible(false);
-    form.resetFields(["rentRange"]); // ✅ reset ค่า rentRange ในฟอร์ม
-    navigate("/rent");
+    message.success("ยืนยันการสั่งเช่าแล้ว กำลังพาไปหน้าชำระเงิน...");
+    navigate("/payment");
   };
 
+
+  useEffect(() => {
+  if (rentModalVisible) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [rentModalVisible]);
+
   return (
-    <div style={{ backgroundColor: "#000", minHeight: "100vh", padding: "20px" }}>
+    <div       
+      className={`page-container ${rentModalVisible ? "blurred" : ""}`} // ✅ เพิ่ม class blur เมื่อ modal เปิด
+      style={{ backgroundColor: "#000", minHeight: "100vh", padding: "20px", transition: "filter 0.3s ease" }}>
       <Row gutter={16}>
         {/* ภาพใหญ่และภาพย่อย */}
         <Col xs={24} md={16}>
@@ -111,7 +160,7 @@ const RentCarDetailPage: React.FC = () => {
               {car.brand} {car.model} ปี {car.yearManufactured}
             </Title>
             <Title level={2} style={{ color: "white", marginTop: "-10px" }}>
-              ฿ {car.price}/วัน
+              ฿ {car.price.toLocaleString()}/วัน
             </Title>
 
             <Divider style={{ borderColor: "rgba(255, 215, 0, 0.3)" }} />
@@ -172,65 +221,102 @@ const RentCarDetailPage: React.FC = () => {
                   e.currentTarget.style.backgroundColor = "gold";
                   e.currentTarget.style.color = "black";
                 }}
+                onClick={handleFormSubmit}
               >
                 สั่งเช่า
               </Button>
             </Form>
-
-              {/* Modal ที่ถูกลบเนื้อหาตรงกลางออก */}
               <Modal
-                title={<span style={{ color: "black", fontWeight: "bold" }}>ยืนยันการเช่า</span>}
+                title={<span style={{ color: '#f1d430ff' }}>ยืนยันคำสั่งเช่า</span>}
                 open={rentModalVisible}
-                onOk={handleConfirmRent}
                 onCancel={() => setRentModalVisible(false)}
-                okText="ยืนยัน"
-                cancelText="ยกเลิก"
-                className="custom-rent-modal"
-                okButtonProps={{ 
-                  style: { 
-                    backgroundColor: "gold", 
-                    color: "black", 
-                    borderColor: "gold", 
-                    borderRadius: "8px",
-                    fontWeight: "bold",
-                  },
-                  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-                    (e.target as HTMLElement).style.backgroundColor = "#ccac00";
-                    (e.target as HTMLElement).style.color = "black";
-                  },
-                  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
-                    (e.target as HTMLElement).style.backgroundColor = "gold";
-                    (e.target as HTMLElement).style.color = "black";
-                  },
+                getContainer={() => document.body} // ← บังคับให้ render เป็น portal ที่ body
+                maskClosable={false}
+                width={600}
+                centered
+                styles={{ 
+                    body: { 
+                        backgroundColor: '#000000' 
+                    },
+                    header: {
+                        backgroundColor: '#000000',
+                        borderBottom: '1px solid #000000'
+                    },
+                    footer: {
+                        backgroundColor: '#000000',
+                        borderTop: '1px solid #000000'
+                    },
+                    content: {
+                        backgroundColor: '#000000',
+                        border: '2px solid #f1d430ff',
+                        borderRadius: '8px'
+                    }
                 }}
-                cancelButtonProps={{ 
-                  style: { 
-                    backgroundColor: "#e0e0e0",
-                    color: "black", 
-                    borderColor: "#d0d0d0", 
-                    borderRadius: "8px",
-                    fontWeight: "bold",
-                  },
-                  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-                    (e.target as HTMLElement).style.backgroundColor = "#c0c0c0";
-                  },
-                  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
-                    (e.target as HTMLElement).style.backgroundColor = "#e0e0e0";
-                  },
-                }}
-                bodyStyle={{ 
-                  backgroundColor: "white",
-                  padding: "20px",
-                  borderRadius: "0 0 8px 8px", 
-                }}
+                footer={[
+                    <Button 
+                        key="back" 
+                        onClick={() => setRentModalVisible(false)}
+                        style={{
+                          backgroundColor: "gold",
+                          color: "black",
+                          fontWeight: "bold",
+                          border: "2px solid gold",
+                          borderRadius: "10px",
+                          boxShadow: "0 2px 8px rgba(255, 215, 0, 0.4)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "black";
+                          e.currentTarget.style.color = "gold";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "gold";
+                          e.currentTarget.style.color = "black";
+                        }}
+                    >
+                        ยกเลิก
+                    </Button>,
+                    <Button 
+                        key="submit" 
+                        onClick={handleConfirmRent}
+                        style={{
+                          backgroundColor: "gold",
+                          color: "black",
+                          fontWeight: "bold",
+                          border: "2px solid gold",
+                          borderRadius: "10px",
+                          boxShadow: "0 2px 8px rgba(255, 215, 0, 0.4)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "black";
+                          e.currentTarget.style.color = "gold";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "gold";
+                          e.currentTarget.style.color = "black";
+                        }}
+                    >
+                        ยืนยัน
+                    </Button>,
+                ]}
               >
-                {selectedRentRange.length === 2 && (
-                  <div style={{ color: "#000000ff" }}>
-                    <p>วันเริ่ม: {selectedRentRange[0].format("DD/MM/YYYY")}</p>
-                    <p>วันสิ้นสุด: {selectedRentRange[1].format("DD/MM/YYYY")}</p>
-                  </div>
-                )}
-                {/* เนื้อหาส่วนนี้ถูกลบออกไปแล้ว */}
+              <div style={{ color: 'white' }}>
+                <p>ชื่อ-นามสกุล : </p>
+                <p>รถยนต์ : {car.brand} {car.model} ปี {car.yearManufactured}</p>
+                {selectedRentRange.length === 2 && (() => {
+                  const startDate = selectedRentRange[0];
+                  const endDate = selectedRentRange[1];
+                  const days = endDate.diff(startDate, "day") + 1; // ✅ รวมวันเริ่มต้นด้วย
+                  const totalPrice = days * car.price;
+                  return (
+                    <>
+                      <p>วันเริ่ม: {startDate.format("DD/MM/YYYY")}</p>
+                      <p>วันสิ้นสุด: {endDate.format("DD/MM/YYYY")}</p>
+                      <p>จำนวนวัน: {days} วัน</p>
+                      <p>ราคา: {totalPrice.toLocaleString()} บาท</p>
+                    </>
+                  );
+                })()}
+              </div>
               </Modal>
           </Card>
         </Col>

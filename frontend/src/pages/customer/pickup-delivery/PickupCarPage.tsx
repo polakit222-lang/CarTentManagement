@@ -23,7 +23,6 @@ dayjs.extend(utc);
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// ## INTERFACE ที่แก้ไขให้ตรงกับ API ##
 interface PickupBooking {
     ID: number;
     Customer: {
@@ -81,7 +80,6 @@ const PickupCarPage: React.FC = () => {
             });
             if (response.ok) {
                 const responseData = await response.json();
-                // ## แก้ไข: ดึงข้อมูลจาก responseData.data ##
                 setBookingHistory(responseData.data || []);
             } else {
                 setBookingHistory([]);
@@ -100,7 +98,6 @@ const PickupCarPage: React.FC = () => {
     }, [user, token]);
 
     const filteredAndSortedBookings = useMemo(() => {
-        // ## แก้ไข: ใช้ b.status ในการ filter ##
         const filtered = statusFilter === 'ทั้งหมด'
             ? bookingHistory
             : bookingHistory.filter(b => b.status === statusFilter);
@@ -163,7 +160,6 @@ const PickupCarPage: React.FC = () => {
         setBookingToCancel(null);
     };
 
-    // ## แก้ไข: รับค่า status และปรับ case ให้ตรงกับข้อมูลจริง ##
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'รอดำเนินการ':
@@ -187,13 +183,24 @@ const PickupCarPage: React.FC = () => {
     }
 
     return (
+        
         <div style={{ padding: '24px 48px' }}>
+             <style>{`
+                .ant-select-selector, .ant-select-dropdown {
+                    color: white !important;
+                }
+                .ant-select-item-option-content {
+                    color: white;
+                }
+                .ant-select-item-option-selected .ant-select-item-option-content {
+                    color: black;
+                }
+            `}</style>
             <Title level={2} style={{ color: 'white' }}>ประวัติการนัดรับ-ส่งรถยนต์</Title>
             <Divider style={{ borderColor: '#424242' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <Space>
                     <Text style={{ color: 'white' }}>สถานะ:</Text>
-                    {/* ## แก้ไข: ปรับ Option ให้ตรงกับข้อมูลจริง ## */}
                     <Select
                         defaultValue="ทั้งหมด"
                         style={{ width: 120, backgroundColor: '#424242', color: 'white' }}
@@ -238,30 +245,28 @@ const PickupCarPage: React.FC = () => {
                                         <Text style={{ color: 'white' }}>
                                             <CalendarOutlined /> วันที่นัดหมาย: {dayjs(booking.DateTime).locale('th').format('DD MMMM BBBB')}
                                         </Text>
+                                        {/* --- vvvvv --- ส่วนที่แก้ไข --- vvvvv --- */}
                                         <Text style={{ color: 'white' }}>
-                                            <ClockCircleOutlined /> เวลา: {dayjs.utc(booking.DateTime).format('HH:mm')} น.
+                                            {/* ✅ เอา .utc ออกเพื่อให้ dayjs แสดงเวลาตามโซนเวลาท้องถิ่น */}
+                                            <ClockCircleOutlined /> เวลา: {dayjs(booking.DateTime).format('HH:mm')} น.
                                         </Text>
-                                        {/* ## แก้ไข: ใช้ first_name และ last_name ## */}
+                                        {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
                                         <Text style={{ color: 'white' }}>
                                             <UserOutlined /> พนักงาน: {booking.Employee?.first_name} {booking.Employee?.last_name}
                                         </Text>
-                                        {/* ## แก้ไข: ใช้ SubDistrictName, DistrictName, ProvinceName ## */}
                                         <Text style={{ color: 'white' }}>
                                             <EnvironmentOutlined /> สถานที่: {booking.Address} {booking.SubDistrict?.SubDistrictName} {booking.District?.DistrictName} {booking.Province?.ProvinceName}
                                         </Text>
-                                        {/* ## แก้ไข: ใช้ booking.status ## */}
                                         <Text style={{ color: 'white' }}>
                                             สถานะ: {getStatusIcon(booking.status)} {booking.status}
                                         </Text>
                                     </Space>
                                     <Space style={{ marginTop: '20px' }}>
-                                        {/* ## แก้ไข: ใช้ booking.status ## */}
                                         {booking.status !== 'ยกเลิก' && booking.status !== 'สำเร็จ' && (
                                             <Button icon={<EditOutlined />} onClick={() => handleEditBooking(booking.ID)} style={{ background: '#5e5e5e', color: 'white', borderColor: '#777' }}>
                                                 แก้ไข
                                             </Button>
                                         )}
-                                        {/* ## แก้ไข: ใช้ booking.status ## */}
                                         {booking.status !== 'ยกเลิก' && booking.status !== 'สำเร็จ' && (
                                             <Button icon={<CloseCircleOutlined />} danger onClick={() => handleCancelBooking(booking)}>
                                                 ยกเลิก

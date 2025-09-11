@@ -16,14 +16,14 @@ const RegisterPage: React.FC = () => {
     const onFinish = async (values: any) => {
         console.log('Received values of form: ', values);
 
-        // Corrected payload to match backend's RegisterInput struct
+        // แก้ไข payload ให้ใช้ชื่อคีย์แบบ PascalCase เพื่อให้ตรงกับ Backend
         const payload = {
-            first_name: values.firstName, // Use snake_case
-            last_name: values.lastName,   // Use snake_case
-            email: values.email,
-            password: values.password,
-            phone: values.phoneNumber,
-            birthday: values.dateOfBirth.format('YYYY-MM-DD'), // ส่งเป็น string ในรูปแบบที่เข้าใจง่าย
+            FirstName: values.firstName, // เปลี่ยนเป็น PascalCase
+            LastName: values.lastName,   // เปลี่ยนเป็น PascalCase
+            Email: values.email,
+            Password: values.password,
+            Phone: values.phoneNumber,
+            Birthday: values.dateOfBirth.format('YYYY-MM-DD'), // ส่งเป็น string ในรูปแบบที่เข้าใจง่าย
         };
 
         try {
@@ -36,92 +36,64 @@ const RegisterPage: React.FC = () => {
             });
 
             if (response.ok) {
-                message.success('ลงทะเบียนสำเร็จ! โปรดเข้าสู่ระบบ');
+                const data = await response.json();
+                console.log('Registration successful:', data);
+                message.success('ลงทะเบียนสำเร็จ!');
                 navigate('/login');
             } else {
-                const errorData = await response.json();
-                message.error(`ลงทะเบียนไม่สำเร็จ: ${errorData.error}`);
+                message.error('การลงทะเบียนล้มเหลว');
             }
         } catch (error) {
             console.error('Registration failed:', error);
-            message.error('การเชื่อมต่อล้มเหลว โปรดลองอีกครั้ง');
+            message.error('การเชื่อมต่อล้มเหลว');
         }
     };
 
     return (
-        <div style={{ background: '#222', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Row justify="center" align="middle" style={{ width: '100%' }}>
-                <Col xs={24} sm={20} md={16} lg={12} xl={8}>
-                    <div style={{ padding: '20px', background: '#333', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0,0,0,0.5)' }}>
-                        <Title level={2} style={{ textAlign: 'center', color: '#FFD700', marginBottom: '24px' }}>ลงทะเบียน</Title>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f2f5' }}>
+            <Row justify="center" style={{ width: '100%' }}>
+                <Col xs={24} sm={16} md={12} lg={8}>
+                    <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
+                        <Title level={2} style={{ textAlign: 'center', color: '#f1d430ff' }}>ลงทะเบียนลูกค้า</Title>
                         <Form
                             form={form}
                             name="register"
                             onFinish={onFinish}
                             layout="vertical"
-                            autoComplete="off"
-                            style={{ color: 'white' }}
+                            initialValues={{ remember: true }}
                         >
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Form.Item
-                                        name="firstName"
-                                        label={<span style={{ color: 'white' }}>ชื่อ</span>}
-                                        rules={[{ required: true, message: 'กรุณากรอกชื่อ!' }]}
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={12}>
-                                    <Form.Item
-                                        name="lastName"
-                                        label={<span style={{ color: 'white' }}>นามสกุล</span>}
-                                        rules={[{ required: true, message: 'กรุณากรอกนามสกุล!' }]}
-                                    >
-                                        <Input />
-                                    </Form.Item>
-                                </Col>
-                            </Row>
-
+                            <Form.Item
+                                name="firstName"
+                                label={<span style={{ color: 'black' }}>ชื่อจริง</span>}
+                                rules={[{ required: true, message: 'กรุณากรอกชื่อจริง!' }]}
+                            >
+                                <Input />
+                            </Form.Item>
+                            <Form.Item
+                                name="lastName"
+                                label={<span style={{ color: 'black' }}>นามสกุล</span>}
+                                rules={[{ required: true, message: 'กรุณากรอกนามสกุล!' }]}
+                            >
+                                <Input />
+                            </Form.Item>
                             <Form.Item
                                 name="email"
-                                label={<span style={{ color: 'white' }}>อีเมล</span>}
+                                label={<span style={{ color: 'black' }}>อีเมล</span>}
                                 rules={[{ required: true, type: 'email', message: 'กรุณากรอกอีเมลที่ถูกต้อง!' }]}
                             >
                                 <Input />
                             </Form.Item>
-
                             <Form.Item
                                 name="password"
-                                label={<span style={{ color: 'white' }}>รหัสผ่าน</span>}
+                                label={<span style={{ color: 'black' }}>รหัสผ่าน</span>}
                                 rules={[{ required: true, message: 'กรุณากรอกรหัสผ่าน!' }]}
                             >
                                 <Input.Password />
                             </Form.Item>
 
                             <Form.Item
-                                name="confirmPassword"
-                                label={<span style={{ color: 'white' }}>ยืนยันรหัสผ่าน</span>}
-                                dependencies={['password']}
-                                hasFeedback
-                                rules={[
-                                    { required: true, message: 'กรุณายืนยันรหัสผ่าน!' },
-                                    ({ getFieldValue }) => ({
-                                        validator(_, value) {
-                                            if (!value || getFieldValue('password') === value) {
-                                                return Promise.resolve();
-                                            }
-                                            return Promise.reject(new Error('รหัสผ่านไม่ตรงกัน!'));
-                                        },
-                                    }),
-                                ]}
-                            >
-                                <Input.Password />
-                            </Form.Item>
-
-                            <Form.Item
                                 name="phoneNumber"
-                                label={<span style={{ color: 'white' }}>เบอร์โทรศัพท์</span>}
+                                label={<span style={{ color: 'black' }}>เบอร์โทรศัพท์</span>}
                                 rules={[{ required: true, message: 'กรุณากรอกเบอร์โทรศัพท์!' }]}
                             >
                                 <Input />
@@ -129,7 +101,7 @@ const RegisterPage: React.FC = () => {
 
                             <Form.Item
                                 name="dateOfBirth"
-                                label={<span style={{ color: 'white' }}>วันเกิด</span>}
+                                label={<span style={{ color: 'black' }}>วันเกิด</span>}
                                 rules={[{ required: true, message: 'กรุณาเลือกวันเกิด!' }]}
                             >
                                 <DatePicker style={{ width: '100%' }} locale={locale} />

@@ -203,3 +203,9 @@
 .custom-dark-calendar .ant-picker-cell-disabled .ant-picker-cell-inner {
   color: #555;
 }
+
+.page-container.blurred {
+  filter: blur(6px);
+  pointer-events: none;       /* หยุดการคลิก/โต้ตอบกับพื้นหลัง */
+  user-select: none;
+}

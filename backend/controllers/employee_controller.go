@@ -4,15 +4,33 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/PanuAutawo/CarTentManagement/backend/configs"
 	"github.com/PanuAutawo/CarTentManagement/backend/entity"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
 )
 
 type EmployeeController struct {
 	DB *gorm.DB
+}
+
+// สร้าง Struct ใหม่สำหรับ Response ให้ตรงกับ entity.Employee และใช้ snake_case สำหรับ JSON
+type EmployeeResponse struct {
+	ID           uint      `json:"id"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+	ProfileImage string    `json:"profile_image"`
+	FirstName    string    `json:"first_name"`
+	LastName     string    `json:"last_name"`
+	Email        string    `json:"email"`
+	PhoneNumber  string    `json:"phone_number"`
+	Address      string    `json:"address"`
+	Birthday     time.Time `json:"start_date"`
+	Sex          string    `json:"sex"`
+	Position     string    `json:"position"`
+	Jobtype      time.Time `json:"jobtype"`
 }
 
 func NewEmployeeController(db *gorm.DB) *EmployeeController {
@@ -42,25 +60,43 @@ func (e *EmployeeController) LoginEmployee(c *gin.Context) {
 		return
 	}
 
-	token, err := middleware.GenerateToken(employee.ID)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":   employee.ID,
+		"role": "employee",
+		"exp":  time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(configs.SECRET_KEY))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create token"})
 		return
 	}
 
+	// สร้าง response struct จาก entity
+	response := EmployeeResponse{
+		ID:           employee.ID,
+		CreatedAt:    employee.CreatedAt,
+		UpdatedAt:    employee.UpdatedAt,
+		ProfileImage: employee.ProfileImage,
+		FirstName:    employee.FirstName,
+		LastName:     employee.LastName,
+		Email:        employee.Email,
+		PhoneNumber:  employee.PhoneNumber,
+		Address:      employee.Address,
+		Birthday:     employee.Birthday,
+		Sex:          employee.Sex,
+		Position:     employee.Position,
+		Jobtype:      employee.Jobtype,
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"token":   token,
-		"employee": gin.H{
-			"id":        employee.ID,
-			"firstName": employee.FirstName,
-			"lastName":  employee.LastName,
-			"email":     employee.Email,
-		},
+		"message":  "Login successful",
+		"token":    tokenString,
+		"employee": response,
 	})
 }
 
-// GET /employee/me (Protected)
+// GET /employees/me (Protected)
 func (e *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 	employeeID, exists := c.Get("userID")
 	if !exists {
@@ -74,31 +110,86 @@ func (e *EmployeeController) GetCurrentEmployee(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": employee})
+	// แปลงข้อมูลเป็น Response Struct ใหม่ (ซึ่งตอนนี้เป็น snake_case แล้ว)
+	response := EmployeeResponse{
+		ID:           employee.ID,
+		CreatedAt:    employee.CreatedAt,
+		UpdatedAt:    employee.UpdatedAt,
+		ProfileImage: employee.ProfileImage,
+		FirstName:    employee.FirstName,
+		LastName:     employee.LastName,
+		Email:        employee.Email,
+		PhoneNumber:  employee.PhoneNumber,
+		Address:      employee.Address,
+		Birthday:     employee.Birthday,
+		Sex:          employee.Sex,
+		Position:     employee.Position,
+		Jobtype:      employee.Jobtype,
+	}
+	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
-// POST /admin/employees
-func (e *EmployeeController) CreateEmployee(c *gin.Context) {
-	var newEmployee entity.Employee
-	if err := c.ShouldBindJSON(&newEmployee); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// PUT /employees/me (Protected)
+func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
+	employeeID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authorized"})
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newEmployee.Password), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
-	newEmployee.Password = string(hashedPassword)
-	newEmployee.Birthday = time.Now()
-
-	if err := e.DB.Create(&newEmployee).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	var employee entity.Employee
+	if err := e.DB.First(&employee, employeeID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"data": newEmployee})
+	var updatedInfo struct {
+		ProfileImage string `json:"profile_image"`
+		FirstName    string `json:"first_name"`
+		LastName     string `json:"last_name"`
+		PhoneNumber  string `json:"phone_number"`
+		Address      string `json:"address"`
+		Birthday     string `json:"start_date"`
+		Sex          string `json:"sex"`
+		Position     string `json:"position"`
+		Jobtype      string `json:"jobtype"`
+	}
+
+	if err := c.ShouldBindJSON(&updatedInfo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data: " + err.Error()})
+		return
+	}
+
+	employee.ProfileImage = updatedInfo.ProfileImage
+	employee.FirstName = updatedInfo.FirstName
+	employee.LastName = updatedInfo.LastName
+	employee.PhoneNumber = updatedInfo.PhoneNumber
+	employee.Address = updatedInfo.Address
+	employee.Sex = updatedInfo.Sex
+	employee.Position = updatedInfo.Position
+
+	if err := e.DB.Save(&employee).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update employee data"})
+		return
+	}
+
+	// แปลงข้อมูลที่อัปเดตแล้วเป็น Response Struct ใหม่
+	response := EmployeeResponse{
+		ID:           employee.ID,
+		CreatedAt:    employee.CreatedAt,
+		UpdatedAt:    employee.UpdatedAt,
+		ProfileImage: employee.ProfileImage,
+		FirstName:    employee.FirstName,
+		LastName:     employee.LastName,
+		Email:        employee.Email,
+		PhoneNumber:  employee.PhoneNumber,
+		Address:      employee.Address,
+		Birthday:     employee.Birthday,
+		Sex:          employee.Sex,
+		Position:     employee.Position,
+		Jobtype:      employee.Jobtype,
+	}
+	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
 // GET /employees
@@ -108,10 +199,7 @@ func (e *EmployeeController) GetEmployees(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	// --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
-	// เปลี่ยนจากการส่ง {"data": employees} เป็นการส่ง employees (Array) ตรงๆ
 	c.JSON(http.StatusOK, employees)
-	// --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 }
 
 // GET /employees/:id
@@ -123,54 +211,4 @@ func (e *EmployeeController) GetEmployeeByID(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": employee})
-}
-
-// PUT /admin/employees/:id
-func (e *EmployeeController) UpdateEmployee(c *gin.Context) {
-	id := c.Param("id")
-	var employee entity.Employee
-	if err := e.DB.First(&employee, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
-		return
-	}
-
-	var updatedInfo entity.Employee
-	if err := c.ShouldBindJSON(&updatedInfo); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if updatedInfo.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedInfo.Password), bcrypt.DefaultCost)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-			return
-		}
-		employee.Password = string(hashedPassword)
-	}
-
-	employee.FirstName = updatedInfo.FirstName
-	employee.LastName = updatedInfo.LastName
-	employee.Email = updatedInfo.Email
-	employee.PhoneNumber = updatedInfo.PhoneNumber
-	employee.Address = updatedInfo.Address
-	employee.Sex = updatedInfo.Sex
-	employee.Position = updatedInfo.Position
-
-	if err := e.DB.Save(&employee).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": employee})
-}
-
-// DELETE /admin/employees/:id
-func (e *EmployeeController) DeleteEmployee(c *gin.Context) {
-	id := c.Param("id")
-	if err := e.DB.Delete(&entity.Employee{}, id).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "Employee deleted successfully"})
 }
