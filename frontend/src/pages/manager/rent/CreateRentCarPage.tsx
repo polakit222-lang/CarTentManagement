@@ -8,83 +8,95 @@ const CreateRentCarPage: React.FC = () => {
   const [car, setCar] = useState<CarResponse | null>(null);
   const [periods, setPeriods] = useState<RentPeriod[]>([]);
 
+  // ดึงข้อมูลรถพร้อม rent_list
   useEffect(() => {
     if (id) {
       rentService.getRentListsByCar(Number(id))
         .then((res) => {
           setCar(res);
-          setPeriods(res.rent_list.map((p) => ({ ...p, temp: false })));
+          // ถ้ามี rent_list ใช้ของเดิม เพิ่ม temp=false, ถ้าไม่มี ใช้ array ว่าง
+          setPeriods(
+            res.rent_list?.length
+              ? res.rent_list.map((p) => ({ ...p, temp: false }))
+              : []
+          );
         });
     }
   }, [id]);
 
+  // เพิ่มช่วงเช่าใหม่
   const addPeriod = () => {
     setPeriods([
       ...periods,
-      {
-        rent_start_date: '',
-        rent_end_date: '',
-        rent_price: 0,
-        temp: true,
-      },
+      { rent_start_date: '', rent_end_date: '', rent_price: 0, temp: true },
     ]);
   };
 
-  // ลบจาก state เท่านั้น
+  // ลบช่วงเช่าใน state
   const removePeriod = (index: number) => {
-    const period = periods[index];
-    if (period.temp) {
-      setPeriods(periods.filter((_, i) => i !== index));
-    }
+    setPeriods(periods.filter((_, i) => i !== index));
   };
 
-  // ลบจาก backend ถ้ามี id
-  const deletePeriod = async (index: number) => {
-    const period = periods[index];
-    if (period.id && !period.temp) {
+  // ลบช่วงเช่าที่มี id (จาก backend) ด้วย
+  const deletePeriod = async (p: RentPeriod, index: number) => {
+    if (p.id && window.confirm('ต้องการลบช่วงเช่านี้จริงหรือไม่?')) {
       try {
-        await rentService.deleteRentDate(period.id);
-        setPeriods(periods.filter((_, i) => i !== index));
+        await rentService.deleteRentDate(p.id);
+        removePeriod(index);
+        alert('ลบเรียบร้อยแล้ว');
       } catch (err) {
-        alert('ลบช่วงเช่าไม่สำเร็จ');
         console.error(err);
+        alert('ลบไม่สำเร็จ');
       }
     } else {
+      // ถ้าไม่มี id แค่ลบจาก frontend
       removePeriod(index);
     }
   };
 
+  // อัปเดตค่าใน period
   const updatePeriod = (index: number, key: keyof RentPeriod, value: string | number) => {
     const newPeriods = [...periods];
     newPeriods[index] = { ...newPeriods[index], [key]: value };
     setPeriods(newPeriods);
   };
 
+  // ส่งข้อมูลไป backend
   const handleSubmit = async () => {
     if (!car) return;
 
+    // ส่งเฉพาะช่วงเช่าที่ถูกต้อง
     const validPeriods = periods.filter(
       (p) => p.rent_start_date && p.rent_end_date && p.rent_price > 0
     );
 
-    if (validPeriods.length === 0) {
+    if (!validPeriods.length) {
       alert('กรุณาเพิ่มช่วงเช่าที่ถูกต้อง (วันที่และราคาต้องไม่ว่าง และราคาต้อง > 0)');
       return;
     }
 
-    await rentService.createOrUpdateRentList({
-      car_id: car.id,
-      status: 'Available',
-      manager_id: 1,
-      dates: validPeriods.map((p) => ({
-        id: p.id || 0,
-        open_date: p.rent_start_date,
-        close_date: p.rent_end_date,
-        rent_price: p.rent_price,
-      })),
-    });
+    try {
+      await rentService.createOrUpdateRentList({
+        car_id: car.id,
+        status: 'Available', // สามารถปรับเป็น select input
+        manager_id: 1,       // ปรับตาม context จริง
+        dates: validPeriods.map((p) => ({
+          id: p.id || 0, // ถ้ามี id ส่งไปเพื่อ update
+          open_date: p.rent_start_date,
+          close_date: p.rent_end_date,
+          rent_price: p.rent_price,
+        })),
+      });
 
-    alert('บันทึกเรียบร้อย');
+      alert('บันทึกเรียบร้อย');
+      // reload ข้อมูลใหม่
+      const refreshed = await rentService.getRentListsByCar(car.id);
+      setCar(refreshed);
+      setPeriods(refreshed.rent_list.map((p) => ({ ...p, temp: false })));
+    } catch (err) {
+      console.error(err);
+      alert('บันทึกไม่สำเร็จ');
+    }
   };
 
   return (
@@ -110,7 +122,7 @@ const CreateRentCarPage: React.FC = () => {
             value={p.rent_price}
             onChange={(e) => updatePeriod(i, 'rent_price', parseFloat(e.target.value))}
           />
-          <button onClick={() => deletePeriod(i)}>ลบ</button>
+          <button onClick={() => deletePeriod(p, i)}>ลบ</button>
         </div>
       ))}
 
