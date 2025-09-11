@@ -45,6 +45,7 @@ export async function fetchEmployee(id: number): Promise<Employee> {
 export async function addEmployee(
   employee: Omit<Employee, "employeeID">
 ): Promise<Employee> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = { ...employee };
 
   // ✅ ลบ birthday ถ้าไม่กรอก

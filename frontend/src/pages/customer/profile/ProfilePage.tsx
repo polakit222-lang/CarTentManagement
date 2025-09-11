@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card, Avatar, Descriptions, Button, Row, Col, Typography, message,
-  Form, Input, DatePicker, Spin, Divider
+  Form, Input, DatePicker, Spin, Divider, Empty, Collapse
 } from 'antd';
 import {
-  UserOutlined, EditOutlined, SaveOutlined, CloseCircleOutlined
+  UserOutlined, EditOutlined, SaveOutlined, CloseCircleOutlined,
+  CarOutlined, PhoneOutlined, FileTextOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import locale from 'antd/es/date-picker/locale/th_TH';
@@ -13,6 +14,9 @@ import 'dayjs/locale/th';
 import { useAuth } from '../../../hooks/useAuth';
 
 const { Title } = Typography;
+// --- vvvvv --- START: เพิ่ม Imports ใหม่ --- vvvvv ---
+const { Panel } = Collapse;
+// --- ^^^^^ --- END: จบส่วนที่เพิ่ม --- ^^^^^ ---
 
 interface Customer {
   ID: number;
@@ -24,12 +28,35 @@ interface Customer {
   Password?: string;
 }
 
+interface SalesContract {
+  ID: number;
+  Employee: {
+    first_name: string;
+    last_name: string;
+    Phone: string;
+  };
+  SaleList: {
+    Car: {
+      Detail: {
+        CarModel: {
+          model_name: string;
+        };
+        Brand: {
+          brand_name: string;
+        };
+      };
+    };
+  };
+}
+
 const CusProfilePage: React.FC = () => {
   const [customerData, setCustomerData] = useState<Customer | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
   const { user, token, logout } = useAuth();
+  const [myCars, setMyCars] = useState<SalesContract[]>([]);
+  const [loadingCars, setLoadingCars] = useState(true);
 
   useEffect(() => {
     const fetchCustomerData = async () => {
@@ -50,22 +77,21 @@ const CusProfilePage: React.FC = () => {
         }
 
         const data = await response.json();
-        // --- แก้ไขจุดที่ 1: จัดการ key ทั้ง Birthday และ birthday ---
         const mappedData: Customer = {
           ID: data.ID,
           FirstName: data.FirstName,
           LastName: data.LastName,
           Email: data.Email,
           Phone: data.Phone,
-          Birthday: data.Birthday || data.birthday, // ใช้ค่าตัวใดตัวหนึ่งที่มีอยู่
+          Birthday: data.Birthday || data.birthday,
         };
         setCustomerData(mappedData);
         form.setFieldsValue({
-            firstName: mappedData.FirstName,
-            lastName: mappedData.LastName,
-            email: mappedData.Email,
-            phone: mappedData.Phone,
-            birthday: mappedData.Birthday ? dayjs(mappedData.Birthday) : null,
+          firstName: mappedData.FirstName,
+          lastName: mappedData.LastName,
+          email: mappedData.Email,
+          phone: mappedData.Phone,
+          birthday: mappedData.Birthday ? dayjs(mappedData.Birthday) : null,
         });
       } catch (error) {
         console.error("Error fetching customer data:", error);
@@ -76,7 +102,32 @@ const CusProfilePage: React.FC = () => {
       }
     };
 
+    const fetchSalesContracts = async () => {
+      if (!user?.ID || !token) {
+        setLoadingCars(false);
+        return;
+      }
+      try {
+        setLoadingCars(true);
+        const response = await fetch(`http://localhost:8080/sales-contracts/customer/${user.ID}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setMyCars(data.data || []);
+        } else {
+          setMyCars([]);
+        }
+      } catch (error) {
+        console.error("Error fetching sales contracts:", error);
+        message.error('ไม่สามารถดึงข้อมูลรถของฉันได้');
+      } finally {
+        setLoadingCars(false);
+      }
+    };
+
     fetchCustomerData();
+    fetchSalesContracts();
   }, [user, token, form, logout]);
 
   const handleEdit = () => {
@@ -86,13 +137,13 @@ const CusProfilePage: React.FC = () => {
   const handleCancel = () => {
     setIsEditMode(false);
     if (customerData) {
-        form.setFieldsValue({
-            firstName: customerData.FirstName,
-            lastName: customerData.LastName,
-            email: customerData.Email,
-            phone: customerData.Phone,
-            birthday: customerData.Birthday ? dayjs(customerData.Birthday) : null,
-        });
+      form.setFieldsValue({
+        firstName: customerData.FirstName,
+        lastName: customerData.LastName,
+        email: customerData.Email,
+        phone: customerData.Phone,
+        birthday: customerData.Birthday ? dayjs(customerData.Birthday) : null,
+      });
     }
   };
 
@@ -121,17 +172,15 @@ const CusProfilePage: React.FC = () => {
       }
 
       const updatedData = await response.json();
-
-      // --- แก้ไขจุดที่ 2: จัดการ key ทั้ง Birthday และ birthday หลังการอัปเดต ---
       const mappedUpdatedData: Customer = {
         ID: updatedData.ID,
         FirstName: updatedData.FirstName,
         LastName: updatedData.LastName,
         Email: updatedData.Email,
         Phone: updatedData.Phone,
-        Birthday: updatedData.Birthday || updatedData.birthday, // ใช้ค่าตัวใดตัวหนึ่งที่มีอยู่
+        Birthday: updatedData.Birthday || updatedData.birthday,
       };
-      
+
       setCustomerData(mappedUpdatedData);
       setIsEditMode(false);
       message.success('บันทึกข้อมูลสำเร็จ!');
@@ -152,10 +201,10 @@ const CusProfilePage: React.FC = () => {
             style={{ borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}
           >
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '50px' }}>
-                    <Spin size="large" />
-                    <Title level={4} style={{ marginTop: '20px' }}>กำลังโหลดข้อมูล...</Title>
-                </div>
+              <div style={{ textAlign: 'center', padding: '50px' }}>
+                <Spin size="large" />
+                <Title level={4} style={{ marginTop: '20px' }}>กำลังโหลดข้อมูล...</Title>
+              </div>
             ) : (
               <Row gutter={[16, 16]} justify="center">
                 <Col style={{ textAlign: 'center' }}>
@@ -214,6 +263,53 @@ const CusProfilePage: React.FC = () => {
               )}
             </Row>
           </Card>
+
+          {/* --- vvvvv --- START: เพิ่ม JSX สำหรับ "รถของฉัน" แบบ Toggle --- vvvvv --- */}
+          <Divider style={{ margin: '2.5rem 0' }} />
+          <style>{`
+  .custom-collapse .ant-collapse-arrow {
+    color: #f1d430ff !important; /* เปลี่ยนสีลูกศร */
+    font-size: 20px;
+  }
+  .custom-collapse .ant-collapse-header-text {
+    color: #f1d430ff !important; /* เปลี่ยนสีข้อความ header */
+  }
+`}</style>
+          <Collapse ghost
+           expandIconPosition="start"
+            className="custom-collapse">
+            <Panel header={<Title level={3} style={{ margin: 0, color: '#f1d430ff' }}>รถของฉัน</Title>} key="1">
+              {loadingCars ? (
+                <div style={{ textAlign: 'center', padding: '50px' }}>
+                  <Spin size="large" />
+                </div>
+              ) : myCars.length > 0 ? (
+                <Row gutter={[24, 24]}>
+                  {myCars.map(contract => (
+                    <Col xs={24} md={12} key={contract.ID}>
+                      <Card
+                        bordered={false}
+                        style={{ borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}
+                        title={
+                          <Title level={5} style={{ color: '#f1d430ff', margin: 0 }}>
+                            <CarOutlined style={{ marginRight: '10px' }} />
+                            {contract.SaleList?.Car?.Detail?.Brand?.brand_name} {contract.SaleList?.Car?.Detail?.CarModel?.model_name}
+                          </Title>
+                        }
+                      >
+                        <p><FileTextOutlined style={{ marginRight: '10px' }} /> <b>หมายเลขสัญญา:</b> SC-{contract.ID}</p>
+                        <p><UserOutlined style={{ marginRight: '10px' }} /> <b>พนักงาน:</b> {contract.Employee?.first_name} {contract.Employee?.last_name}</p>
+                        <p><PhoneOutlined style={{ marginRight: '10px' }} /> <b>เบอร์โทรติดต่อ:</b> {contract.Employee?.Phone}</p>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+              ) : (
+                <Empty description="คุณยังไม่มีรถยนต์ในครอบครอง" />
+              )}
+            </Panel>
+          </Collapse>
+          {/* --- ^^^^^ --- END: จบส่วนที่เพิ่ม --- ^^^^^ --- */}
         </Col>
       </Row>
     </div>

@@ -33,42 +33,41 @@ interface TypeInformation {
 }
 
 interface SalesContract {
-    ID: number;
+  ID: number;
 }
 
 interface Province {
-    ProvinceName: string;
+  ProvinceName: string;
 }
 interface District {
-    DistrictName: string;
+  DistrictName: string;
 }
 interface SubDistrict {
-    SubDistrictName: string;
+  SubDistrictName: string;
 }
 
-// --- vvvvv --- START: โค้ดที่แก้ไขส่วนที่ 1 --- vvvvv ---
-// เพิ่ม Employee เพื่อให้สามารถเช็ค ID ของพนักงานได้
+// จุดที่ 1: แก้ไข Interface
 interface PickupDeliveryFromDB {
+  ID: number;
+  DateTime: string;
+  status: string; // <--- แก้ไขจาก Status เป็น status
+  SalesContractID: number;
+  Employee: {
     ID: number;
-    DateTime: string;
-    Status: string;
-    Employee: {
-      ID: number;
-    };
+  };
 }
-// --- ^^^^^ --- END: จบส่วนที่แก้ไขส่วนที่ 1 --- ^^^^^ ---
 
 
 interface PickupDeliveryForEdit {
-    ID: number;
-    DateTime: string;
-    Address: string;
-    SalesContract: SalesContract;
-    Employee: Employee;
-    TypeInformation: TypeInformation;
-    Province?: Province;
-    District?: District;
-    SubDistrict?: SubDistrict;
+  ID: number;
+  DateTime: string;
+  Address: string;
+  SalesContract: SalesContract;
+  Employee: Employee;
+  TypeInformation: TypeInformation;
+  Province?: Province;
+  District?: District;
+  SubDistrict?: SubDistrict;
 }
 
 interface DistrictFromAPI {
@@ -92,7 +91,7 @@ const PickupCarCreatePage: React.FC = () => {
   const [bookedTimeSlots, setBookedTimeSlots] = useState<string[]>([]);
 
   // Form state
-  const [contractNumber, setContractNumber] = useState('');
+  const [contractNumber, setContractNumber] = useState<string | undefined>(undefined);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [address, setAddress] = useState('');
@@ -107,6 +106,9 @@ const PickupCarCreatePage: React.FC = () => {
 
   const [districtsFromApi, setDistrictsFromApi] = useState<DistrictFromAPI[]>([]);
   const [subDistrictsFromApi, setSubDistrictsFromApi] = useState<SubDistrictFromAPI[]>([]);
+
+  const [salesContracts, setSalesContracts] = useState<SalesContract[]>([]);
+  const [pickupDeliveries, setPickupDeliveries] = useState<PickupDeliveryFromDB[]>([]);
 
   const inputStyle = {
     backgroundColor: '#4A4A4A',
@@ -132,13 +134,25 @@ const PickupCarCreatePage: React.FC = () => {
     [typeInformations, selectedMethodId]
   );
 
-  const isSaveDisabled =
-    !contractNumber ||
-    !selectedDate ||
-    !selectedTime ||
-    !selectedEmployeeId ||
-    !selectedMethodId ||
-    (selectedMethodName === 'ให้ไปส่งตามที่อยู่' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
+  // จุดที่ 2: แก้ไข isSaveDisabled
+  const isSaveDisabled = useMemo(() => {
+    const isInfoMissing =
+      !contractNumber ||
+      !selectedDate ||
+      !selectedTime ||
+      !selectedEmployeeId ||
+      !selectedMethodId ||
+      (selectedMethodName === 'ให้ไปส่งตามที่อยู่' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
+
+    const salesContractID = contractNumber ? parseInt(contractNumber, 10) : NaN;
+    const hasExistingBooking = isNaN(salesContractID) ? false : pickupDeliveries.some(delivery =>
+      delivery.SalesContractID === salesContractID &&
+      (delivery.status === 'รอดำเนินการ' || delivery.status === 'สำเร็จ') && // <--- แก้ไขจาก Status เป็น status
+      (editingId ? delivery.ID.toString() !== editingId : true)
+    );
+
+    return isInfoMissing || hasExistingBooking;
+  }, [contractNumber, selectedDate, selectedTime, selectedEmployeeId, selectedMethodId, selectedMethodName, address, selectedProvince, selectedDistrict, selectedSubdistrict, pickupDeliveries, editingId]);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -169,6 +183,23 @@ const PickupCarCreatePage: React.FC = () => {
 
         const { data }: { data: PickupDeliveryForEdit } = await response.json();
 
+        if (data.Province && data.District && data.SubDistrict) {
+          const provinceData = provinces.find(p => p.name_th === data.Province?.ProvinceName);
+          if (provinceData) {
+            const fetchedDistricts = provinceData.amphure.map(a => ({ ID: a.id, DistrictName: a.name_th }));
+            setDistrictsFromApi(fetchedDistricts);
+
+            const districtData = provinceData.amphure.find(d => d.name_th === data.District?.DistrictName);
+            if (districtData) {
+              const fetchedSubdistricts = districtData.tambon.map(t => ({
+                ID: t.id,
+                SubDistrictName: t.name_th,
+              }));
+              setSubDistrictsFromApi(fetchedSubdistricts);
+            }
+          }
+        }
+
         setContractNumber(data.SalesContract.ID.toString());
         setSelectedEmployeeId(data.Employee.ID);
         setSelectedMethodId(data.TypeInformation.ID);
@@ -177,19 +208,19 @@ const PickupCarCreatePage: React.FC = () => {
         setSelectedTime(bookingDateTime.format('HH:mm'));
 
         if (data.Address) {
-            setAddress(data.Address);
+          setAddress(data.Address);
         }
         if (data.Province) {
-            setSelectedProvince(data.Province.ProvinceName);
+          setSelectedProvince(data.Province.ProvinceName);
         }
         if (data.District) {
-            setSelectedDistrict(data.District.DistrictName);
+          setSelectedDistrict(data.District.DistrictName);
         }
         if (data.SubDistrict) {
-            setSelectedSubdistrict(data.SubDistrict.SubDistrictName);
+          setSelectedSubdistrict(data.SubDistrict.SubDistrictName);
         }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         message.error(`เกิดข้อผิดพลาด: ${error.message}`);
         navigate('/pickup-car');
@@ -198,12 +229,13 @@ const PickupCarCreatePage: React.FC = () => {
       }
     };
 
+
     fetchDropdownData().then(() => {
-        if (editingId) {
-            fetchBookingDataForEdit();
-        } else {
-            setLoading(false);
-        }
+      if (editingId) {
+        fetchBookingDataForEdit();
+      } else {
+        setLoading(false);
+      }
     });
 
   }, [editingId, token, navigate]);
@@ -214,10 +246,62 @@ const PickupCarCreatePage: React.FC = () => {
     }
   }, [user]);
 
-  // --- vvvvv --- START: โค้ดที่แก้ไขส่วนที่ 2 --- vvvvv ---
+  useEffect(() => {
+    const fetchContractsAndBookings = async () => {
+      if (!user?.ID) return;
+
+      try {
+        setLoading(true);
+        const [contractsResponse, deliveriesResponse] = await Promise.all([
+          fetch(`http://localhost:8080/sales-contracts/customer/${user.ID}`),
+          fetch('http://localhost:8080/pickup-deliveries')
+        ]);
+
+        if (!contractsResponse.ok || !deliveriesResponse.ok) {
+          throw new Error('ไม่สามารถดึงข้อมูลสัญญาหรือการนัดหมายได้');
+        }
+
+        const contractsData = await contractsResponse.json();
+        const deliveriesData = await deliveriesResponse.json();
+
+        setSalesContracts(contractsData.data || []);
+        setPickupDeliveries(deliveriesData.data || []);
+
+      } catch (error) {
+        console.error('Failed to fetch sales contracts or pickup deliveries:', error);
+        message.error('ไม่สามารถดึงข้อมูลสัญญาซื้อขายได้');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContractsAndBookings();
+  }, [user]);
+
+  // จุดที่ 3: แก้ไข availableSalesContracts
+  const availableSalesContracts = useMemo(() => {
+    const currentEditingContractId = editingId
+      ? pickupDeliveries.find(d => d.ID.toString() === editingId)?.SalesContractID
+      : null;
+
+    const bookedSalesContractIDs = new Set<number>();
+    pickupDeliveries.forEach(delivery => {
+      const isPendingOrCompleted = delivery.status === 'รอดำเนินการ' || delivery.status === 'สำเร็จ'; // <--- แก้ไขจาก Status เป็น status
+      if (isPendingOrCompleted) {
+        bookedSalesContractIDs.add(delivery.SalesContractID);
+      }
+    });
+
+    if (currentEditingContractId) {
+      bookedSalesContractIDs.delete(currentEditingContractId);
+    }
+
+    return salesContracts.filter(contract => !bookedSalesContractIDs.has(contract.ID));
+
+  }, [salesContracts, pickupDeliveries, editingId]);
+
   useEffect(() => {
     const fetchBookedTimes = async () => {
-      // ถ้ายังไม่ได้เลือกวันหรือพนักงาน ให้ล้างค่าเวลาที่จองแล้ว และไม่ต้องทำอะไรต่อ
       if (!selectedDate || !selectedEmployeeId) {
         setBookedTimeSlots([]);
         return;
@@ -231,11 +315,9 @@ const PickupCarCreatePage: React.FC = () => {
 
         const unavailableTimes = bookings
           .filter(booking => {
-            // ไม่ต้องเช็ครายการปัจจุบัน ในกรณีที่กำลังแก้ไข
             if (editingId && booking.ID.toString() === editingId) {
-                return false;
+              return false;
             }
-            // เงื่อนไข: ต้องเป็นวันเดียวกัน และเป็นของพนักงานคนเดียวกัน
             const isSameDay = dayjs(booking.DateTime).isSame(selectedDate, 'day');
             const isSameEmployee = booking.Employee.ID === selectedEmployeeId;
             return isSameDay && isSameEmployee;
@@ -251,26 +333,24 @@ const PickupCarCreatePage: React.FC = () => {
     };
 
     fetchBookedTimes();
-  }, [selectedDate, selectedEmployeeId, editingId]); // เพิ่ม selectedEmployeeId เพื่อให้ re-fetch เมื่อมีการเปลี่ยนพนักงาน
-  // --- ^^^^^ --- END: จบส่วนที่แก้ไขส่วนที่ 2 --- ^^^^^ ---
-
+  }, [selectedDate, selectedEmployeeId, editingId]);
 
   useEffect(() => {
     if (selectedMethodId === 2) {
       setSelectedDistrict(null);
       setSelectedSubdistrict(null);
       setSubDistrictsFromApi([]);
-      
+
       setSelectedProvince("Bangkok");
       const fetchBangkokDistricts = async () => {
         try {
-            const response = await fetch('http://localhost:8080/districts/by-province/1');
-            if (!response.ok) throw new Error('Failed to fetch districts');
-            const data = await response.json();
-            setDistrictsFromApi(data || []);
+          const response = await fetch('http://localhost:8080/districts/by-province/1');
+          if (!response.ok) throw new Error('Failed to fetch districts');
+          const data = await response.json();
+          setDistrictsFromApi(data || []);
         } catch (error) {
-            console.error(error);
-            message.error("ไม่สามารถดึงข้อมูลอำเภอของกรุงเทพมหานครได้");
+          console.error(error);
+          message.error("ไม่สามารถดึงข้อมูลอำเภอของกรุงเทพมหานครได้");
         }
       };
       fetchBangkokDistricts();
@@ -284,80 +364,113 @@ const PickupCarCreatePage: React.FC = () => {
   }, [selectedMethodId]);
 
   useEffect(() => {
-    if (selectedDistrict && selectedMethodId === 2) {
-        const district = districtsFromApi.find(d => d.DistrictName === selectedDistrict);
-        if (district) {
-            setSelectedSubdistrict(null);
-            const fetchSubDistricts = async () => {
-                try {
-                    const response = await fetch(`http://localhost:8080/sub-districts/by-district/${district.ID}`);
-                    if (!response.ok) throw new Error('Failed to fetch sub-districts');
-                    const data = await response.json();
-                    setSubDistrictsFromApi(data || []);
-                } catch (error) {
-                    console.error(error);
-                    message.error("ไม่สามารถดึงข้อมูลตำบลได้");
-                }
-            };
-            fetchSubDistricts();
-        }
+    if (selectedDistrict) {
+      const selectedDistrictObj = districtsFromApi.find(d => d.DistrictName === selectedDistrict);
+      if (selectedDistrictObj) {
+        const fetchSubDistricts = async () => {
+          try {
+            const response = await fetch(`http://localhost:8080/sub-districts/by-district/${selectedDistrictObj.ID}`);
+            if (!response.ok) throw new Error('Failed to fetch sub-districts');
+            const data = await response.json();
+            setSubDistrictsFromApi(data || []);
+          } catch (error) {
+            console.error(error);
+            message.error("ไม่สามารถดึงข้อมูลตำบลได้");
+          }
+        };
+        fetchSubDistricts();
+      }
     }
-  }, [selectedDistrict, selectedMethodId, districtsFromApi]);
-
+  }, [selectedDistrict, districtsFromApi]);
 
   const handleSave = async () => {
     if (!customerId) {
-        message.error("ข้อมูลผู้ใช้ไม่ถูกต้อง กรุณาลองเข้าสู่ระบบใหม่อีกครั้ง");
-        return;
+      message.error("ข้อมูลผู้ใช้ไม่ถูกต้อง กรุณาลองเข้าสู่ระบบใหม่อีกครั้ง");
+      return;
     }
-    if (isSaveDisabled) {
-        message.warning("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
+
+    const isInfoMissing =
+      !contractNumber ||
+      !selectedDate ||
+      !selectedTime ||
+      !selectedEmployeeId ||
+      !selectedMethodId ||
+      (selectedMethodName === 'ให้ไปส่งตามที่อยู่' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
+
+    if (isInfoMissing) {
+      message.warning("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
+      return;
+    }
+
+    let latestDeliveries: PickupDeliveryFromDB[] = [];
+    try {
+      const deliveriesResponse = await fetch('http://localhost:8080/pickup-deliveries');
+      if (!deliveriesResponse.ok) {
+        throw new Error('ไม่สามารถดึงข้อมูลการนัดหมายล่าสุดได้');
+      }
+      latestDeliveries = (await deliveriesResponse.json()).data || [];
+    } catch (error) {
+      console.error('Failed to fetch latest deliveries for validation:', error);
+      message.error('เกิดข้อผิดพลาดในการตรวจสอบสถานะการนัดหมาย กรุณาลองใหม่อีกครั้ง');
+      return;
+    }
+
+    if (!editingId && contractNumber) {
+      const salesContractID = parseInt(contractNumber, 10);
+      const hasExistingBooking = latestDeliveries.some(delivery =>
+        delivery.SalesContractID === salesContractID &&
+        (delivery.status === 'รอดำเนินการ' || delivery.status === 'สำเร็จ') // <--- แก้ไขจาก Status เป็น status
+      );
+
+      if (hasExistingBooking) {
+        message.error(`หมายเลขสัญญานี้ (${contractNumber}) ได้รับรถยนต์แล้ว หรืออยู่ระหว่างรอดำเนินการ`);
         return;
+      }
     }
 
     const pickupDateTime = selectedDate!
-        .hour(parseInt(selectedTime!.split(':')[0]))
-        .minute(parseInt(selectedTime!.split(':')[1]))
-        .second(0);
+      .hour(parseInt(selectedTime!.split(':')[0]))
+      .minute(parseInt(selectedTime!.split(':')[1]))
+      .second(0);
 
     const payload = {
-        CustomerID: customerId,
-        EmployeeID: selectedEmployeeId!,
-        TypeInformationID: selectedMethodId!,
-        SalesContractNumber: parseInt(contractNumber, 10),
-        PickupDate: pickupDateTime.format(),
-        Address: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? address : "",
-        Province: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedProvince || "") : "",
-        District: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedDistrict || "") : "",
-        Subdistrict: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedSubdistrict || "") : "",
+      CustomerID: customerId,
+      EmployeeID: selectedEmployeeId!,
+      TypeInformationID: selectedMethodId!,
+      SalesContractNumber: parseInt(contractNumber!, 10),
+      PickupDate: pickupDateTime.format(),
+      Address: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? address : "",
+      Province: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedProvince || "") : "",
+      District: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedDistrict || "") : "",
+      Subdistrict: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedSubdistrict || "") : "",
     };
 
     try {
-        const url = editingId
-            ? `http://localhost:8080/pickup-deliveries/${editingId}`
-            : 'http://localhost:8080/pickup-deliveries';
-        
-        const method = editingId ? 'PUT' : 'POST';
+      const url = editingId
+        ? `http://localhost:8080/pickup-deliveries/${editingId}`
+        : 'http://localhost:8080/pickup-deliveries';
 
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload),
-        });
+      const method = editingId ? 'PUT' : 'POST';
 
-        if (response.ok) {
-            message.success(editingId ? 'แก้ไขการนัดหมายสำเร็จ!' : 'สร้างการนัดหมายสำเร็จ!');
-            navigate('/pickup-car');
-        } else {
-            const errorData = await response.json();
-            message.error(`บันทึกไม่สำเร็จ: ${errorData.error || 'กรุณาตรวจสอบข้อมูลอีกครั้ง'}`);
-        }
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        message.success(editingId ? 'แก้ไขการนัดหมายสำเร็จ!' : 'สร้างการนัดหมายสำเร็จ!');
+        navigate('/pickup-car');
+      } else {
+        const errorData = await response.json();
+        message.error(`บันทึกไม่สำเร็จ: ${errorData.error || 'กรุณาตรวจสอบข้อมูลอีกครั้ง'}`);
+      }
     } catch (error) {
-        console.error('Failed to save booking:', error);
-        message.error('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
+      console.error('Failed to save booking:', error);
+      message.error('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
     }
   };
 
@@ -371,9 +484,9 @@ const PickupCarCreatePage: React.FC = () => {
 
   if (loading) {
     return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <Spin size="large" />
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" />
+      </div>
     );
   }
 
@@ -384,12 +497,32 @@ const PickupCarCreatePage: React.FC = () => {
     .ant-input::placeholder {
         color: #a9a9a9 !important;
     }
+    .ant-select-selector {
+        background-color: #4A4A4A !important;
+        border-color: #888 !important;
+    }
+    .ant-select-selection-search-input {
+      color: #fff !important;
+    }
+    .ant-select-arrow {
+      color: #fff !important;
+    }
+    .ant-select-dropdown {
+        background-color: #4A4A4A !important;
+    }
+    .ant-select-item-option-content {
+        color: #fff !important;
+    }
+    .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+        background-color: #f1d430ff !important;
+        color: #000 !important;
+    }
   `;
 
   return (
     <div style={{ padding: '24px 48px' }}>
       <style>{customCss}</style>
-       <style>{`
+      <style>{`
         .ant-select-selection-item {
           color: #FFFFFF !important;
         }
@@ -412,7 +545,19 @@ const PickupCarCreatePage: React.FC = () => {
             <Title level={4} style={{ color: '#f1d430ff' }}>ข้อมูลการนัดหมาย</Title>
             <Row align="middle" gutter={[16, 20]} style={{ marginBottom: '40px' }}>
               <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>หมายเลขสัญญาซื้อขาย</Text></Col>
-              <Col xs={24} sm={16}><Input placeholder="กรอกหมายเลขสัญญา" value={contractNumber} onChange={e => setContractNumber(e.target.value)} style={inputStyle} /></Col>
+              <Col xs={24} sm={16}>
+                <Select
+                  placeholder="เลือกหมายเลขสัญญา"
+                  value={contractNumber}
+                  style={{ width: '100%', ...inputStyle }}
+                  onChange={value => setContractNumber(value)}
+                  options={availableSalesContracts.map(contract => ({
+                    value: String(contract.ID),
+                    label: `SC-${contract.ID}`
+                  }))}
+                  notFoundContent={<Text style={{ color: '#aaa' }}>ไม่พบหมายเลขสัญญา</Text>}
+                />
+              </Col>
 
               <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>เลือกพนักงาน</Text></Col>
               <Col xs={24} sm={16}><Select
@@ -445,14 +590,18 @@ const PickupCarCreatePage: React.FC = () => {
                 selectedDate={selectedDate}
                 setSelectedDate={setSelectedDate as (date: Dayjs) => void}
                 disabledDate={disabledDate}
+
               />
               <div style={{ padding: '24px' }}>
                 <Row gutter={[16, 16]}>
                   {timeOptions.map((time, index) => {
                     const isBooked = bookedTimeSlots.includes(time);
-                    
+
                     let isTimeDisabled = false;
                     const now = dayjs();
+                    if (!selectedEmployeeId) return true;
+                    // ✅ ถ้ายังไม่ได้เลือกพนักงาน -> disable ทุกเวลา
+
                     if (selectedDate && selectedDate.isSame(now, 'day')) {
                       if (now.hour() >= 12) {
                         isTimeDisabled = true;
@@ -498,48 +647,48 @@ const PickupCarCreatePage: React.FC = () => {
 
                   <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>จังหวัด</Text></Col>
                   <Col xs={24} sm={16}>
-                    <Select 
-                      placeholder="เลือกจังหวัด" 
-                      value={selectedProvince} 
-                      style={{ width: '100%' }} 
+                    <Select
+                      placeholder="เลือกจังหวัด"
+                      value={selectedProvince}
+                      style={{ width: '100%' }}
                       disabled={selectedMethodId === 2}
-                      options={selectedMethodId === 2 
-                                ? [{ value: 'Bangkok', label: 'กรุงเทพมหานคร' }]
-                                : provinces.map(p => ({ value: p.name_th, label: p.name_th }))
-                              }
+                      options={selectedMethodId === 2
+                        ? [{ value: 'Bangkok', label: 'กรุงเทพมหานคร' }]
+                        : provinces.map(p => ({ value: p.name_th, label: p.name_th }))
+                      }
                       onChange={setSelectedProvince}
                     />
                   </Col>
 
                   <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>อำเภอ/เขต</Text></Col>
                   <Col xs={24} sm={16}>
-                    <Select 
-                      showSearch 
-                      placeholder="เลือกอำเภอ/เขต" 
-                      value={selectedDistrict} 
-                      style={{ width: '100%' }} 
-                      onChange={setSelectedDistrict} 
-                      disabled={!selectedProvince} 
+                    <Select
+                      showSearch
+                      placeholder="เลือกอำเภอ/เขต"
+                      value={selectedDistrict}
+                      style={{ width: '100%' }}
+                      onChange={setSelectedDistrict}
+                      disabled={!selectedProvince}
                       options={selectedMethodId === 2
-                                ? districtsFromApi.map(d => ({ value: d.DistrictName, label: d.DistrictName }))
-                                : districtOptions
-                              }
+                        ? districtsFromApi.map(d => ({ value: d.DistrictName, label: d.DistrictName }))
+                        : districtOptions
+                      }
                     />
                   </Col>
 
                   <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>ตำบล/แขวง</Text></Col>
                   <Col xs={24} sm={16}>
-                    <Select 
-                      showSearch 
-                      placeholder="เลือกตำบล/แขวง" 
-                      value={selectedSubdistrict} 
-                      style={{ width: '100%' }} 
-                      onChange={setSelectedSubdistrict} 
-                      disabled={!selectedDistrict} 
-                       options={selectedMethodId === 2
-                                ? subDistrictsFromApi.map(s => ({ value: s.SubDistrictName, label: s.SubDistrictName }))
-                                : subdistrictOptions
-                              }
+                    <Select
+                      showSearch
+                      placeholder="เลือกตำบล/แขวง"
+                      value={selectedSubdistrict}
+                      style={{ width: '100%' }}
+                      onChange={setSelectedSubdistrict}
+                      disabled={!selectedDistrict}
+                      options={selectedMethodId === 2
+                        ? subDistrictsFromApi.map(s => ({ value: s.SubDistrictName, label: s.SubDistrictName }))
+                        : subdistrictOptions
+                      }
                     />
                   </Col>
                 </Row>

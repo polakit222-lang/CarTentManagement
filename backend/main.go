@@ -28,6 +28,8 @@ func main() {
 	setupdata.InsertTypeInformations(configs.DB)
 	setupdata.InsertMockInspections(configs.DB)
 	setupdata.InsertMockPickupDelivery(configs.DB)
+	setupdata.CreateSalesContracts(configs.DB)
+	setupdata.CreatePayments(configs.DB)
 
 	// 3. Create router
 	r := gin.Default()
@@ -52,7 +54,9 @@ func main() {
 	customerController := controllers.NewCustomerController(configs.DB)
 	managerController := controllers.NewManagerController(configs.DB)
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
+	salesContractController := controllers.NewSalesContractController(configs.DB)
 	leaveController := controllers.NewLeaveController(configs.DB) // ✅ เพิ่ม LeaveController
+
 
 	// --- Routes ---
 
@@ -107,6 +111,18 @@ func main() {
 		employeeProtectedRoutes.PUT("/me", employeeController.UpdateCurrentEmployee)
 	}
 
+	// SalesContract Routes
+	salesContractRoutes := r.Group("/sales-contracts")
+	
+	{
+		salesContractRoutes.POST("", salesContractController.CreateSalesContract)
+		salesContractRoutes.GET("", salesContractController.GetSalesContracts)
+		salesContractRoutes.GET("/:id", salesContractController.GetSalesContractByID)
+		salesContractRoutes.PUT("/:id", salesContractController.UpdateSalesContract)
+		salesContractRoutes.DELETE("/:id", salesContractController.DeleteSalesContract)
+		salesContractRoutes.GET("/employee/:employeeID", salesContractController.GetSalesContractsByEmployeeID)
+		salesContractRoutes.GET("/customer/:customerID", salesContractController.GetSalesContractsByCustomerID) // เพิ่ม route ใหม่
+	}
 	// Inspection Appointment Routes
 	inspectionRoutes := r.Group("/inspection-appointments")
 	{
@@ -139,6 +155,9 @@ func main() {
 		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
 	}
 
+
+	// Admin-Only Routes
+
 	// ✅ New API Group (สำหรับ Manager + Leaves)
 	api := r.Group("/api")
 	{
@@ -147,6 +166,7 @@ func main() {
 		api.GET("/employees/:id/leaves", leaveController.ListLeavesByEmployee)
 		api.POST("/leaves", leaveController.CreateLeave)
 		api.PUT("/leaves/:id/status", leaveController.UpdateLeaveStatus)
+
 
 		// Employee CRUD (Manager)
 		api.GET("/employees", employeeController.GetEmployees)

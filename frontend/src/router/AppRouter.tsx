@@ -48,7 +48,7 @@ import HomePageEm from '../pages/employee/HomePageEm';
 import AppointmentDetailsPage from '../pages/employee/pickup-delivery/AppointmentDetailsPage';
 import AppointmentAll from '../pages/employee/pickup-delivery/AppointmentAll';
 import InspectionPage from '../pages/employee/inspection/InspectionPage';
-import SummaryPage from '../pages/employee/sell-summary/SummaryPage'
+import SummaryPage from '../pages/employee/salecontact/SummaryPage'
 import EmpProfilePage from '../pages/employee/profile/EmployeeDashboard'
 
 interface ProtectedRouteProps {

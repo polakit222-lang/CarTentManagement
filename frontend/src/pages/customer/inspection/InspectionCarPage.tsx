@@ -11,18 +11,19 @@ import {
     PlusCircleOutlined, EditOutlined, CalendarOutlined,
     ClockCircleOutlined, BuildOutlined, CloseCircleOutlined,
     CheckCircleOutlined, LoadingOutlined, SortAscendingOutlined,
-    SortDescendingOutlined
+    SortDescendingOutlined,
+    FileTextOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
-import utc from 'dayjs/plugin/utc'; // Import the utc plugin
+import utc from 'dayjs/plugin/utc';
 import thTH from 'antd/locale/th_TH';
 import { useAuth } from '../../../hooks/useAuth';
 
 dayjs.locale('th');
 dayjs.extend(buddhistEra);
-dayjs.extend(utc); // Extend dayjs with the utc plugin
+dayjs.extend(utc);
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -36,7 +37,7 @@ const colors = {
   grayLight: '#424242',
 };
 
-// Corrected interface to match the backend response
+// --- vvvvv --- START: โค้ดที่แก้ไข (1/2) --- vvvvv ---
 interface InspectionBooking {
     ID: number;
     Customer: {
@@ -45,13 +46,14 @@ interface InspectionBooking {
         LastName: string;
     };
     note: string;
-    date_time: string; // Corrected to match backend field name
+    date_time: string;
     SalesContract: {
-        ContractNumber: string;
+        ID: number; // แก้ไขจาก ContractNumber เป็น ID
     };
-    inspection_status: string; // Corrected to match backend field name
+    inspection_status: string;
     InspectionSystem: { CarSystem: { system_name: string } }[];
 }
+// --- ^^^^^ --- END: จบส่วนที่แก้ไข --- ^^^^^ ---
 
 const InspectionCarPage: React.FC = () => {
     
@@ -64,7 +66,6 @@ const InspectionCarPage: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const { user, token } = useAuth();
 
-    // Function to fetch inspection appointments from the backend
     const fetchBookings = async () => {
         if (!user || !user.ID || !token) {
             setLoading(false);
@@ -87,7 +88,6 @@ const InspectionCarPage: React.FC = () => {
                 setBookingHistory(data);
             } else {
                 setBookingHistory([]);
-                // message.error('ไม่สามารถดึงประวัติการนัดหมายได้');
             }
         } catch (error) {
             console.error('Failed to fetch inspection appointments:', error);
@@ -211,7 +211,7 @@ const InspectionCarPage: React.FC = () => {
                     color: white !important;
                 }
                 .ant-select-item-option-content {
-                    color: blsck;
+                    color: black;
                 }
                 .ant-select-item-option-selected .ant-select-item-option-content {
                     color: black;
@@ -249,7 +249,29 @@ const InspectionCarPage: React.FC = () => {
                 <div style={{ minHeight: 'calc(100vh - 280px)' }}>
                     {filteredAndSortedBookings.length > 0 ? (
                         <Row gutter={[24, 24]}>
-                            {filteredAndSortedBookings.map(booking => (
+                            {filteredAndSortedBookings.map(booking => {
+                                const now = dayjs();
+                                let dateTimeToParse = booking.date_time;
+                                if (dateTimeToParse && dateTimeToParse.endsWith('Z')) {
+                                    dateTimeToParse = dateTimeToParse.slice(0, -1);
+                                }
+                                const bookingDateTime = dayjs(dateTimeToParse);
+
+                                let canModifyOrCancel = false;
+
+                                if (booking.inspection_status !== 'ยกเลิก' && booking.inspection_status !== 'เสร็จสิ้น') {
+                                    if (bookingDateTime.isAfter(now)) {
+                                        if (now.isSame(bookingDateTime, 'day')) {
+                                            if (bookingDateTime.diff(now, 'hour') >= 1) {
+                                                canModifyOrCancel = true;
+                                            }
+                                        } else {
+                                            canModifyOrCancel = true;
+                                        }
+                                    }
+                                }
+
+                                return (
                                 <Col xs={24} md={12} lg={8} key={booking.ID}>
                                     <Card
                                         style={{
@@ -262,13 +284,19 @@ const InspectionCarPage: React.FC = () => {
                                             {`นัดหมายตรวจสภาพรถยนต์ #${booking.ID}`}
                                         </Title>
                                         <Space direction="vertical" style={{ width: '100%' }}>
+                                            {/* --- vvvvv --- START: โค้ดที่แก้ไข (2/2) --- vvvvv --- */}
+                                            <Text style={{ color: 'white' }}>
+                                                <FileTextOutlined />{' '}
+                                                หมายเลขสัญญา: SC-{booking.SalesContract?.ID}
+                                            </Text>
+                                            {/* --- ^^^^^ --- END: จบส่วนที่แก้ไข --- ^^^^^ --- */}
                                             <Text style={{ color: 'white' }}>
                                                 <CalendarOutlined />{' '}
-                                                วันที่นัดหมาย: {dayjs(booking.date_time).locale('th').format('DD MMMM BBBB')}
+                                                วันที่นัดหมาย: {bookingDateTime.locale('th').format('DD MMMM BBBB')}
                                             </Text>
                                             <Text style={{ color: 'white' }}>
                                                 <ClockCircleOutlined />{' '}
-                                                เวลา: {dayjs.utc(booking.date_time).format('HH:mm')} น.
+                                                เวลา: {bookingDateTime.format('HH:mm')} น.
                                             </Text>
                                             <Text style={{ color: 'white' }}>
                                                 <BuildOutlined />{' '}
@@ -279,20 +307,20 @@ const InspectionCarPage: React.FC = () => {
                                             </Text>
                                         </Space>
                                         <Space style={{ marginTop: '20px' }}>
-                                            {booking.inspection_status !== 'ยกเลิก' && booking.inspection_status !== 'เสร็จสิ้น' && (
-                                                <Button icon={<EditOutlined />} onClick={() => handleEditBooking(booking.ID)} style={{ background: '#5e5e5e', color: 'white', borderColor: '#777' }}>
-                                                    แก้ไข
-                                                </Button>
-                                            )}
-                                            {booking.inspection_status !== 'ยกเลิก' && booking.inspection_status !== 'เสร็จสิ้น' && (
-                                                <Button icon={<CloseCircleOutlined />} danger onClick={() => handleCancelBooking(booking)}>
-                                                    ยกเลิก
-                                                </Button>
+                                            {canModifyOrCancel && (
+                                                <>
+                                                    <Button icon={<EditOutlined />} onClick={() => handleEditBooking(booking.ID)} style={{ background: '#5e5e5e', color: 'white', borderColor: '#777' }}>
+                                                        แก้ไข
+                                                    </Button>
+                                                    <Button icon={<CloseCircleOutlined />} danger onClick={() => handleCancelBooking(booking)}>
+                                                        ยกเลิก
+                                                    </Button>
+                                                </>
                                             )}
                                         </Space>
                                     </Card>
                                 </Col>
-                            ))}
+                            )})}
                         </Row>
                     ) : (
                         <div style={{ textAlign: 'center', marginTop: '100px' }}>
