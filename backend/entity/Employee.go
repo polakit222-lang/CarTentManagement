@@ -19,7 +19,7 @@ type Employee struct {
 	Birthday     time.Time `json:"birthday"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
-	JobType      time.Time    `json:"job_type"` // แก้เป็น string
+	JobType      time.Time `json:"job_type"` // แก้เป็น string
 
 	TotalSales Status `json:"total_sales" gorm:"-"` // ไม่ map ลง DB
 

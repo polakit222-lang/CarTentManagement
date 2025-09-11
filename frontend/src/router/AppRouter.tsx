@@ -85,10 +85,10 @@ const AppRouter: React.FC = () => {
                     <Route path="/edit-car/:id" element={<EditCarTentPage />} />
                     <Route path="/rent" element={<RentListPage />} />
                     <Route path="/edit-rent/:id" element={<EditRentPage />} />
-                    <Route path="/add-rent/:id" element={<CreateRentCarPage />} />
+                   <Route path="/add-rent/:id" element={<CreateRentCarPage />} />
                     <Route path="/add-rent" element={<AddRentPage />} />
-                    <Route path="/sell" element={<SellListPage />} />
-                    <Route path="/edit-sell/:id" element={<EditSellPage />} />
+                    <Route path="/sell" element={<SellListPage/>} />
+                    <Route path="/edit-sell/:id" element={<EditSellPage/>} />
                     {/* <Route path="/add-sell/:id" element={<CreateSellCarPage />} /> */}
                     <Route path="/add-sell" element={<AddSellPage />} />
 

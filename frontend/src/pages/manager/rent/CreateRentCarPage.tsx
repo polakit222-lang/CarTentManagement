@@ -1,73 +1,120 @@
-import React, { useEffect, useState } from 'react';
-import { fetchRentPeriods } from '../../services/rentService';
-import RentPeriodInput from '../../../components/RentPeriodInput';
-import type { RentPeriod, RentListRequest } from '../../../services/rentService';
-import type { CarInfo } from '../../../interface/Car';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import type { RentPeriod, CarResponse } from '../../../interface/Rent';
+import rentService from '../../../services/rentService';
 
 const CreateRentCarPage: React.FC = () => {
-  const [carList, setCarList] = useState<CarInfo[]>([]);
-  const [selectedCar, setSelectedCar] = useState<CarInfo | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const [car, setCar] = useState<CarResponse | null>(null);
   const [periods, setPeriods] = useState<RentPeriod[]>([]);
 
   useEffect(() => {
-    // ดึง list รถทั้งหมดจาก backend
-    fetchCars().then(setCarList); // fetchCars อยู่ใน carService
-  }, []);
-
-  useEffect(() => {
-    if (selectedCar) {
-      // ถ้ามีรถที่เลือก ให้ตั้ง periods เริ่มต้นจาก rent_list ของรถ
-      setPeriods(selectedCar.rent_list?.map(r => ({
-        start_date: r.rent_start_date,
-        end_date: r.rent_end_date,
-        price: r.rent_price
-      })) || []);
-    } else {
-      setPeriods([]);
+    if (id) {
+      rentService.getRentListsByCar(Number(id))
+        .then((res) => {
+          setCar(res);
+          setPeriods(res.rent_list.map((p) => ({ ...p, temp: false })));
+        });
     }
-  }, [selectedCar]);
+  }, [id]);
 
-  const handleSubmit = () => {
-    if (!selectedCar) return;
+  const addPeriod = () => {
+    setPeriods([
+      ...periods,
+      {
+        rent_start_date: '',
+        rent_end_date: '',
+        rent_price: 0,
+        temp: true,
+      },
+    ]);
+  };
 
-    const request: RentListRequest = {
-      carID: selectedCar.ID,
-      periods: periods
-    };
+  // ลบจาก state เท่านั้น
+  const removePeriod = (index: number) => {
+    const period = periods[index];
+    if (period.temp) {
+      setPeriods(periods.filter((_, i) => i !== index));
+    }
+  };
 
-    // call API เพื่อบันทึก rent periods ของรถ
-    saveRentList(request)
-      .then(() => alert('Saved successfully'))
-      .catch(err => console.error(err));
+  // ลบจาก backend ถ้ามี id
+  const deletePeriod = async (index: number) => {
+    const period = periods[index];
+    if (period.id && !period.temp) {
+      try {
+        await rentService.deleteRentDate(period.id);
+        setPeriods(periods.filter((_, i) => i !== index));
+      } catch (err) {
+        alert('ลบช่วงเช่าไม่สำเร็จ');
+        console.error(err);
+      }
+    } else {
+      removePeriod(index);
+    }
+  };
+
+  const updatePeriod = (index: number, key: keyof RentPeriod, value: string | number) => {
+    const newPeriods = [...periods];
+    newPeriods[index] = { ...newPeriods[index], [key]: value };
+    setPeriods(newPeriods);
+  };
+
+  const handleSubmit = async () => {
+    if (!car) return;
+
+    const validPeriods = periods.filter(
+      (p) => p.rent_start_date && p.rent_end_date && p.rent_price > 0
+    );
+
+    if (validPeriods.length === 0) {
+      alert('กรุณาเพิ่มช่วงเช่าที่ถูกต้อง (วันที่และราคาต้องไม่ว่าง และราคาต้อง > 0)');
+      return;
+    }
+
+    await rentService.createOrUpdateRentList({
+      car_id: car.id,
+      status: 'Available',
+      manager_id: 1,
+      dates: validPeriods.map((p) => ({
+        id: p.id || 0,
+        open_date: p.rent_start_date,
+        close_date: p.rent_end_date,
+        rent_price: p.rent_price,
+      })),
+    });
+
+    alert('บันทึกเรียบร้อย');
   };
 
   return (
     <div>
-      <h2>Create Rent Car</h2>
+      <h1>สร้าง/แก้ไข Rent List สำหรับรถ {car?.car_name}</h1>
 
-      <select
-        value={selectedCar?.ID || ''}
-        onChange={e => {
-          const car = carList.find(c => c.ID === Number(e.target.value)) || null;
-          setSelectedCar(car);
-        }}
-      >
-        <option value="">-- Select Car --</option>
-        {carList.map(car => (
-          <option key={car.ID} value={car.ID}>
-            {car.carName} ({car.yearManufacture})
-          </option>
-        ))}
-      </select>
+      <button onClick={addPeriod}>เพิ่มช่วงเช่า</button>
 
-      {selectedCar && (
-        <div style={{ marginTop: 16 }}>
-          <RentPeriodInput periods={periods} setPeriods={setPeriods} />
-          <button onClick={handleSubmit} style={{ marginTop: 16 }}>
-            Save Rent Periods
-          </button>
+      {periods.map((p, i) => (
+        <div key={i} style={{ border: '1px solid #ccc', margin: 5, padding: 5 }}>
+          <input
+            type="date"
+            value={p.rent_start_date}
+            onChange={(e) => updatePeriod(i, 'rent_start_date', e.target.value)}
+          />
+          <input
+            type="date"
+            value={p.rent_end_date}
+            onChange={(e) => updatePeriod(i, 'rent_end_date', e.target.value)}
+          />
+          <input
+            type="number"
+            value={p.rent_price}
+            onChange={(e) => updatePeriod(i, 'rent_price', parseFloat(e.target.value))}
+          />
+          <button onClick={() => deletePeriod(i)}>ลบ</button>
         </div>
-      )}
+      ))}
+
+      <button onClick={handleSubmit}>บันทึก</button>
     </div>
   );
 };

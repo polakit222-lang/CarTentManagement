@@ -1,38 +1,37 @@
 // src/services/rentService.ts
 import axios from 'axios';
+import type { CarResponse } from '../interface/Rent';
 
-export const API_URL = 'http://localhost:8080/api/rentlists';
+const API_URL = 'http://localhost:8080/rentlists';
 
-// Type สำหรับ RentPeriod
-export interface RentPeriod {
-  start_date: string; // YYYY-MM-DD
-  end_date: string;   // YYYY-MM-DD
-  price: number;
-}
+const rentService = {
+  // ดึงข้อมูลรถพร้อม rent list
+  async getRentListsByCar(carId: number): Promise<CarResponse> {
+    const { data } = await axios.get<CarResponse>(`${API_URL}/${carId}`);
+    return data;
+  },
 
-// Type สำหรับส่งไปสร้าง RentList
-export interface RentListRequest {
-  car_id: number;
-  status: string;
-  rent_price: number;
-  manager_id: number;
-  periods: RentPeriod[];
-}
+  // สร้างหรืออัปเดต rent list
+  async createOrUpdateRentList(payload: {
+    car_id: number;
+    status: string;
+    manager_id: number;
+    dates: {
+      id?: number; // ✅ เพิ่ม id ไว้เผื่อ update
+      open_date: string;
+      close_date: string;
+      rent_price: number;
+    }[];
+  }): Promise<CarResponse> {
+    const { data } = await axios.put<CarResponse>(`${API_URL}`, payload);
+    return data;
+  },
 
-// สร้าง RentList
-export const createRentList = async (payload: RentListRequest) => {
-  const response = await axios.post(API_URL, payload);
-  return response.data;
+  // ✅ ลบ rent date ตาม id
+  async deleteRentDate(dateId: number): Promise<{ message: string }> {
+    const { data } = await axios.delete<{ message: string }>(`${API_URL}/date/${dateId}`);
+    return data;
+  },
 };
 
-// ดึง RentLists ทั้งหมด (optional)
-export const fetchRentLists = async () => {
-  const response = await axios.get(API_URL);
-  return response.data;
-};
-
-// ดึง RentList ตาม ID (optional)
-export const fetchRentListByID = async (id: number) => {
-  const response = await axios.get(`${API_URL}/${id}`);
-  return response.data;
-};
+export default rentService;

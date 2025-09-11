@@ -30,7 +30,7 @@ type EmployeeResponse struct {
 	Birthday     time.Time `json:"birthday"`
 	Sex          string    `json:"sex"`
 	Position     string    `json:"position"`
-	JobType      string    `json:"job_type"`
+	JobType      time.Time `json:"job_type"`
 }
 
 func NewEmployeeController(db *gorm.DB) *EmployeeController {
@@ -142,15 +142,15 @@ func (e *EmployeeController) UpdateCurrentEmployee(c *gin.Context) {
 	}
 
 	var updatedInfo struct {
-		ProfileImage string `json:"profile_image"`
-		FirstName    string `json:"first_name"`
-		LastName     string `json:"last_name"`
-		PhoneNumber  string `json:"phone_number"`
-		Address      string `json:"address"`
-		Birthday     string `json:"birthday"`
-		Sex          string `json:"sex"`
-		Position     string `json:"position"`
-		JobType      string `json:"job_type"`
+		ProfileImage string    `json:"profile_image"`
+		FirstName    string    `json:"first_name"`
+		LastName     string    `json:"last_name"`
+		PhoneNumber  string    `json:"phone_number"`
+		Address      string    `json:"address"`
+		Birthday     string    `json:"birthday"`
+		Sex          string    `json:"sex"`
+		Position     string    `json:"position"`
+		JobType      time.Time `json:"job_type"`
 	}
 
 	if err := c.ShouldBindJSON(&updatedInfo); err != nil {

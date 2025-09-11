@@ -11,8 +11,6 @@ type RentList struct {
 	Car    *Car   `gorm:"foreignKey:CarID" json:"car"`
 	Status string `json:"status"`
 
-	RentPrice float64 `json:"rent_price"`
-
 	ManagerID     uint            `json:"manager_id"`
 	Manager       *Manager        `gorm:"foreignKey:ManagerID" json:"manager"`
 	RentAbleDates []*RentAbleDate `gorm:"foreignKey:RentListID" json:"rent_able_dates"`

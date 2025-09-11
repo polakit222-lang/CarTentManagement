@@ -65,6 +65,7 @@ func main() {
 
 	// Car Routes
 	r.GET("/cars", carController.GetAllCars)
+	r.GET("/cars/:id", carController.GetCarByID)
 	r.Static("/images/cars", "./public/images/cars")
 	// Address Routes
 	provinceRoutes := r.Group("/provinces")
@@ -147,12 +148,13 @@ func main() {
 		adminCustomerRoutes.PUT("/:id", customerController.UpdateCustomer)
 		adminCustomerRoutes.DELETE("/:id", customerController.DeleteCustomer)
 	}
+	rentListRoutes := r.Group("/rentlists")
+	{
+		rentListRoutes.GET("/:carId", rentListController.GetRentListsByCar)
+		rentListRoutes.PUT("", rentListController.CreateOrUpdateRentList)
+		rentListRoutes.DELETE("/date/:dateId", rentListController.DeleteRentDate)
 
-	r.POST("/api/rentlists", rentListController.CreateRentList)
-	r.GET("/api/rentlists", rentListController.GetAllRentLists)
-	r.GET("/api/rentlists/:id", rentListController.GetRentListByID)
-	r.PUT("/api/rentlists/:id", rentListController.UpdateRentList)
-	r.DELETE("/api/rentlists/:id", rentListController.DeleteRentList)
+	}
 
 	// Start server
 	if err := r.Run(":8080"); err != nil {
