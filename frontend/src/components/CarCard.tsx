@@ -17,7 +17,7 @@ const CarCard: React.FC<CarCardProps> = ({ car, type }) => {
   const carouselRef = useRef<any>(null);
   const navigate = useNavigate();
 
-  const images = car.pictures?.map((p) => `http://localhost:8080/images/cars/${p.path}`) || [];
+  const images = car.pictures?.map((p) => `${p.path}`) || [];
 
   // ปุ่ม action แยกตาม type
   const renderActions = () => {
