@@ -59,8 +59,8 @@ const InspectionPage: React.FC = () => {
           customerName: `${item.Customer.FirstName} ${item.Customer.LastName}`,
           // --- vvvvv --- ส่วนที่แก้ไข 1 --- vvvvv ---
           // เปลี่ยน item.DateTime เป็น item.date_time
-          appointmentDate: dayjs(item.date_time).format('D MMMM YYYY'),
-          appointmentTime: dayjs(item.date_time).format('HH:mm'),
+          appointmentDate: dayjs.utc(item.date_time).format('D MMMM BBBB'),
+          appointmentTime: dayjs.utc(item.date_time).format('HH:mm'),
           // --- ^^^^^ --- จบส่วนที่แก้ไข 1 --- ^^^^^ ---
           systems: item.InspectionSystem.map((sys: { CarSystem: { system_name: string; }; }) => sys.CarSystem.system_name).join(', '),
           // --- vvvvv --- ส่วนที่แก้ไข 2 --- vvvvv ---

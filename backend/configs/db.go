@@ -43,6 +43,7 @@ func ConnectDatabase(dbName string) {
 		&entity.TypeInformation{},
 		&entity.District{},
 		&entity.SubDistrict{},
+		&entity.Payment{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)

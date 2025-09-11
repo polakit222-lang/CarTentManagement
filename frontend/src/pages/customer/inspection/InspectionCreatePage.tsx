@@ -1,7 +1,7 @@
 // src/pages/customer/inspection/InspectionCreatePage.tsx
 import React, { useState, useEffect } from 'react';
 import {
-    Button, Space, Row, Col, Input, Typography, Divider, message, Spin
+    Button, Space, Row, Col, Input, Typography, Divider, message, Spin, Select
 } from 'antd';
 import { CarOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
@@ -35,6 +35,12 @@ interface InspectionAppointmentResponse {
     InspectionSystem: { CarSystem: { system_name: string } }[];
 }
 
+// Interface for SalesContract
+interface SalesContract {
+    ID: number;
+    // ... add other fields if needed, like contract number display
+}
+
 const InspectionCreatePage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -46,7 +52,8 @@ const InspectionCreatePage: React.FC = () => {
 
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-    const [contractNumber, setContractNumber] = useState('');
+    const [contractNumber, setContractNumber] = useState<string | null>(null); // Change state to hold number or null
+    const [salesContracts, setSalesContracts] = useState<SalesContract[]>([]); // New state for sales contracts
     const [messageText, setMessageText] = useState('');
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -103,8 +110,27 @@ const InspectionCreatePage: React.FC = () => {
         fetchAllAppointments();
     }, []);
 
+    // --- NEW: Fetch sales contracts for the logged-in customer ---
+    useEffect(() => {
+        const fetchSalesContracts = async () => {
+            if (user && user.ID) {
+                try {
+                    const response = await fetch(`http://localhost:8080/sales-contracts/customer/${user.ID}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setSalesContracts(data.data);
+                    } else {
+                        message.error('ไม่สามารถดึงข้อมูลสัญญาซื้อขายของลูกค้าได้');
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch sales contracts:', error);
+                    message.error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์เพื่อดึงข้อมูลสัญญาซื้อขายได้');
+                }
+            }
+        };
+        fetchSalesContracts();
+    }, [user]);
 
-    // --- vvvvv --- START: โค้ดที่แก้ไข --- vvvvv ---
     // Effect to filter booked times based on the selected date and current time
     useEffect(() => {
         if (selectedDate && allAppointments.length > 0) {
@@ -131,11 +157,11 @@ const InspectionCreatePage: React.FC = () => {
             // Logic to handle past times for the current day
             const now = dayjs();
             const isToday = selectedDate.isSame(now, 'day');
-            
+
             let pastTimes: string[] = [];
             if (isToday) {
                 const currentHour = now.hour();
-                
+
                 if (currentHour >= 12) {
                     pastTimes = timeOptions;
                 } else {
@@ -145,7 +171,7 @@ const InspectionCreatePage: React.FC = () => {
                     });
                 }
             }
-            
+
             // 4. Combine fully booked times with past times
             const unavailableTimes = [...new Set([...fullyBookedTimes, ...pastTimes])];
             setBookedTimes(unavailableTimes);
@@ -156,7 +182,6 @@ const InspectionCreatePage: React.FC = () => {
             }
         }
     }, [selectedDate, allAppointments, editingId, selectedTime]);
-    // --- ^^^^^ --- END: จบส่วนที่แก้ไข --- ^^^^^ ---
 
     // Effect to fetch booking details for editing
     useEffect(() => {
@@ -228,6 +253,11 @@ const InspectionCreatePage: React.FC = () => {
             return;
         }
 
+        if (contractNumber === null) {
+            message.error('กรุณาเลือกหมายเลขสัญญาซื้อขาย');
+            return;
+        }
+        
         const salesContractID = parseInt(contractNumber);
         if (isNaN(salesContractID)) {
              message.error('กรุณากรอกหมายเลขสัญญาซื้อขายเป็นตัวเลข');
@@ -288,11 +318,7 @@ const InspectionCreatePage: React.FC = () => {
         }
         return false;
     };
-    const customCss = `
-        .ant-input::placeholder {
-            color: #a9a9a9 !important;
-        }
-    `;
+    
 
     if (loading) {
         return (
@@ -302,10 +328,52 @@ const InspectionCreatePage: React.FC = () => {
             </div>
         );
     }
+    const customCss = `
+    .ant-select-selection-placeholder {
+        color: #a9a9a9 !important;
+    }
+    .ant-input::placeholder {
+        color: #a9a9a9 !important;
+    }
+    .ant-select-selector {
+        background-color: #4A4A4A !important;
+        border-color: #888 !important;
+    }
+    .ant-select-selection-search-input {
+      color: #fff !important;
+    }
+    .ant-select-arrow {
+      color: #fff !important;
+    }
+    .ant-select-dropdown {
+        background-color: #4A4A4A !important;
+    }
+    .ant-select-item-option-content {
+        color: #fff !important;
+    }
+    .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+        background-color: #f1d430ff !important;
+        color: #000 !important;
+    }
+  `;
 
     return (
         <div style={{ padding: '24px 48px' }}>
-            <style>{customCss}</style>
+             <style>{customCss}</style>
+      <style>{`
+        .ant-select-selection-item {
+          color: #FFFFFF !important;
+        }
+        .custom-dropdown-theme .ant-select-item-option-content {
+          color: #FFFFFF; 
+        }
+        .custom-dropdown-theme .ant-select-item-option-active .ant-select-item-option-content {
+           color: #FFFFFF; 
+        }
+        .custom-dropdown-theme .ant-select-item-option-selected .ant-select-item-option-content {
+          color: #FFFFFF;
+        }
+      `}</style>
             <div style={{ minHeight: 'calc(100vh - 180px)', padding: 24 }}>
                 <Row justify="center">
                     <Col xs={24} sm={22} md={20} lg={18} xl={16}>
@@ -321,7 +389,20 @@ const InspectionCreatePage: React.FC = () => {
                             <Col xs={24} sm={16}><Input placeholder="นามสกุล" value={lastName} style={disabledInputStyle} disabled /></Col>
 
                             <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>หมายเลขสัญญาซื้อขาย</Text></Col>
-                            <Col xs={24} sm={16}><Input placeholder="กรอกหมายเลขสัญญา" value={contractNumber} onChange={e => setContractNumber(e.target.value)} style={inputStyle} /></Col>
+                            <Col xs={24} sm={16}>
+                                <Select
+                                    placeholder="เลือกหมายเลขสัญญา"
+                                    value={contractNumber}
+                                    onChange={value => setContractNumber(value)}
+                                    style={{ ...inputStyle, width: '100%', color: 'white' }}
+                                    dropdownStyle={{ background: '#424242' }}
+                                    options={salesContracts.map(contract => ({
+                                        label: `SC-${contract.ID}`,
+                                        value: String(contract.ID)
+                                    }))}
+                                    notFoundContent={<Text style={{ color: '#aaa' }}>ไม่พบหมายเลขสัญญา</Text>}
+                                />
+                            </Col>
 
                             <Col xs={24} sm={8} style={{ textAlign: 'left' }}><Text style={{ color: 'white' }}>ข้อความแจ้งช่าง (ถ้ามี)</Text></Col>
                             <Col xs={24} sm={16}><Input.TextArea placeholder="รายละเอียดเพิ่มเติม" value={messageText} onChange={e => setMessageText(e.target.value)} style={inputStyle} /></Col>

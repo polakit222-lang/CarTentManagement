@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Typography, Table, Tag, Button, Space, Spin, Empty, DatePicker, ConfigProvider, Input, message, Checkbox } from 'antd';
+import { 
+  Typography, Table, Tag, Button, Space, Spin, Empty, DatePicker, 
+  ConfigProvider, Input, message, Checkbox, Row, Col, Calendar, Badge 
+} from 'antd';
 import type { TableProps } from 'antd';
 import { CalendarOutlined, FileTextOutlined, ClearOutlined, FilterOutlined } from '@ant-design/icons';
 import { useAuth } from '../../../hooks/useAuth';
@@ -21,7 +24,7 @@ import type { Dayjs } from 'dayjs';
 const { Title } = Typography;
 const { Search } = Input;
 
-// --- Style Variables from Employeestyle.css ---
+// --- Style Variables ---
 const colors = {
   gold: '#d4af37',
   goldDark: '#b38e2f',
@@ -30,15 +33,14 @@ const colors = {
   gray: '#1e1e1e',
 };
 
-// --- vvvvv --- ส่วนที่แก้ไข 1 --- vvvvv ---
+// Interface for authenticated user
 interface AuthenticatedUser {
-    id: number; // แก้ไขจาก ID เป็น id (ตัวพิมพ์เล็ก)
+    id: number;
     firstName?: string;
     lastName?: string;
 }
-// --- ^^^^^ --- จบส่วนที่แก้ไข 1 --- ^^^^^ ---
 
-// Interface สำหรับข้อมูลที่ใช้แสดงผลในตาราง
+// Interface for data displayed in the table
 interface DisplayBooking {
   id: number;
   customerId: number;
@@ -52,7 +54,7 @@ interface DisplayBooking {
   customerName: string;
 }
 
-
+// --- Helper function to parse Thai date strings ---
 const parseThaiDate = (dateString: string): Date | null => {
   if (!dateString) return null;
   const months: { [key: string]: number } = {
@@ -80,22 +82,19 @@ const AppointmentAll: React.FC = () => {
   const { user } = useAuth() as { user: AuthenticatedUser | null };
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
-  const [filterDate, setFilterDate] = useState<Dayjs | null>(null);
+  const [filterDate, setFilterDate] = useState<Dayjs | undefined >(undefined );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tableFilters, setTableFilters] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      // --- vvvvv --- ส่วนที่แก้ไข 2 --- vvvvv ---
-      if (!user || !user.id) { // แก้ไขจาก user.ID เป็น user.id
+      if (!user || !user.id) {
         setLoading(false);
         return;
       }
       setLoading(true);
       try {
-        // เรียก API โดยใช้ user.id (ตัวเล็ก)
         const response = await fetch(`http://localhost:8080/pickup-deliveries/employee/${user.id}`);
-      // --- ^^^^^ --- จบส่วนที่แก้ไข 2 --- ^^^^^ ---
         if (!response.ok) {
           throw new Error('ไม่สามารถดึงข้อมูลการนัดหมายได้');
         }
@@ -128,7 +127,7 @@ const AppointmentAll: React.FC = () => {
 
   const handleClearFilters = () => {
     setSearchText('');
-    setFilterDate(null);
+    setFilterDate(undefined);
     setTableFilters({});
     message.info('ล้างค่าการกรองทั้งหมดแล้ว');
   };
@@ -167,6 +166,21 @@ const AppointmentAll: React.FC = () => {
   const handleTableChange = (pagination: any, filters: any) => {
     setTableFilters(filters);
   };
+  
+  // --- vvvvv --- ส่วนที่เพิ่มเข้ามาจาก HomePageEm.tsx --- vvvvv ---
+  const dateCellRender = (date: Dayjs) => {
+    const hasAppointment = appointments.some(app => dayjs(parseThaiDate(app.appointmentDate)).isSame(date, 'day'));
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            {hasAppointment && <Badge status="processing" color={colors.gold} />}
+        </div>
+    );
+  };
+
+  const handleDateSelect = (date: Dayjs) => {
+      setFilterDate(date);
+  };
+  // --- ^^^^^ --- จบส่วนที่เพิ่มเข้ามา --- ^^^^^ ---
 
   const columns: TableProps<DisplayBooking>['columns'] = [
     {
@@ -176,7 +190,12 @@ const AppointmentAll: React.FC = () => {
       sorter: (a, b) => {
         const dateA = parseThaiDate(a.appointmentDate);
         const dateB = parseThaiDate(b.appointmentDate);
-        return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+        if (!dateA || !dateB) return 0;
+        const timeA = a.appointmentTime.split(':').map(Number);
+        const timeB = b.appointmentTime.split(':').map(Number);
+        const dateTimeA = new Date(dateA.getTime()).setHours(timeA[0], timeA[1]);
+        const dateTimeB = new Date(dateB.getTime()).setHours(timeB[0], timeB[1]);
+        return dateTimeA - dateTimeB;
       },
       render: (_, record) => {
         const date = parseThaiDate(record.appointmentDate);
@@ -314,6 +333,8 @@ const AppointmentAll: React.FC = () => {
           Button: { defaultBg: colors.gray, defaultColor: colors.white, defaultBorderColor: colors.gold, defaultHoverBg: colors.goldDark, defaultHoverColor: colors.black, defaultHoverBorderColor: colors.gold },
           Empty: { colorText: colors.white, colorTextDisabled: '#aaa' },
           Pagination: { colorText: colors.gold, colorTextDisabled: colors.gold },
+          Calendar: { colorBgContainer: colors.gray, colorText: colors.white, colorTextHeading: '#ccc', colorBgTextHover: colors.goldDark, controlItemBgActive: colors.gold, },
+          Badge: { colorPrimary: colors.gold, colorText: colors.gold, },
         },
       }}
     >
@@ -321,34 +342,49 @@ const AppointmentAll: React.FC = () => {
         <Title level={2} style={{ color: colors.gold, marginBottom: '2rem', borderBottom: `1px solid ${colors.gold}`, paddingBottom: '1rem' }}>
           รายการนัดหมายของฉัน
         </Title>
-        <Space direction="vertical" style={{ marginBottom: '24px', width: '100%' }}>
-          <Search
-            placeholder="ค้นหาจากเลขที่สัญญา หรือ ชื่อลูกค้า"
-            allowClear
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value.toLowerCase())}
-            style={{ maxWidth: 400 }}
-          />
-          <Space wrap>
-            <DatePicker
-              value={filterDate}
-              onChange={(date) => setFilterDate(date)}
-              placeholder="กรองตามวันที่นัดหมาย"
-              format="D MMMM YYYY"
-              style={{ minWidth: 220 }}
-            />
-            <Button icon={<ClearOutlined />} onClick={handleClearFilters}>
-              ล้างค่า
-            </Button>
-          </Space>
-        </Space>
-
+        
+        <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
+            {/* --- คอลัมน์สำหรับ Filter Controls --- */}
+            <Col xs={24} md={10} lg={8}>
+                <Title level={4} style={{ color: colors.white }}>ตัวกรอง</Title>
+                <Space direction="vertical" style={{ width: '100%' }}>
+                    <Search
+                        placeholder="ค้นหาจากเลขที่สัญญา หรือ ชื่อลูกค้า"
+                        allowClear
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value.toLowerCase())}
+                    />
+                    <DatePicker
+                        value={filterDate}
+                        onChange={(date) => setFilterDate(date)}
+                        placeholder="กรองตามวันที่นัดหมาย"
+                        format="D MMMM YYYY"
+                        style={{ width: '100%' }}
+                    />
+                    <Button icon={<ClearOutlined />} onClick={handleClearFilters} style={{ width: '100%' }}>
+                        ล้างค่าการกรองทั้งหมด
+                    </Button>
+                </Space>
+            </Col>
+            {/* --- คอลัมน์สำหรับ Calendar --- */}
+            <Col xs={24} md={14} lg={16}>
+                <div style={{ border: `1px solid ${colors.gold}`, borderRadius: '8px', padding: '8px', background: colors.gray }}>
+                    <Calendar 
+                        fullscreen={false} 
+                        dateCellRender={dateCellRender} 
+                        onSelect={handleDateSelect}
+                        value={filterDate}
+                    />
+                </div>
+            </Col>
+        </Row>
+        
         <Spin spinning={loading} size="large">
           <Table
             columns={columns}
             dataSource={filteredData}
             rowKey="id"
-            pagination={{ pageSize: 10, showSizeChanger: true }}
+            pagination={{ pageSize: 10, showTotal: (total, range) => `${range[0]}-${range[1]} จาก ${total} รายการ` }}
             locale={{ emptyText: <Empty description={<Typography.Text style={{ color: '#777' }}>
                             {'ไม่มีข้อมูลการนัดหมายที่ตรงกับเงื่อนไข'}</Typography.Text>} />}} 
             onChange={handleTableChange}

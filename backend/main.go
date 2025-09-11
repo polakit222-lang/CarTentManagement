@@ -29,6 +29,8 @@ func main() {
 	setupdata.InsertTypeInformations(configs.DB)
 	setupdata.InsertMockInspections(configs.DB)
 	setupdata.InsertMockPickupDelivery(configs.DB)
+	setupdata.CreateSalesContracts(configs.DB)
+	setupdata.CreatePayments(configs.DB)
 
 	// 3. Create router
 	r := gin.Default()
@@ -53,6 +55,7 @@ func main() {
 	customerController := controllers.NewCustomerController(configs.DB)
 	managerController := controllers.NewManagerController(configs.DB)
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
+	salesContractController := controllers.NewSalesContractController(configs.DB)
 
 	// --- Routes ---
 
@@ -110,6 +113,18 @@ func main() {
 		employeeProtectedRoutes.PUT("/me", employeeController.UpdateCurrentEmployee)
 	}
 
+	// SalesContract Routes
+	salesContractRoutes := r.Group("/sales-contracts")
+	
+	{
+		salesContractRoutes.POST("", salesContractController.CreateSalesContract)
+		salesContractRoutes.GET("", salesContractController.GetSalesContracts)
+		salesContractRoutes.GET("/:id", salesContractController.GetSalesContractByID)
+		salesContractRoutes.PUT("/:id", salesContractController.UpdateSalesContract)
+		salesContractRoutes.DELETE("/:id", salesContractController.DeleteSalesContract)
+		salesContractRoutes.GET("/employee/:employeeID", salesContractController.GetSalesContractsByEmployeeID)
+		salesContractRoutes.GET("/customer/:customerID", salesContractController.GetSalesContractsByCustomerID) // เพิ่ม route ใหม่
+	}
 	// Inspection Appointment Routes
 	inspectionRoutes := r.Group("/inspection-appointments")
 	{
@@ -143,7 +158,6 @@ func main() {
 	}
 
 	// Admin-Only Routes
-	
 
 	adminCustomerRoutes := r.Group("/admin/customers")
 	{

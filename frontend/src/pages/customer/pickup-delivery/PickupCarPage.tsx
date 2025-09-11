@@ -9,7 +9,8 @@ import thTH from 'antd/locale/th_TH';
 import {
     PlusCircleOutlined, EditOutlined, CalendarOutlined,
     ClockCircleOutlined, UserOutlined, EnvironmentOutlined, CloseCircleOutlined,
-    CheckCircleOutlined, LoadingOutlined, SortAscendingOutlined, SortDescendingOutlined
+    CheckCircleOutlined, LoadingOutlined, SortAscendingOutlined, SortDescendingOutlined,
+    FileTextOutlined // เพิ่มไอคอนสำหรับหมายเลขสัญญา
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
@@ -216,7 +217,7 @@ const PickupCarPage: React.FC = () => {
                             color: white !important;
                         }
                         .ant-select-item-option-content {
-                            color: blsck;
+                            color: black;
                         }
                         .ant-select-item-option-selected .ant-select-item-option-content {
                             color: black;
@@ -258,7 +259,30 @@ const PickupCarPage: React.FC = () => {
                 <div style={{ minHeight: 'calc(100vh - 280px)' }}>
                     {filteredAndSortedBookings.length > 0 ? (
                         <Row gutter={[24, 24]}>
-                            {filteredAndSortedBookings.map(booking => (
+                            {filteredAndSortedBookings.map(booking => {
+                                const now = dayjs();
+                                
+                                let dateTimeToParse = booking.DateTime;
+                                if (dateTimeToParse && dateTimeToParse.endsWith('Z')) {
+                                    dateTimeToParse = dateTimeToParse.slice(0, -1);
+                                }
+                                const bookingDateTime = dayjs(dateTimeToParse);
+
+                                let canModifyOrCancel = false;
+
+                                if (booking.status !== 'ยกเลิก' && booking.status !== 'สำเร็จ') {
+                                    if (bookingDateTime.isAfter(now)) {
+                                        if (now.isSame(bookingDateTime, 'day')) {
+                                            if (bookingDateTime.diff(now, 'hour') >= 1) {
+                                                canModifyOrCancel = true;
+                                            }
+                                        } else {
+                                            canModifyOrCancel = true;
+                                        }
+                                    }
+                                }
+
+                                return (
                                 <Col xs={24} md={12} lg={8} key={booking.ID}>
                                     <Card
                                         style={{
@@ -271,15 +295,17 @@ const PickupCarPage: React.FC = () => {
                                             {`นัดรับ-ส่งรถยนต์ #${booking.ID}`}
                                         </Title>
                                         <Space direction="vertical" style={{ width: '100%' }}>
+                                            {/* --- vvvvv --- START: โค้ดที่เพิ่มเข้ามา --- vvvvv --- */}
                                             <Text style={{ color: 'white' }}>
-                                                <CalendarOutlined /> วันที่นัดหมาย: {dayjs(booking.DateTime).locale('th').format('DD MMMM BBBB')}
+                                                <FileTextOutlined /> หมายเลขสัญญา: SC-{booking.SalesContract?.ID}
                                             </Text>
-                                            {/* --- vvvvv --- ส่วนที่แก้ไข --- vvvvv --- */}
+                                            {/* --- ^^^^^ --- END: จบส่วนที่เพิ่มเข้ามา --- ^^^^^ --- */}
                                             <Text style={{ color: 'white' }}>
-                                                {/* ✅ เอา .utc ออกเพื่อให้ dayjs แสดงเวลาตามโซนเวลาท้องถิ่น */}
-                                                <ClockCircleOutlined /> เวลา: {dayjs(booking.DateTime).format('HH:mm')} น.
+                                                <CalendarOutlined /> วันที่นัดหมาย: {bookingDateTime.isValid() ? bookingDateTime.locale('th').format('DD MMMM BBBB') : 'Invalid Date'}
                                             </Text>
-                                            {/* --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ --- */}
+                                            <Text style={{ color: 'white' }}>
+                                                <ClockCircleOutlined /> เวลา: {bookingDateTime.isValid() ? bookingDateTime.format('HH:mm') : 'Invalid Date'} น.
+                                            </Text>
                                             <Text style={{ color: 'white' }}>
                                                 <UserOutlined /> พนักงาน: {booking.Employee?.first_name} {booking.Employee?.last_name}
                                             </Text>
@@ -290,21 +316,19 @@ const PickupCarPage: React.FC = () => {
                                                 สถานะ: {getStatusIcon(booking.status)} {booking.status}
                                             </Text>
                                         </Space>
-                                        <Space style={{ marginTop: '20px' }}>
-                                            {booking.status !== 'ยกเลิก' && booking.status !== 'สำเร็จ' && (
+                                        {canModifyOrCancel && (
+                                            <Space style={{ marginTop: '20px' }}>
                                                 <Button icon={<EditOutlined />} onClick={() => handleEditBooking(booking.ID)} style={{ background: '#5e5e5e', color: 'white', borderColor: '#777' }}>
                                                     แก้ไข
                                                 </Button>
-                                            )}
-                                            {booking.status !== 'ยกเลิก' && booking.status !== 'สำเร็จ' && (
                                                 <Button icon={<CloseCircleOutlined />} danger onClick={() => handleCancelBooking(booking)}>
                                                     ยกเลิก
                                                 </Button>
-                                            )}
-                                        </Space>
+                                            </Space>
+                                        )}
                                     </Card>
                                 </Col>
-                            ))}
+                            )})}
                         </Row>
                     ) : (
                         <div style={{ textAlign: 'center', marginTop: '100px' }}>

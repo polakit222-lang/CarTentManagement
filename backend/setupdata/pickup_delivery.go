@@ -26,12 +26,7 @@ func InsertMockPickupDelivery(db *gorm.DB) {
 		return
 	}
 
-	var salesContract entity.SalesContract
-	db.Where("customer_id = ?", customer.ID).First(&salesContract)
-	if salesContract.ID == 0 {
-		log.Println("SalesContract for mock pickup/delivery not found. Skipping.")
-		return
-	}
+	salesContractID := uint(1)
 
 	var employee entity.Employee
 	db.First(&employee, 1) // สมมติว่าใช้ Employee ID 1
@@ -50,12 +45,16 @@ func InsertMockPickupDelivery(db *gorm.DB) {
 	var subDistrict entity.SubDistrict
 	db.Where("district_id = ? AND sub_district_name = ?", district.ID, "ปทุมวัน").First(&subDistrict)
 
+	appointmentTime, err := time.Parse(time.RFC3339, "2025-09-11T15:00:00Z")
+	if err != nil {
+		log.Fatalf("failed to parse appointment time: %v", err)
+	}
 	// --- สร้างข้อมูล PickupDelivery ---
 	pickup := entity.PickupDelivery{
 		CustomerID:        customer.ID,
 		TypeInformationID: typeInfo.ID,
-		SalesContractID:   salesContract.ID,
-		DateTime:          time.Now().Add(5 * 24 * time.Hour), // นัดอีก 5 วันข้างหน้า
+		SalesContractID:   salesContractID, // ใช้ SalesContract ที่ดึงมา
+		DateTime:          appointmentTime, // นัดอีก 5 วันข้างหน้า
 		EmployeeID:        employee.ID,
 		Address:           "123/45 อาคารสยามสแควร์วัน",
 		SubDistrictID:     &subDistrict.ID,
@@ -70,4 +69,3 @@ func InsertMockPickupDelivery(db *gorm.DB) {
 		log.Println("Mock PickupDelivery created successfully.")
 	}
 }
-
