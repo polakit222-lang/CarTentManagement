@@ -170,7 +170,6 @@ func main() {
 		rentListRoutes.DELETE("/date/:dateId", rentListController.DeleteRentDate)
 
 	}
-	r.GET("/customer-bycar/:id", customerByCarController.GetCustomerByCar)
 
 	// Start server
 	if err := r.Run(":8080"); err != nil {
