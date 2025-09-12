@@ -53,7 +53,7 @@ func main() {
 	managerController := controllers.NewManagerController(configs.DB)
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
 	leaveController := controllers.NewLeaveController(configs.DB) // ✅ เพิ่ม LeaveController
-
+	rentListController := controllers.NewRentListController(configs.DB)
 	// --- Routes ---
 
 	// Public Routes
