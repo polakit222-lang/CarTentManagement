@@ -4,7 +4,9 @@ import {
     Layout, Button, Row, Col, Card, Tabs, Form, Input, Checkbox, message, Typography
 } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+// --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
+import { useNavigate, useLocation } from 'react-router-dom'; // 1. เพิ่ม useLocation
+// --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
 import { useAuth } from '../../hooks/useAuth';
 
 const { Content } = Layout;
@@ -18,6 +20,9 @@ interface LoginFormValues {
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
+    // --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
+    const location = useLocation(); // 2. เรียกใช้ useLocation เพื่อเข้าถึง state
+    // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
     const { login } = useAuth();
     const [activeTabKey, setActiveTabKey] = useState('1');
 
@@ -25,6 +30,10 @@ const LoginPage: React.FC = () => {
      * Handles Customer Login
      */
     const onFinishCustomer = async (values: LoginFormValues) => {
+        // --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
+        // 3. ตรวจสอบ path ที่ต้องการจะไปหลังจาก login
+        const from = location.state?.from || '/buycar';
+        // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
         const payload = {
             email: values.email,
             password: values.password,
@@ -40,7 +49,9 @@ const LoginPage: React.FC = () => {
                 const data = await response.json();
                 login(data.customer, data.token);
                 message.success('เข้าสู่ระบบสำเร็จ!');
-                navigate('/buycar');
+                // --- vvvvv --- ส่วนที่แก้ไข --- vvvvv ---
+                navigate(from, { replace: true }); // 4. เปลี่ยนไปใช้ path ที่ดึงมา
+                // --- ^^^^^ --- จบส่วนที่แก้ไข --- ^^^^^ ---
             } else {
                 message.error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
             }
@@ -233,4 +244,3 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-

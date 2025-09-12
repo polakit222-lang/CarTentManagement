@@ -103,7 +103,7 @@ const RentCarPage: React.FC = () => {
       paddingBottom: "6px",
       }}
     >
-      เลือกรถยนต์ที่คุต้องการเช่า
+      เลือกรถยนต์ที่คุณต้องการเช่า
     </Title>
     {/* Container หลักแบบ Flex */}
     <div style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}>
