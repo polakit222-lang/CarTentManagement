@@ -65,6 +65,7 @@ func main() {
 	r.POST("/login", customerController.LoginCustomer)
 	r.POST("/employee/login", employeeController.LoginEmployee)
 	r.POST("/manager/login", managerController.LoginManager)
+	r.GET("/employees", employeeController.GetEmployees) // 👈 เพิ่มบรรทัดนี้
 
 	// Car Routes
 	r.GET("/cars", carController.GetAllCars)
@@ -138,25 +139,29 @@ func main() {
 	// Pickup Delivery Routes
 	pickupDeliveryRoutes := r.Group("/pickup-deliveries")
 	{
-		pickupDeliveryRoutes.GET("/:id", pickupDeliveryController.GetPickupDeliveryByID)
-		pickupDeliveryRoutes.GET("/employee/:employeeID", pickupDeliveryController.GetPickupDeliveriesByEmployeeID)
+		{
+		// 1. ย้ายเส้นทางที่เฉพาะเจาะจงมากกว่าขึ้นมาไว้ด้านบน
 		pickupDeliveryRoutes.GET("", pickupDeliveryController.GetPickupDeliveries)
+		pickupDeliveryRoutes.GET("/employee/:employeeID", pickupDeliveryController.GetPickupDeliveriesByEmployeeID)
 		pickupDeliveryRoutes.GET("/customer/:customerID", pickupDeliveryController.GetPickupDeliveriesByCustomerID)
+		
+		// 2. เส้นทางที่ใช้พารามิเตอร์ทั่วไป (/:id) จะอยู่ถัดลงมา
+		pickupDeliveryRoutes.GET("/:id", pickupDeliveryController.GetPickupDeliveryByID)
+
+		// 3. เส้นทางสำหรับการสร้างและแก้ไขข้อมูล
 		pickupDeliveryRoutes.POST("", pickupDeliveryController.CreatePickupDelivery)
 		pickupDeliveryRoutes.PUT("/:id", pickupDeliveryController.UpdatePickupDelivery)
 		pickupDeliveryRoutes.PATCH("/:id/status", pickupDeliveryController.UpdatePickupDeliveryStatus)
 		pickupDeliveryRoutes.DELETE("/:id", pickupDeliveryController.DeletePickupDelivery)
 	}
-
-	// Public Employee Routes
-	employeePublicRoutes := r.Group("/employees")
-	{
-		employeePublicRoutes.GET("", employeeController.GetEmployees)
-		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
 	}
 
+	
+	
 
-	// Admin-Only Routes
+
+
+	
 
 	// ✅ New API Group (สำหรับ Manager + Leaves)
 	api := r.Group("/api")

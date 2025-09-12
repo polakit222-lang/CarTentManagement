@@ -1,3 +1,4 @@
+// PickupCarPageCreate.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Select, Button, Space, Row, Col, Input,
@@ -9,6 +10,7 @@ import 'dayjs/locale/th';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../../hooks/useAuth';
+import { getEmployees } from '../../../services/employeeService'; // 👈 นำเข้าฟังก์ชันที่ถูกต้อง
 
 import "../../../style/global.css";
 import '../../../style/inspecstyle.css';
@@ -21,10 +23,11 @@ dayjs.locale('th');
 const { Title, Text } = Typography;
 
 // --- Interfaces ---
+// New
 interface Employee {
-  ID: number;
-  first_name: string;
-  last_name: string;
+  employeeID: number;
+  firstName: string;
+  lastName: string;
 }
 
 interface TypeInformation {
@@ -54,7 +57,7 @@ interface PickupDeliveryFromDB {
   SalesContractID: number;
   Employee: {
     ID: number;
-  };
+  } | null; // <--- เพิ่ม null type
 }
 
 
@@ -157,12 +160,11 @@ const PickupCarCreatePage: React.FC = () => {
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [empResponse, typeResponse] = await Promise.all([
-          fetch('http://localhost:8080/employees'),
+        const [empData, typeResponse] = await Promise.all([
+          getEmployees(), // 👈 แก้ไขที่นี่
           fetch('http://localhost:8080/type-informations')
         ]);
-        if (!empResponse.ok || !typeResponse.ok) throw new Error('Failed to fetch initial data');
-        const empData = await empResponse.json();
+        if (!typeResponse.ok) throw new Error('Failed to fetch initial data');
         const typeData = await typeResponse.json();
         setEmployees(empData);
         setTypeInformations(typeData);
@@ -201,7 +203,7 @@ const PickupCarCreatePage: React.FC = () => {
         }
 
         setContractNumber(data.SalesContract.ID.toString());
-        setSelectedEmployeeId(data.Employee.ID);
+        setSelectedEmployeeId(data.Employee.employeeID);
         setSelectedMethodId(data.TypeInformation.ID);
         const bookingDateTime = dayjs(data.DateTime);
         setSelectedDate(bookingDateTime);
@@ -319,8 +321,10 @@ const PickupCarCreatePage: React.FC = () => {
               return false;
             }
             const isSameDay = dayjs(booking.DateTime).isSame(selectedDate, 'day');
-            const isSameEmployee = booking.Employee.ID === selectedEmployeeId;
-            return isSameDay && isSameEmployee;
+            // --- 👇 แก้ไขเงื่อนไขตรงนี้ ---
+            const isSameEmployee = booking.Employee && booking.Employee.ID === selectedEmployeeId;
+            const isActiveBooking = booking.status === 'รอดำเนินการ' || booking.status === 'สำเร็จ';
+            return isSameDay && isSameEmployee && isActiveBooking;
           })
           .map(booking => dayjs(booking.DateTime).format('HH:mm'));
 
@@ -566,8 +570,8 @@ const PickupCarCreatePage: React.FC = () => {
                 style={{ width: '100%' }}
                 onChange={setSelectedEmployeeId}
                 options={employees?.map(emp => ({
-                  value: emp.ID,
-                  label: `${emp.first_name} ${emp.last_name}`
+                  value: emp.employeeID,
+                  label: `${emp.firstName} ${emp.lastName}`
                 }))}
               /></Col>
 
@@ -599,8 +603,10 @@ const PickupCarCreatePage: React.FC = () => {
 
                     let isTimeDisabled = false;
                     const now = dayjs();
-                    if (!selectedEmployeeId) return true;
-                    // ✅ ถ้ายังไม่ได้เลือกพนักงาน -> disable ทุกเวลา
+
+                    if (!selectedEmployeeId) {
+                      isTimeDisabled = true;
+                    }
 
                     if (selectedDate && selectedDate.isSame(now, 'day')) {
                       if (now.hour() >= 12) {
