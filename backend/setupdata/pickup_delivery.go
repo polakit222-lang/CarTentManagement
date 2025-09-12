@@ -33,7 +33,7 @@ func InsertMockPickupDelivery(db *gorm.DB) {
 
 	var typeInfo entity.TypeInformation
 	// VVVV --- แก้ไขชื่อคอลัมน์และชื่อตัวแปรตรงนี้ --- VVVV
-	db.Where("type = ?", "ให้ไปส่งตามที่อยู่").First(&typeInfo)
+	db.Where("type = ?", "ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)").First(&typeInfo)
 
 	var province entity.Province
 	// VVVV --- แก้ไขชื่อจังหวัดตรงนี้ --- VVVV

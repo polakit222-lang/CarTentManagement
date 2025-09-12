@@ -72,8 +72,8 @@ const SummaryPage: React.FC = () => {
           (item: any) => ({
             id: item.ID,
             contractNumber: `SC-${item.ID}`,
-            customerName: `${item.Customer?.FirstName || ''} ${
-              item.Customer?.LastName || ''
+            customerName: `${item.Customer?.first_name || ''} ${
+              item.Customer?.last_name || ''
             }`,
             employee: item.Employee?.FirstName,
             status: item.Status,

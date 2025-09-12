@@ -28,8 +28,8 @@ const colors = {
 interface AppointmentDataFromAPI extends Record<string, any> {
   ID: number;
   Customer: {
-    FirstName: string;
-    LastName: string;
+    first_name: string;
+    last_name: string;
   };
   SalesContract: {
     ID: number;
@@ -209,7 +209,7 @@ const AppointmentDetailsPage: React.FC = () => {
                 </Title>
                 <Descriptions bordered column={1} size="middle">
                   <Descriptions.Item label={<Text style={labelStyle}>ชื่อ-สกุล ลูกค้า</Text>}>
-                    <Text style={contentStyle}>{`${appointment.Customer?.FirstName || ''} ${appointment.Customer?.LastName || ''}`}</Text>
+                    <Text style={contentStyle}>{`${appointment.Customer?.first_name || ''} ${appointment.Customer?.last_name || ''}`}</Text>
                   </Descriptions.Item>
                   <Descriptions.Item label={<Text style={labelStyle}>เลขที่สัญญา</Text>}>
                     <Text style={contentStyle}>SC-{appointment.SalesContract?.ID}</Text>

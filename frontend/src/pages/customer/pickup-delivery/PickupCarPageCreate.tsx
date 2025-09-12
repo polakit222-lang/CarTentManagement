@@ -145,7 +145,7 @@ const PickupCarCreatePage: React.FC = () => {
       !selectedTime ||
       !selectedEmployeeId ||
       !selectedMethodId ||
-      (selectedMethodName === 'ให้ไปส่งตามที่อยู่' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
+      (selectedMethodName === 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
 
     const salesContractID = contractNumber ? parseInt(contractNumber, 10) : NaN;
     const hasExistingBooking = isNaN(salesContractID) ? false : pickupDeliveries.some(delivery =>
@@ -399,7 +399,7 @@ const PickupCarCreatePage: React.FC = () => {
       !selectedTime ||
       !selectedEmployeeId ||
       !selectedMethodId ||
-      (selectedMethodName === 'ให้ไปส่งตามที่อยู่' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
+      (selectedMethodName === 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' && (!address || !selectedProvince || !selectedDistrict || !selectedSubdistrict));
 
     if (isInfoMissing) {
       message.warning("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
@@ -443,10 +443,10 @@ const PickupCarCreatePage: React.FC = () => {
       TypeInformationID: selectedMethodId!,
       SalesContractNumber: parseInt(contractNumber!, 10),
       PickupDate: pickupDateTime.format(),
-      Address: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? address : "",
-      Province: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedProvince || "") : "",
-      District: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedDistrict || "") : "",
-      Subdistrict: selectedMethodName === 'ให้ไปส่งตามที่อยู่' ? (selectedSubdistrict || "") : "",
+      Address: selectedMethodName === 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' ? address : "",
+      Province: selectedMethodName === 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' ? (selectedProvince || "") : "",
+      District: selectedMethodName === 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' ? (selectedDistrict || "") : "",
+      Subdistrict: selectedMethodName === 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' ? (selectedSubdistrict || "") : "",
     };
 
     try {
@@ -644,7 +644,7 @@ const PickupCarCreatePage: React.FC = () => {
               </div>
             </div>
 
-            {selectedMethodName === 'ให้ไปส่งตามที่อยู่' && (
+            {selectedMethodName === 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' && (
               <>
                 <Title level={4} style={{ color: 'white' }}>ข้อมูลที่อยู่สำหรับจัดส่ง</Title>
                 <Row align="middle" gutter={[16, 20]} style={{ marginBottom: '40px' }}>

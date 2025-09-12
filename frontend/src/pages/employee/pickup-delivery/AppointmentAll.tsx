@@ -126,7 +126,7 @@ const AppointmentAll: React.FC = () => {
           employee: item.Employee?.FirstName || "-",
           appointmentMethod: item.TypeInformation?.Type || "-",
           status: item.status || "-",
-          customerName: `${item.Customer?.FirstName || ""} ${item.Customer?.LastName || ""}`.trim(),
+          customerName: `${item.Customer?.first_name || ""} ${item.Customer?.last_name || ""}`.trim(),
           address: `${item.Address || ""} ${item.SubDistrict?.SubDistrictName || ""} ${item.District?.DistrictName || ""} ${item.Province?.ProvinceName || ""}`.trim()
         }));
 
@@ -252,7 +252,7 @@ const AppointmentAll: React.FC = () => {
       dataIndex: 'appointmentMethod',
       key: 'appointmentMethod',
       render: (method) => {
-        const isDelivery = method?.includes('ให้ไปส่งตามที่อยู่');
+        const isDelivery = method?.includes('ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)');
         return (
           <Tag color={isDelivery ? 'purple' : 'geekblue'}>
             {isDelivery ? 'จัดส่ง' : 'รับที่เต็นท์'}
@@ -261,7 +261,7 @@ const AppointmentAll: React.FC = () => {
       },
       filters: [
         { text: 'รับที่เต็นท์', value: 'รับที่เต็นท์' },
-        { text: 'จัดส่ง', value: 'ให้ไปส่งตามที่อยู่' },
+        { text: 'จัดส่ง', value: 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' },
       ],
       filteredValue: tableFilters.appointmentMethod || null,
       onFilter: (value, record) => record.appointmentMethod?.includes(value as string) ?? false,
@@ -271,7 +271,7 @@ const AppointmentAll: React.FC = () => {
             style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}
             options={[
               { label: 'รับที่เต็นท์', value: 'รับที่เต็นท์' },
-              { label: 'จัดส่ง', value: 'ให้ไปส่งตามที่อยู่' },
+              { label: 'จัดส่ง', value: 'ให้ไปส่งตามที่อยู่(เฉพาะเขตกรุงเทพฯ)' },
             ]}
             value={selectedKeys as string[]}
             onChange={(keys) => setSelectedKeys(keys)}

@@ -156,11 +156,11 @@ func main() {
 	}
 
 	//public Employee Routes (สำหรับดูข้อมูลพนักงาน)
-	employeePublicRoutes := r.Group("/employees")
-	{
-		employeePublicRoutes.GET("", employeeController.GetEmployees)
-		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
-	}
+	// employeePublicRoutes := r.Group("/employees")
+	// {
+	// 	employeePublicRoutes.GET("", employeeController.GetEmployees)
+	// 	employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
+	// }
 
 	// ✅ New API Group (สำหรับ Manager + Leaves)
 	api := r.Group("/api")
