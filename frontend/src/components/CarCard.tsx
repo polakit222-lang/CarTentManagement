@@ -1,7 +1,7 @@
 // src/components/CarCard.tsx
 import React, { useState, useRef } from "react";
 import type { CarInfo, CarType } from "../interface/Car";
-import { Card, Typography, Tag, Modal, Carousel, Button } from "antd";
+import { Card, Typography, Modal, Carousel, Button } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
@@ -17,60 +17,77 @@ const CarCard: React.FC<CarCardProps> = ({ car, type }) => {
   const carouselRef = useRef<any>(null);
   const navigate = useNavigate();
 
-  const images = car.pictures?.map((p) => `${p.path}`) || [];
+  const images = car.pictures?.map((p) => p.path) || [];
 
-  // ปุ่ม action แยกตาม type
-  // ...
   const renderActions = () => {
     switch (type) {
       case "sale":
         return [
-          <Button key="edit" type="link" onClick={() => navigate(`/edit-sell/${car.ID}`)}>
-            แก้ไข
-          </Button>,
-          <Button key="cancelSale" type="link" danger onClick={() => navigate(`/sell`)}>
-            ยกเลิกการขาย
-          </Button>,
+          <Button key="edit" type="link" onClick={() => navigate(`/edit-sell/${car.ID}`)}>แก้ไข</Button>,
+          <Button key="cancelSale" type="link" danger onClick={() => navigate(`/sell`)}>ยกเลิกการขาย</Button>,
         ];
       case "rent":
         return [
-          <Button key="edit" type="link" onClick={() => navigate(`/edit-rent/${car.ID}`)}>
-            แก้ไข
-          </Button>,
-          <Button key="addRent" type="link" onClick={() => navigate(`/add-rent/${car.ID}`)}>
-            เพิ่มช่วงปล่อยเช่า
-          </Button>,
+          <Button key="edit" type="link" onClick={() => navigate(`/edit-rent/${car.ID}`)}>แก้ไข</Button>,
+          <Button key="addRent" type="link" onClick={() => navigate(`/add-rent/${car.ID}`)}>เพิ่มช่วงปล่อยเช่า</Button>,
         ];
       case "noUse":
         return [
-          <Button key="edit" type="link" onClick={() => navigate(`/edit-car/${car.ID}`)}>
-            แก้ไข
-          </Button>,
-          <Button key="setRent" type="link" onClick={() => navigate(`/add-rent/${car.ID}`)}>
-            ปล่อยเช่า
-          </Button>,
-          <Button key="setSale" type="link" onClick={() => navigate(`/add-sell/${car.ID}`)}>
-            ขาย
-          </Button>,
+          <Button key="edit" type="link" onClick={() => navigate(`/edit-car/${car.ID}`)}>แก้ไข</Button>,
+          <Button key="setRent" type="link" onClick={() => navigate(`/add-rent/${car.ID}`)}>ปล่อยเช่า</Button>,
+          <Button key="setSale" type="link" onClick={() => navigate(`/add-sell/${car.ID}`)}>ขาย</Button>,
         ];
       case "rentView":
         return [
-          <Button key="detail" type="link" onClick={() => navigate(`/rentcar-details/${car.ID}`)}>
-            รายละเอียด
-          </Button>,
+          <Button key="detail" type="link" onClick={() => navigate(`/rentcar-details/${car.ID}`)}>รายละเอียด</Button>,
         ];
       case "saleView":
         return [
-          <Button key="detail" type="link" onClick={() => navigate(`/buycar-details/${car.ID}`)}>
-            รายละเอียด
-          </Button>,
+          <Button key="detail" type="link" onClick={() => navigate(`/buycar-details/${car.ID}`)}>รายละเอียด</Button>,
         ];
       default:
         return [];
     }
   };
-  // ...
 
+  // ฟังก์ชันแสดงข้อมูลราคา / สถานะ ตาม type
+  const renderInfo = () => {
+    switch (type) {
+      case "sale":
+        return car.sale_list?.length ? (
+          <Text>ราคาขาย: {car.sale_list[0].sale_price.toLocaleString()} บาท</Text>
+        ) : null;
+      case "rent":
+        return car.rent_list?.length ? (
+          <>
+            <Text>ราคาเช่า: {car.rent_list[0].rent_price.toLocaleString()} บาท/วัน</Text>
+            <br />
+            <Text>เริ่มเช่า: {car.rent_list[0].rent_start_date}</Text>
+          </>
+        ) : null;
+      case "noUse":
+        return (
+          <>
+            {car.purchasePrice && <Text>ราคาซื้อ: {car.purchasePrice.toLocaleString()} บาท</Text>}
+            <br />
+          </>
+        );
+      case "rentView":
+        return car.rent_list?.length ? (
+          <>
+            <Text strong>ราคาเช่า: {car.rent_list[0].rent_price.toLocaleString()} บาท/วัน</Text>
+            <br />
+            <Text>เริ่มเช่า: {car.rent_list[0].rent_start_date}</Text>
+          </>
+        ) : null;
+      case "saleView":
+        return car.sale_list?.length ? (
+          <Text strong>ราคาขาย: {car.sale_list[0].sale_price.toLocaleString()} บาท</Text>
+        ) : null;
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -89,41 +106,11 @@ const CarCard: React.FC<CarCardProps> = ({ car, type }) => {
         }
         actions={renderActions()}
       >
-        <Title level={5}>
-          {car.carName} ปี {car.yearManufacture}
-        </Title>
+        <Title level={5}>{car.carName} ปี {car.yearManufacture}</Title>
         <Text>สภาพ: {car.condition}</Text>
         <br />
-
-        {/* กรณี sale (จัดการขาย) */}
-        {type === "sale" && car.sale_list?.length && (
-          <Text>ราคาขาย: {car.sale_list[0].sale_price.toLocaleString()} บาท</Text>
-        )}
-
-        {/* กรณี rent (จัดการเช่า) */}
-        {type === "rent" && car.rent_list?.length && (
-          <>
-            <Text>ราคาเช่า: {car.rent_list[0].rent_price.toLocaleString()} บาท/วัน</Text>
-            <br />
-            <Text>เริ่มเช่า: {car.rent_list[0].rent_start_date}</Text>
-          </>
-        )}
-
-        {/* กรณี rentView (แสดงให้ผู้ใช้ดูรถที่ปล่อยเช่า) */}
-        {type === "rentView" && car.rent_list?.length && (
-          <>
-            <Text strong>ราคาเช่า: {car.rent_list[0].rent_price.toLocaleString()} บาท/วัน</Text>
-            <br />
-            <Text>เริ่มเช่า: {car.rent_list[0].rent_start_date}</Text>
-          </>
-        )}
-
-        {/* กรณี saleView (แสดงให้ผู้ใช้ดูรถที่ขาย) */}
-        {type === "saleView" && car.sale_list?.length && (
-          <Text strong>ราคาขาย: {car.sale_list[0].sale_price.toLocaleString()} บาท</Text>
-        )}
+        {renderInfo()}
       </Card>
-
 
       <Modal open={isOpen} footer={null} onCancel={() => setIsOpen(false)} width={600}>
         <div style={{ position: "relative" }}>

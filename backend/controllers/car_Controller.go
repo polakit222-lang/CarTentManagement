@@ -92,36 +92,27 @@ func (cc *CarController) GetCarByID(c *gin.Context) {
 		Preload("RentList.RentAbleDates.DateforRent").
 		First(&car, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			c.JSON(404, gin.H{"error": "Car not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Car not found"})
 		} else {
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
 
-	// ✅ map ข้อมูลเข้า CarResponse
-	cr := entity.CarResponse{
-		ID:              car.ID,
-		CarName:         car.CarName,
-		YearManufacture: car.YearManufacture,
-		Color:           car.Color,
-		Mileage:         car.Mileage,
-		Condition:       car.Condition,
-	}
+	cr := CarResponse{Car: car}
 
 	// SaleList
 	for _, s := range car.SaleList {
-		cr.SaleList = append(cr.SaleList, entity.SaleEntry{
-			SalePrice: s.SalePrice,
-		})
+		cr.SaleList = append(cr.SaleList, struct {
+			SalePrice float64 `json:"sale_price"`
+		}{SalePrice: s.SalePrice})
 	}
 
 	// RentList
 	for _, r := range car.RentList {
 		for _, rd := range r.RentAbleDates {
 			if rd.DateforRent != nil {
-				cr.RentList = append(cr.RentList, entity.RentPeriod{
-					ID:            rd.DateforRent.ID,
+				cr.RentList = append(cr.RentList, RentPeriod{
 					RentPrice:     rd.DateforRent.RentPrice,
 					RentStartDate: rd.DateforRent.OpenDate.Format("2006-01-02"),
 					RentEndDate:   rd.DateforRent.CloseDate.Format("2006-01-02"),
@@ -130,5 +121,5 @@ func (cc *CarController) GetCarByID(c *gin.Context) {
 		}
 	}
 
-	c.JSON(200, cr)
+	c.JSON(http.StatusOK, cr)
 }

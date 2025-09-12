@@ -64,10 +64,10 @@ func main() {
 	r.POST("/employee/login", employeeController.LoginEmployee)
 	r.POST("/manager/login", managerController.LoginManager)
 
+	r.Static("/images/cars", "./public/images/cars")
 	// Car Routes
 	r.GET("/cars", carController.GetAllCars)
 	r.GET("/cars/:id", carController.GetCarByID)
-	r.Static("/images/cars", "./public/images/cars")
 	// Address Routes
 	provinceRoutes := r.Group("/provinces")
 	{
