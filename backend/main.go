@@ -56,8 +56,7 @@ func main() {
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
 	salesContractController := controllers.NewSalesContractController(configs.DB)
 	leaveController := controllers.NewLeaveController(configs.DB) // ✅ เพิ่ม LeaveController
-
-
+	rentListController := controllers.NewRentListController(configs.DB)
 	// --- Routes ---
 
 	// Public Routes
@@ -67,10 +66,10 @@ func main() {
 	r.POST("/manager/login", managerController.LoginManager)
 	r.GET("/employees", employeeController.GetEmployees) // 👈 เพิ่มบรรทัดนี้
 
+	r.Static("/images/cars", "./public/images/cars")
 	// Car Routes
 	r.GET("/cars", carController.GetAllCars)
-	r.Static("/images/cars", "./public/images/cars")
-
+	r.GET("/cars/:id", carController.GetCarByID)
 	// Address Routes
 	provinceRoutes := r.Group("/provinces")
 	{
@@ -114,7 +113,7 @@ func main() {
 
 	// SalesContract Routes
 	salesContractRoutes := r.Group("/sales-contracts")
-	
+
 	{
 		salesContractRoutes.POST("", salesContractController.CreateSalesContract)
 		salesContractRoutes.GET("", salesContractController.GetSalesContracts)
@@ -156,12 +155,12 @@ func main() {
 	}
 	}
 
-	
-	
-
-
-
-	
+	//public Employee Routes (สำหรับดูข้อมูลพนักงาน)
+	employeePublicRoutes := r.Group("/employees")
+	{
+		employeePublicRoutes.GET("", employeeController.GetEmployees)
+		employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
+	}
 
 	// ✅ New API Group (สำหรับ Manager + Leaves)
 	api := r.Group("/api")
@@ -171,7 +170,6 @@ func main() {
 		api.GET("/employees/:id/leaves", leaveController.ListLeavesByEmployee)
 		api.POST("/leaves", leaveController.CreateLeave)
 		api.PUT("/leaves/:id/status", leaveController.UpdateLeaveStatus)
-
 
 		// Employee CRUD (Manager)
 		api.GET("/employees", employeeController.GetEmployees)
@@ -187,6 +185,13 @@ func main() {
 		adminCustomerRoutes.GET("/:id", customerController.GetCustomerByID)
 		adminCustomerRoutes.PUT("/:id", customerController.UpdateCustomer)
 		adminCustomerRoutes.DELETE("/:id", customerController.DeleteCustomer)
+	}
+	rentListRoutes := r.Group("/rentlists")
+	{
+		rentListRoutes.GET("/:carId", rentListController.GetRentListsByCar)
+		rentListRoutes.PUT("", rentListController.CreateOrUpdateRentList)
+		rentListRoutes.DELETE("/date/:dateId", rentListController.DeleteRentDate)
+
 	}
 
 	// Start server

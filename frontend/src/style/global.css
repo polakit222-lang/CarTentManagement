@@ -87,3 +87,8 @@
 .ant-menu-item:hover {
     color: #f1d846ff !important;
 }
+
+.blurred {
+  filter: blur(5px);
+  pointer-events: none; /* ป้องกันการคลิกที่พื้นหลังขณะ modal เปิด */
+}
