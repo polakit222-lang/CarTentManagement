@@ -1,4 +1,4 @@
-import type dayjs from "dayjs";
+//import type dayjs from "dayjs";
 
 export type Sex = ""|"male" | "female" | "other";
 export type JobType = ""|"Full-time" | "Part-time" | "Contract";
@@ -12,7 +12,7 @@ export interface Employee {
   phone: string;
   address: string;
   sex: Sex;
-  birthday: dayjs.Dayjs;
+  birthday: string;
   position: string;
   jobType: JobType;
   totalSales: string;
