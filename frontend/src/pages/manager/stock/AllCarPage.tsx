@@ -47,7 +47,7 @@ return (
     <div style={{ marginLeft: 300, padding: 20, display: "flex", flexWrap: "wrap", gap: 20 }}>
       {filteredCars.map(car => {
         const type: CarType = car.sale_list?.length ? "sale" : car.rent_list?.length ? "rent" : "noUse";
-        return <CarCard key={car.ID} car={car} type={type} onEdit={() => {}} />;
+        return <CarCard key={car.ID} car={car} type={type}  />;
       })}
     </div>
   </div>
