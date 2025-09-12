@@ -52,4 +52,5 @@ const mapCar = (data: any): CarInfo => ({
     rent_start_date: r.rent_start_date,
     rent_end_date: r.rent_end_date,
   })) || [],
+  //555555
 });
