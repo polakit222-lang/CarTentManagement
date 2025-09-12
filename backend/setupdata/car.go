@@ -91,6 +91,8 @@ func InsertCarsFromCSV(db *gorm.DB, filepath string) {
 			{Title: "Front view", Path: row[12], CarID: car.ID},
 			{Title: "Side view", Path: row[13], CarID: car.ID},
 			{Title: "Interior", Path: row[14], CarID: car.ID},
+			{Title: "Main", Path: row[15], CarID: car.ID},
+			{Title: "Bottom", Path: row[16], CarID: car.ID},
 		}
 
 		for _, pic := range pictures {

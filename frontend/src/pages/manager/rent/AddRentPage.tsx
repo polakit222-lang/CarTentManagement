@@ -1,125 +1,55 @@
-import { useState, useMemo } from 'react';
-import { carList } from '../../../data/carList';
-import CarGrid from '../../../components/CarGrid';
-import { carRentList } from '../../../data/carRentList';
-// FIX: Import 'FilterValues' type from the Filter component
-import Filter, { type FilterValues } from '../../../components/Filter';
-// FIX: Import 'SortOption' type from the Sorter component
-import Sorter, { type SortOption } from '../../../components/Sorter';
-// FIX: Removed unused 'Button' and 'Link' imports
+import React, { useState, useEffect } from "react";
+import type { CarInfo, FilterValues, SortOption } from "../../../interface/Car";
+import { fetchCars } from "../../../services/carService";
+import CarCard from "../../../components/CarCard";
+import Filter from "../../../components/Filter";
 
+const AddRentPage: React.FC = () => {
+  const [cars, setCars] = useState<CarInfo[]>([]);
+  const [filteredCars, setFilteredCars] = useState<CarInfo[]>([]);
 
-const conditionOrder = ['ดี', 'ปานกลาง', 'แย่'];
+  useEffect(() => {
+    const loadCars = async () => {
+      const data = await fetchCars();
+      setCars(data);
+      setFilteredCars(data);
+    };
+    loadCars();
+  }, []);
 
-const AddRentPage = () => {
-  const filteredCarsNotSell = carList.filter(
-    (car) => !carRentList.some((sellCar) => sellCar.id === car.id)
-  );
+  const handleApply = (filters: FilterValues, sort?: SortOption) => {
+    let result = [...cars];
 
-  const [filters, setFilters] = useState<FilterValues | null>(null);
-  const [sortOption, setSortOption] = useState<SortOption | undefined>(
-    undefined
-  );
-
-  const filteredCars = useMemo(() => {
-    let result = filteredCarsNotSell;
-
-    if (filters) {
-      result = result.filter((c) => {
-        if (filters.brand && c.brand !== filters.brand) return false;
-        if (filters.model && c.model !== filters.model) return false;
-        if (filters.priceRange) {
-          const p = c.price ?? 0;
-          if (p < filters.priceRange[0] || p > filters.priceRange[1]) return false;
-        }
-        if (filters.yearRange) {
-          const y = c.yearManufactured ?? 0;
-          if (y < filters.yearRange[0] || y > filters.yearRange[1]) return false;
-        }
-        if (filters.mileageMax !== null && filters.mileageMax !== undefined) {
-          if ((c.mileage ?? 0) > (filters.mileageMax ?? Number.MAX_SAFE_INTEGER)) return false;
-        }
-        if (filters.isAvailable && !c.status?.includes('available')) return false;
-        if (filters.conditions && filters.conditions.length > 0) {
-          if (!filters.conditions.includes(c.condition ?? '')) return false;
-        }
-        if (filters.status && filters.status.length > 0) {
-          // สมมติว่า c.status เก็บเป็น string เช่น 'selling' | 'renting' | 'pending'
-          const carStatus = Array.isArray(c.status) ? c.status[0] : undefined; // ✅ ดึงค่า index ที่ 1
-          if (!filters.status.includes(carStatus ?? '')) return false;
-        }
-        if (filters.usageRange) {
-          const currentYear = new Date().getFullYear();
-          const usageAge = currentYear - (c.yearUsed ?? currentYear);
-          if (usageAge < filters.usageRange[0] || usageAge > filters.usageRange[1]) return false;
-        }
-        return true;
-      });
+    if (filters.brand) result = result.filter(c => c.brand?.brandName === filters.brand);
+    if (filters.model) result = result.filter(c => c.model?.modelName === filters.model);
+    if (filters.subModel) result = result.filter(c => c.submodel?.submodelName === filters.subModel);
+    if (filters.conditions?.length) result = result.filter(c => filters.conditions!.includes(c.condition!));
+    if (filters.priceRange) {
+      const [min, max] = filters.priceRange;
+      result = result.filter(c => c.purchasePrice >= min && c.purchasePrice <= max);
     }
 
-    if (sortOption) {
-      result = [...result].sort((a, b) => {
-        switch (sortOption) {
-          case 'priceAsc':
-            return (a.price ?? 0) - (b.price ?? 0);
-          case 'priceDesc':
-            return (b.price ?? 0) - (a.price ?? 0);
-          case 'mileageAsc':
-            return (a.mileage ?? 0) - (b.mileage ?? 0);
-          case 'mileageDesc':
-            return (b.mileage ?? 0) - (a.mileage ?? 0);
-          case 'condition':
-            return (
-              conditionOrder.indexOf(a.condition ?? 'แย่') -
-              conditionOrder.indexOf(b.condition ?? 'แย่')
-            );
-          case 'yearUsedAsc':
-            return (a.yearUsed ?? 0) - (b.yearUsed ?? 0);
-          case 'yearUsedDesc':
-            return (b.yearUsed ?? 0) - (a.yearUsed ?? 0);
-          default:
-            return 0;
-        }
-      });
+    if (sort) {
+      if (sort === "priceAsc") result.sort((a, b) => a.purchasePrice - b.purchasePrice);
+      if (sort === "priceDesc") result.sort((a, b) => b.purchasePrice - a.purchasePrice);
+      if (sort === "yearUsedAsc") result.sort((a, b) => a.yearManufacture - b.yearManufacture);
+      if (sort === "yearUsedDesc") result.sort((a, b) => b.yearManufacture - a.yearManufacture);
     }
 
-    return result;
-    // FIX: Added missing dependency 'filteredCarsNotSell' to the array
-  }, [filters, sortOption, filteredCarsNotSell]);
+    setFilteredCars(result);
+  };
+
+  const handleClear = () => setFilteredCars(cars);
 
   return (
-    <div style={{ display: 'flex', width: '100%', padding: 10 }}>
-      <div style={{ zIndex: 2 }}>
-        <Filter
-          carList={carList}
-          width={300}
-          onApply={(v) => setFilters(v)}
-          onClear={() => setFilters(null)}
-        />
-      </div>
-      <div style={{ marginLeft: 280, marginTop: 50, width: '100%' }}>
-        <div
-          style={{
-            height: 80,
-            display: 'flex',
-            alignItems: 'center',
-            position: 'fixed',
-            width: '100%',
-            backgroundColor: '#FFD700',
-            zIndex: 10,
-            padding: 20,
-          }}
-        >
-          <h2 style={{color:'black'}}>เลือกรถยนต์ที่จะให้เช่า</h2>
-          <div style={{ marginRight: 300, marginLeft: 'auto'  }}>
-            <Sorter value={sortOption} onChange={setSortOption} />
-          </div>
-        </div>
-        <div style={{ paddingTop: 80, paddingLeft: 30 }}>
-          {/* ======================= จุดที่แก้ไข ======================= */}
-          <CarGrid cars={filteredCars} rentBasePath="/add-rent" />
-          {/* ========================================================== */}
-        </div>
+    <div style={{ display: "flex", marginTop: 60 }}>
+      <Filter cars={cars} onApply={handleApply} onClear={handleClear} />
+      <div style={{ marginLeft: 300, padding: 20, display: "flex", flexWrap: "wrap", gap: 20 }}>
+        {filteredCars
+          .filter(car => !car.sale_list?.length && !car.rent_list?.length) // ✅ โชว์เฉพาะรถที่ว่าง
+          .map(car => (
+            <CarCard key={car.ID} car={car} type="noUse"  />
+          ))}
       </div>
     </div>
   );

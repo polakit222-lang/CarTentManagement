@@ -1,25 +1,19 @@
 package entity
 
 import (
-
 	"gorm.io/gorm"
 )
 
 type Customer struct {
 	gorm.Model
-	Password  string
-	Email     string
-	Phone     string
-	FirstName string
-	LastName  string
-	Birthday  string	`json:"birthday"`
+	Password  string `json:"password"`
+	Email     string `json:"email"`
+	Phone     string `json:"phone"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Birthday  string `json:"birthday"`
 
-	
-
-	PickupDelivery []PickupDelivery `gorm:"foreignKey:CustomerID"` // แก้ไข: foreignKey เป็น CustomerID
-
-	//for Appointment
-	InspectionAppointments []InspectionAppointment `gorm:"foreignKey:CustomerID"` // แก้ไข: foreignKey เป็น CustomerID
-
-	SalesContract   []SalesContract  `gorm:"foreignKey:CustomerID"`
+	PickupDelivery         []PickupDelivery        `gorm:"foreignKey:CustomerID" json:"pickup_deliveries"`
+	InspectionAppointments []InspectionAppointment `gorm:"foreignKey:CustomerID" json:"inspection_appointments"`
+	SalesContract          []SalesContract         `gorm:"foreignKey:CustomerID" json:"sales_contracts"`
 }
