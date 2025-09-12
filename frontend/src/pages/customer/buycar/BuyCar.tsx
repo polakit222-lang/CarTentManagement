@@ -1,8 +1,18 @@
-import React, { useState, useEffect } from "react";
-import type { CarInfo, CarType, FilterValues, SortOption } from "../../../interface/Car";
-import { fetchCars } from "../../../services/carService";
-import CarCard from "../../../components/CarCard";
-import Filter from "../../../components/Filter";
+import React from 'react';
+import { Typography } from 'antd';
+
+import { useState, useMemo } from 'react';
+import { carList } from '../../../data/carList';
+import CarGrid from '../../../components/CarGrid';
+import { carRentList } from '../../../data/carRentList';
+// FIX: Import 'FilterValues' type from the Filter component
+import Filter, { type FilterValues } from '../../../components/BuyRentFillter';
+// FIX: Import 'SortOption' type from the Sorter component
+import Sorter, { type SortOption } from '../../../components/Sorter';
+// FIX: Removed unused 'Button' and 'Link' imports
+
+const conditionOrder = ['ดี', 'ปานกลาง', 'แย่'];
+const { Title } = Typography;
 
 const BuyCarPage: React.FC = () => {
   const [cars, setCars] = useState<CarInfo[]>([]);
@@ -41,15 +51,44 @@ const BuyCarPage: React.FC = () => {
 
   const handleClear = () => setFilteredCars(cars);
 
-  return (
-    <div style={{ display: "flex", marginTop: 60 }}>
-      <Filter cars={cars} onApply={handleApply} onClear={handleClear} />
-      <div style={{ marginLeft: 300, padding: 20, display: "flex", flexWrap: "wrap", gap: 20 }}>
-        {filteredCars
-          .filter(car => car.sale_list?.length) // ✅ โชว์เฉพาะรถที่ขาย
-          .map(car => (
-            <CarCard key={car.ID} car={car} type="saleView" />
-          ))}
+   return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#000", padding: "10px" }}>
+    {/* หัวข้อ */}
+    <Title
+      level={2}
+      style={{
+      color: "#fff",
+      margin: "0 0 20px 0",
+      display: "inline-block",
+      borderBottom: "3px solid gold", // เส้นขีดใต้ตัวหนังสือ
+      paddingBottom: "6px",
+      }}
+    >
+      เลือกรถยนต์ที่คุณต้องการซื้อ
+    </Title>
+    {/* Container หลักแบบ Flex */}
+    <div style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}>
+      
+{/* ฝั่งซ้าย: ฟิลเตอร์ */}
+      <div style={{ width: "300px", flexShrink: 0, paddingTop: "2px" }}>
+        <Filter
+          carList={carList}
+          width={300}
+          enabledFilters={['brand', 'model', 'price', 'year', 'usage']} // เลือกได้ว่าจะให้มี filter อะไรบ้าง
+          onApply={(v) => setFilters(v)}
+          onClear={() => setFilters(null)}
+        />
+      </div>
+
+      {/* ฝั่งขวา: Car Grid */}
+      <div
+        style={{
+          flex: 1,
+          paddingTop: "20px",
+        }}
+      >
+        <CarGrid cars={filteredCars} detailBasePath="/buycar-details" />
+      </div>
       </div>
     </div>
   );

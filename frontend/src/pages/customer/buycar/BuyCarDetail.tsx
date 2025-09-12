@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Row, Col, Card, Typography, Image, Button, Divider, Space, Modal } from "antd";
+import { useParams, useNavigate, useLocation  } from "react-router-dom";
+import { Row, Col, Card, Typography, Image, Button, Divider, Space, Modal, message } from "antd";
 import { ShoppingCartOutlined, PushpinOutlined } from "@ant-design/icons";
 
 import { carList } from "../../../data/carList";
@@ -11,22 +11,29 @@ import thumb2 from "../../../assets/burCar1/thumb2.jpg";
 import thumb3 from "../../../assets/burCar1/thumb3.jpg";
 import thumb4 from "../../../assets/burCar1/thumb4.jpg";
 
-
+import { useAuth } from "../../../hooks/useAuth";
 const { Title, Paragraph } = Typography;
+
 
 const BuyCarDetailPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth(); 
+  const location = useLocation();
 
   // ✅ เพิ่ม useEffect เพื่อ scroll กลับบนสุดทุกครั้งที่เข้าหน้านี้
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, []);
 
-  // useEffect(() => {
-  //   window.scrollTo({ top: 0, behavior: "smooth" });
-  // }, []);
-  
+  // const handleBuyClick = () => {
+  //   if (user) {
+  //     navigate("/payment");
+  //   } else {
+  //     navigate("/login", { state: { from: location.pathname } }); // ถ้ายังไม่ล็อกอิน ให้ไปที่หน้า login ก่อน
+  //   }
+  // };
+
   const car = carList.find(c => c.id === Number(id));
 
   if (!car) {
@@ -36,8 +43,48 @@ const BuyCarDetailPage: React.FC = () => {
   const [buy, setbuy] = useState(false);
   const [book, setbook] = useState(false);
 
+  const isAnyModalOpen = buy || book;
+
+  useEffect(() => {
+    if (user && location.state?.openModal === "buy") {
+      setbuy(true);
+      navigate(location.pathname, { replace: true });
+    }
+  }, [user, location, navigate]);
+
+  // ฟังก์ชันกดปุ่มสั่งซื้อ
+  const handleBuyClick = () => {
+    if (!user) {
+      // ถ้ายังไม่ล็อกอิน → ไปหน้า login พร้อมส่ง path ปัจจุบัน + flag ว่าต้องเปิด modal
+      navigate("/login", { state: { from: location.pathname, openModal: "buy" } });
+    } else {
+      setbuy(true);
+    }
+  };
+
+  // ฟังก์ชันยืนยันสั่งซื้อ
+  const handleConfirmBuy = () => {
+    setbuy(false);
+    message.success("ยืนยันการสั่งซื้อแล้ว กำลังพาไปหน้าชำระเงิน...");
+    navigate("/payment");
+  };
+
+  useEffect(() => {
+  if (isAnyModalOpen) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [isAnyModalOpen]);
+
   return (
-    <div style={{ backgroundColor: "#000", minHeight: "100vh", padding: "20px" }}>
+    <div     
+      className={`page-container ${isAnyModalOpen ? "blurred" : ""}`} // ✅ เพิ่ม class blur เมื่อ modal เปิด
+      style={{ backgroundColor: "#000", minHeight: "100vh", padding: "20px", transition: "filter 0.3s ease" }}>
+
       <Row gutter={16}>
       {/* ภาพใหญ่และภาพย่อย */}
       <Col xs={24} md={16}>
@@ -101,22 +148,21 @@ const BuyCarDetailPage: React.FC = () => {
       
           >
             <Title level={3} style={{ color: "gold" }}>
-              TOYOTA YARIS ATIV 1.2 E ปี 2020
+              {car.brand} {car.model} ปี {car.yearManufactured}
             </Title>
             <Title level={2} style={{ color: "white", marginTop: "-10px" }}>
-              ฿ 319,000
+              ฿ {car.price.toLocaleString()}
             </Title>
 
             <Divider style={{ borderColor: "rgba(255, 215, 0, 0.3)" }} />
 
             {/* รายละเอียดรถ */}
             <div style={{ color: "#fff", lineHeight: "1.8em" }}>
-              <p>ยี่ห้อ: Toyota</p>
-              <p>รุ่น: Yaris Ativ</p>
-              <p>ปี: 2020</p>
-              <p>เลขไมล์: 50,000 กม.</p>
-              <p>เกียร์: ออโต้</p>
-              <p>สี: ดำ</p>
+              <p>ยี่ห้อ :  {car.brand}</p>
+              <p>รุ่น : {car.model}</p>
+              <p>ปี : {car.yearManufactured}</p>
+              <p>เลขไมล์ : {car.mileage?.toLocaleString()} กม.</p>
+              <p>สี : </p>
             </div>
 
             <Divider style={{ borderColor: "rgba(255, 215, 0, 0.3)" }} />
@@ -126,8 +172,8 @@ const BuyCarDetailPage: React.FC = () => {
               <Title level={4} style={{ color: "gold", marginTop: "-10px" }}>
                 ติดต่อพนักงาน
               </Title>
-              <p>ชื่อ: Lung Tuu</p>
-              <p>เบอร์โทร: 09888866</p>
+              <p>ชื่อ : Lung Tuu</p>
+              <p>เบอร์โทร : 09888866</p>
             </div>
 
             <Divider style={{ borderColor: "rgba(255, 215, 0, 0.3)" }} />
@@ -159,12 +205,86 @@ const BuyCarDetailPage: React.FC = () => {
               </Button>
 
               <Modal
+                title={<span style={{ color: '#f1d430ff' }}>ยืนยันคำสั่งการจอง</span>}
                 open={book}
-                afterOpenChange={(open) => setbook(open)}
                 onCancel={() => setbook(false)}
-                onOk={() => setbook(false)}
-              >
-                <Title level={3}>ยืนยันคำสั่งการจอง</Title>
+                getContainer={() => document.body} // ← บังคับให้ render เป็น portal ที่ body
+                maskClosable={false}
+                width={600}
+                centered
+                styles={{ 
+                    body: { 
+                        backgroundColor: '#000000' 
+                    },
+                    header: {
+                        backgroundColor: '#000000',
+                        borderBottom: '1px solid #000000'
+                    },
+                    footer: {
+                        backgroundColor: '#000000',
+                        borderTop: '1px solid #000000'
+                    },
+                    content: {
+                        backgroundColor: '#000000',
+                        border: '2px solid #f1d430ff',
+                        borderRadius: '8px'
+                    }
+                }}
+                footer={[
+                    <Button 
+                        key="back" 
+                        onClick={() => setbook(false)}
+                        style={{
+                          backgroundColor: "gold",
+                          color: "black",
+                          fontWeight: "bold",
+                          border: "2px solid gold",
+                          borderRadius: "10px",
+                          boxShadow: "0 2px 8px rgba(255, 215, 0, 0.4)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "black";
+                          e.currentTarget.style.color = "gold";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "gold";
+                          e.currentTarget.style.color = "black";
+                        }}
+                    >
+                        ยกเลิก
+                    </Button>,
+                    <Button 
+                        key="submit" 
+                        onClick={handleConfirmBuy}
+                        style={{
+                          backgroundColor: "gold",
+                          color: "black",
+                          fontWeight: "bold",
+                          border: "2px solid gold",
+                          borderRadius: "10px",
+                          boxShadow: "0 2px 8px rgba(255, 215, 0, 0.4)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "black";
+                          e.currentTarget.style.color = "gold";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "gold";
+                          e.currentTarget.style.color = "black";
+                        }}
+                    >
+                        ยืนยัน
+                    </Button>,
+                ]}
+            >
+                <div style={{ color: 'white' }}>
+                    
+                    {/* <h4 style={{ marginTop: '15px', color: '#f1d430ff' }}>ยืนยันคำสั่งซื้อ</h4> */}
+                    <p>ชื่อ-นามสกุล : </p>
+                    <p>รถยนต์ : {car.brand} {car.model} ปี {car.yearManufactured} </p>
+                    <p>ราคา : {car.price.toLocaleString()} บาท </p>
+                    <p>/////////////////////////////</p>
+                </div>
               </Modal>
 
               <Button
@@ -186,19 +306,103 @@ const BuyCarDetailPage: React.FC = () => {
                   e.currentTarget.style.backgroundColor = "gold";
                   e.currentTarget.style.color = "black";
                 }}
-                onClick={() => setbuy(true)}
+                // onClick={() => setbuy(true)}
+                onClick={handleBuyClick}
               >
                 สั่งซื้อ
               </Button>
 
-              <Modal
+              {/* <Modal
                 open={buy}
                 afterOpenChange={(open) => setbuy(open)}
                 onCancel={() => setbuy(false)}
-                onOk={() => setbuy(false)}
+                onOk={handleBuyClick}
               >
                 <Title level={3}>ยืนยันคำสั่งซื้อ</Title>
+              </Modal> */}
+              <Modal
+                title={<span style={{ color: '#f1d430ff' }}>ยืนยันคำสั่งซื้อ</span>}
+                open={buy}
+                onCancel={() => setbuy(false)}
+                getContainer={() => document.body} // ← บังคับให้ render เป็น portal ที่ body
+                maskClosable={false}
+                width={600}
+                centered
+                styles={{ 
+                    body: { 
+                        backgroundColor: '#000000' 
+                    },
+                    header: {
+                        backgroundColor: '#000000',
+                        borderBottom: '1px solid #000000'
+                    },
+                    footer: {
+                        backgroundColor: '#000000',
+                        borderTop: '1px solid #000000'
+                    },
+                    content: {
+                        backgroundColor: '#000000',
+                        border: '2px solid #f1d430ff',
+                        borderRadius: '8px'
+                    }
+                }}
+                footer={[
+                    <Button 
+                        key="back" 
+                        onClick={() => setbuy(false)}
+                        style={{
+                          backgroundColor: "gold",
+                          color: "black",
+                          fontWeight: "bold",
+                          border: "2px solid gold",
+                          borderRadius: "10px",
+                          boxShadow: "0 2px 8px rgba(255, 215, 0, 0.4)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "black";
+                          e.currentTarget.style.color = "gold";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "gold";
+                          e.currentTarget.style.color = "black";
+                        }}
+                    >
+                        ยกเลิก
+                    </Button>,
+                    <Button 
+                        key="submit" 
+                        onClick={handleConfirmBuy}
+                        style={{
+                          backgroundColor: "gold",
+                          color: "black",
+                          fontWeight: "bold",
+                          border: "2px solid gold",
+                          borderRadius: "10px",
+                          boxShadow: "0 2px 8px rgba(255, 215, 0, 0.4)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "black";
+                          e.currentTarget.style.color = "gold";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "gold";
+                          e.currentTarget.style.color = "black";
+                        }}
+                    >
+                        ยืนยัน
+                    </Button>,
+                ]}
+            >
+                <div style={{ color: 'white' }}>
+                    
+                    {/* <h4 style={{ marginTop: '15px', color: '#f1d430ff' }}>ยืนยันคำสั่งซื้อ</h4> */}
+                    <p>ชื่อ-นามสกุล : </p>
+                    <p>รถยนต์ : {car.brand} {car.model} ปี {car.yearManufactured} </p>
+                    <p>ราคา : {car.price.toLocaleString()} บาท
+                    </p>
+                </div>
               </Modal>
+              
             </Space>
           </Card>
         </Col>

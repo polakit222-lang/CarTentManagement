@@ -42,14 +42,43 @@ const RentCarPage: React.FC = () => {
   const handleClear = () => setFilteredCars(cars);
 
   return (
-    <div style={{ display: "flex", marginTop: 60 }}>
-      <Filter cars={cars} onApply={handleApply} onClear={handleClear} />
-      <div style={{ marginLeft: 300, padding: 20, display: "flex", flexWrap: "wrap", gap: 20 }}>
-        {filteredCars
-          .filter(car => car.rent_list?.length) // ✅ โชว์เฉพาะรถที่ขาย
-          .map(car => (
-            <CarCard key={car.ID} car={car} type="rentView" />
-          ))}
+    <div style={{ minHeight: "100vh", backgroundColor: "#000", padding: "10px" }}>
+    {/* หัวข้อ */}
+    <Title
+      level={2}
+      style={{
+      color: "#fff",
+      margin: "0 0 20px 0",
+      display: "inline-block",
+      borderBottom: "3px solid gold", // เส้นขีดใต้ตัวหนังสือ
+      paddingBottom: "6px",
+      }}
+    >
+      เลือกรถยนต์ที่คุณต้องการเช่า
+    </Title>
+    {/* Container หลักแบบ Flex */}
+    <div style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}>
+      
+{/* ฝั่งซ้าย: ฟิลเตอร์ */}
+      <div style={{ width: "300px", flexShrink: 0, paddingTop: "2px" }}>
+        <Filter
+          carList={carList}
+          width={300}
+          enabledFilters={['brand', 'model', 'price', 'year']} // เลือกได้ว่าจะให้มี filter อะไรบ้าง
+          onApply={(v) => setFilters(v)}
+          onClear={() => setFilters(null)}
+        />
+      </div>
+
+      {/* ฝั่งขวา: Car Grid */}
+      <div
+        style={{
+          flex: 1,
+          paddingTop: "20px",
+        }}
+      >
+        <CarGrid cars={filteredCars} detailBasePath="/rentcar-details" />
+      </div>
       </div>
     </div>
   );

@@ -83,10 +83,14 @@ const BuyRentFillter: React.FC<Props> = ({
     [carList]
   ) as string[];
 
-  const priceNumbers = carList.map((c) => Number(c.price ?? 0)).filter((n) => !Number.isNaN(n));
-  const priceMinDefault = safeMin(priceNumbers, 0);
-  const priceMaxDefault = safeMax(priceNumbers, 1000000);
+  // const priceNumbers = carList.map((c) => Number(c.price ?? 0)).filter((n) => !Number.isNaN(n));
+  // const priceMinDefault = safeMin(priceNumbers, 0);
+  // const priceMaxDefault = safeMax(priceNumbers, 1000000);
 
+  const priceMinDefault = 0;
+  const priceMaxDefault = 9999999;
+
+  
   const yearNumbers = carList.map((c) => Number(c.yearManufactured ?? 0)).filter((n) => !Number.isNaN(n));
   const yearMinDefault = safeMin(yearNumbers, 1990);
   const yearMaxDefault = safeMax(yearNumbers, new Date().getFullYear());
@@ -245,7 +249,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>ยี่ห้อ</label>
         <Select
           placeholder="เลือกแบรนด์"
@@ -267,7 +271,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>รุ่น</label>
         <Select
           placeholder="เลือกรุ่น"
@@ -290,7 +294,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>ราคา (฿)</label>
       <Slider
         range
@@ -369,7 +373,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>อายุการใช้งาน (ปี)</label>
         <Slider
           range
@@ -411,7 +415,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>สภาพรถ</label>
         <Checkbox.Group
           options={[
@@ -434,7 +438,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>สิ่งอำนวยความสะดวก</label>
         <Checkbox.Group
           options={[
@@ -457,7 +461,7 @@ const BuyRentFillter: React.FC<Props> = ({
           color: '#9b9b9b',
           fontSize: 13,
           marginBottom: 8,
-          color: "white"
+          // color: "white"
         }}>สถานะรถยนต์</label>
         <Checkbox.Group
           options={[
@@ -465,6 +469,7 @@ const BuyRentFillter: React.FC<Props> = ({
             { label: 'กำลังให้เช่า', value: 'กำลังให้เช่า' },
             { label: 'ยังไม่ดำเนินการ', value: 'ยังไม่ดำเนินการ' },
           ]}
+          
           value={status}
           onChange={(checkedValues) => setStatus(checkedValues.map(v => String(v)))}
           style={{ color: 'white' }}
@@ -478,39 +483,45 @@ const BuyRentFillter: React.FC<Props> = ({
         onClick={handleClear}
         block
         style={{
-          backgroundColor: '#333',
-          color: 'gold',
-          border: '1px solid gold',
-          fontWeight: 'bold',
-          transition: 'all 0.2s ease-in-out',
+          backgroundColor: "gold",
+          color: "black",
+          fontWeight: "bold",
+          border: "2px solid gold",
+          borderRadius: "10px",
+          boxShadow: "0 2px 8px rgba(255, 215, 0, 0.4)",
         }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.backgroundColor = '#444')
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.backgroundColor = '#333')
-        }
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "black"
+          e.currentTarget.style.color = "gold"
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "gold"
+          e.currentTarget.style.color = "black"
+        }}
       >
         ล้าง
       </Button>
 
-            <Button
-        type="primary"
+      <Button
+        // type="primary"
         onClick={handleApply}
         block
         style={{
-          backgroundColor: 'gold',
-          color: '#1a1a1a',
-          fontWeight: 'bold',
-          border: 'none',
-          transition: 'all 0.2s ease-in-out',
+          backgroundColor: "gold",
+          color: "black",
+          fontWeight: "bold",
+          border: "2px solid gold",
+          borderRadius: "10px",
+          boxShadow: "0 2px 8px rgba(255, 215, 0, 0.4)",
         }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.backgroundColor = '#ffd700')
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.backgroundColor = 'gold')
-        }
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "black"
+          e.currentTarget.style.color = "gold"
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "gold"
+          e.currentTarget.style.color = "black"
+        }}
       >
         ใช้ตัวกรอง
       </Button>
