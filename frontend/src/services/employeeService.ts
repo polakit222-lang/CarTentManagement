@@ -1,4 +1,3 @@
-// src/services/employeeService.ts
 import type { Employee } from "../types/employee";
 
 const API = "http://localhost:8080";
@@ -45,14 +44,11 @@ export async function fetchEmployee(id: number): Promise<Employee> {
 export async function addEmployee(
   employee: Omit<Employee, "employeeID">
 ): Promise<Employee> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = { ...employee };
 
   // ✅ ลบ birthday ถ้าไม่กรอก
   if (!payload.birthday || String(payload.birthday).trim() === "") {
     delete payload.birthday;
-  } else if (payload.birthday instanceof Date) {
-    payload.birthday = payload.birthday.toISOString();
   }
 
   const res = await fetch(`${API}/api/employees`, {
@@ -74,10 +70,17 @@ export async function updateEmployee(employee: Employee): Promise<Employee> {
     throw new Error("updateEmployee requires employee.employeeID");
   }
 
+  const payload: any = { ...employee };
+
+  // ✅ ลบ birthday ถ้าไม่กรอก
+  if (!payload.birthday || String(payload.birthday).trim() === "") {
+    delete payload.birthday;
+  }
+
   const res = await fetch(`${API}/api/employees/${employee.employeeID}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(employee),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
