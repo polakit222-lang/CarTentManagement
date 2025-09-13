@@ -19,7 +19,6 @@ func ConnectDatabase(dbName string) {
 		log.Fatal("Failed to connect database:", err)
 	}
 
-	// AutoMigrate all tables
 	err = database.AutoMigrate(
 		&entity.Manager{},
 		&entity.Employee{},
@@ -45,7 +44,6 @@ func ConnectDatabase(dbName string) {
 		&entity.SubDistrict{},
 		&entity.Payment{},
 		&entity.LeaveRequest{},
-		&entity.Payment{},
 		&entity.PaymentMethod{},
 		&entity.Receipt{},
 	)

@@ -44,7 +44,7 @@ import MaProfilePage from '../pages/manager/profile/MaProfilePage'
 
 
 // Employee Pages 
-import HomePageEm from '../pages/employee/HomePageEm';
+import HomePageEm from '../pages/employee/Payment_forEmployee';
 import AppointmentDetailsPage from '../pages/employee/pickup-delivery/AppointmentDetailsPage';
 import AppointmentAll from '../pages/employee/pickup-delivery/AppointmentAll';
 import InspectionPage from '../pages/employee/inspection/InspectionPage';

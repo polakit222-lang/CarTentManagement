@@ -7,6 +7,7 @@ import (
 	"github.com/PanuAutawo/CarTentManagement/backend/configs"
 	"github.com/PanuAutawo/CarTentManagement/backend/controllers"
 	"github.com/PanuAutawo/CarTentManagement/backend/middleware"
+	"github.com/PanuAutawo/CarTentManagement/backend/services" // ✅ เพิ่ม import
 	"github.com/PanuAutawo/CarTentManagement/backend/setupdata"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -29,6 +30,7 @@ func main() {
 	setupdata.InsertMockInspections(configs.DB)
 	setupdata.InsertMockPickupDelivery(configs.DB)
 	setupdata.CreateSalesContracts(configs.DB)
+	setupdata.CreatePaymentMethods(configs.DB)
 	setupdata.CreatePayments(configs.DB)
 
 	// 3. Create router
@@ -55,8 +57,21 @@ func main() {
 	managerController := controllers.NewManagerController(configs.DB)
 	typeInformationController := controllers.NewTypeInformationController(configs.DB)
 	salesContractController := controllers.NewSalesContractController(configs.DB)
-	leaveController := controllers.NewLeaveController(configs.DB) // ✅ เพิ่ม LeaveController
+	leaveController := controllers.NewLeaveController(configs.DB)
 	rentListController := controllers.NewRentListController(configs.DB)
+
+	// ✅ เพิ่ม Payment/Receipt Services + Controllers
+	paymentService := services.NewPaymentService(configs.DB)
+	receiptService := services.NewReceiptService(configs.DB)
+
+	paymentController := &controllers.PaymentController{
+		Service:        paymentService,
+		ReceiptService: receiptService,
+	}
+	receiptController := &controllers.ReceiptController{
+		Service: receiptService,
+	}
+
 	// --- Routes ---
 
 	// Public Routes
@@ -64,12 +79,18 @@ func main() {
 	r.POST("/login", customerController.LoginCustomer)
 	r.POST("/employee/login", employeeController.LoginEmployee)
 	r.POST("/manager/login", managerController.LoginManager)
-	r.GET("/employees", employeeController.GetEmployees) // 👈 เพิ่มบรรทัดนี้
+	r.GET("/employees", employeeController.GetEmployees)
 
 	r.Static("/images/cars", "./public/images/cars")
+
+	// ✅ เสิร์ฟไฟล์ uploads/receipts
+	r.Static("/uploads", "./uploads")
+	r.Static("/static", "./static")
+
 	// Car Routes
 	r.GET("/cars", carController.GetAllCars)
 	r.GET("/cars/:id", carController.GetCarByID)
+
 	// Address Routes
 	provinceRoutes := r.Group("/provinces")
 	{
@@ -113,7 +134,6 @@ func main() {
 
 	// SalesContract Routes
 	salesContractRoutes := r.Group("/sales-contracts")
-
 	{
 		salesContractRoutes.POST("", salesContractController.CreateSalesContract)
 		salesContractRoutes.GET("", salesContractController.GetSalesContracts)
@@ -121,8 +141,9 @@ func main() {
 		salesContractRoutes.PUT("/:id", salesContractController.UpdateSalesContract)
 		salesContractRoutes.DELETE("/:id", salesContractController.DeleteSalesContract)
 		salesContractRoutes.GET("/employee/:employeeID", salesContractController.GetSalesContractsByEmployeeID)
-		salesContractRoutes.GET("/customer/:customerID", salesContractController.GetSalesContractsByCustomerID) // เพิ่ม route ใหม่
+		salesContractRoutes.GET("/customer/:customerID", salesContractController.GetSalesContractsByCustomerID)
 	}
+
 	// Inspection Appointment Routes
 	inspectionRoutes := r.Group("/inspection-appointments")
 	{
@@ -138,31 +159,17 @@ func main() {
 	// Pickup Delivery Routes
 	pickupDeliveryRoutes := r.Group("/pickup-deliveries")
 	{
-		{
-		// 1. ย้ายเส้นทางที่เฉพาะเจาะจงมากกว่าขึ้นมาไว้ด้านบน
 		pickupDeliveryRoutes.GET("", pickupDeliveryController.GetPickupDeliveries)
 		pickupDeliveryRoutes.GET("/employee/:employeeID", pickupDeliveryController.GetPickupDeliveriesByEmployeeID)
 		pickupDeliveryRoutes.GET("/customer/:customerID", pickupDeliveryController.GetPickupDeliveriesByCustomerID)
-		
-		// 2. เส้นทางที่ใช้พารามิเตอร์ทั่วไป (/:id) จะอยู่ถัดลงมา
 		pickupDeliveryRoutes.GET("/:id", pickupDeliveryController.GetPickupDeliveryByID)
-
-		// 3. เส้นทางสำหรับการสร้างและแก้ไขข้อมูล
 		pickupDeliveryRoutes.POST("", pickupDeliveryController.CreatePickupDelivery)
 		pickupDeliveryRoutes.PUT("/:id", pickupDeliveryController.UpdatePickupDelivery)
 		pickupDeliveryRoutes.PATCH("/:id/status", pickupDeliveryController.UpdatePickupDeliveryStatus)
 		pickupDeliveryRoutes.DELETE("/:id", pickupDeliveryController.DeletePickupDelivery)
 	}
-	}
 
-	//public Employee Routes (สำหรับดูข้อมูลพนักงาน)
-	// employeePublicRoutes := r.Group("/employees")
-	// {
-	// 	employeePublicRoutes.GET("", employeeController.GetEmployees)
-	// 	employeePublicRoutes.GET("/:id", employeeController.GetEmployeeByID)
-	// }
-
-	// ✅ New API Group (สำหรับ Manager + Leaves)
+	// ✅ New API Group
 	api := r.Group("/api")
 	{
 		// Leave Routes
@@ -177,6 +184,14 @@ func main() {
 		api.POST("/employees", employeeController.CreateEmployee)
 		api.PUT("/employees/:id", employeeController.UpdateEmployeeByID)
 		api.DELETE("/employees/:id", employeeController.DeleteEmployeeByID)
+
+		// 🔹 Payment Routes
+		api.GET("/payments", paymentController.List)
+		api.POST("/payments/:id/proof", paymentController.UploadProof)
+		api.PATCH("/payments/:id", paymentController.PatchStatus)
+
+		// 🔹 Receipt Routes
+		api.GET("/receipts/:paymentId", receiptController.ByPayment)
 	}
 
 	// Admin-Only Routes
@@ -186,12 +201,12 @@ func main() {
 		adminCustomerRoutes.PUT("/:id", customerController.UpdateCustomer)
 		adminCustomerRoutes.DELETE("/:id", customerController.DeleteCustomer)
 	}
+
 	rentListRoutes := r.Group("/rentlists")
 	{
 		rentListRoutes.GET("/:carId", rentListController.GetRentListsByCar)
 		rentListRoutes.PUT("", rentListController.CreateOrUpdateRentList)
 		rentListRoutes.DELETE("/date/:dateId", rentListController.DeleteRentDate)
-
 	}
 
 	// Start server

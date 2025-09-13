@@ -1,19 +1,28 @@
-import React from 'react';
-import {  Typography } from 'antd';
+import React, { useState } from "react";
+import PaymentList from "../../../components/PaymentForCustomer/PaymentList";
+import "../../../components/PaymentForCustomer/customer-payment.css";
 
-const { Title } = Typography;
+const CustomerPaymentPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState("ซื้อ");
 
-const PaymentPage: React.FC = () => {
+  return (
+    <div className="customer-payment-page">
+      <h1 className="page-title">💳 การชำระเงิน</h1>
+      <div className="tabs">
+        {["ซื้อ", "เช่า", "ประกัน"].map((tab) => (
+          <button
+            key={tab}
+            className={activeTab === tab ? "active" : ""}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
 
-
- return (
-    <div style={{  minHeight: '100vh' }}>
-
-        <Title level={2} style={{ color: 'white' }}>หน้าสำหรับการชำระเงิน</Title>
-        
-     
+      <PaymentList type={activeTab} />
     </div>
   );
 };
 
-export default PaymentPage;
+export default CustomerPaymentPage;
