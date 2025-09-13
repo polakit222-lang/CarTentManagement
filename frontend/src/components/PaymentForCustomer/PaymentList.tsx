@@ -58,7 +58,7 @@ const PaymentList: React.FC<{ type: string }> = ({ type }) => {
                   </button>
                 )}
                 {payment.status === "ชำระแล้ว" && (
-                  <ReceiptButton paymentId={payment.id} />  
+                  <ReceiptButton paymentId={payment.id} />
                 )}
               </div>
             </div>

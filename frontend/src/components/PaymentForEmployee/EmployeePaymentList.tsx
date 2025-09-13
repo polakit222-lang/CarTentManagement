@@ -17,7 +17,6 @@ const EmployeePaymentList: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [filter, setFilter] = useState<string>("ทั้งหมด");
 
-  // ✅ โหลดรายการชำระเงิน
   const fetchPayments = () => {
     axios
       .get("http://localhost:8080/api/payments")
@@ -38,9 +37,8 @@ const EmployeePaymentList: React.FC = () => {
     <div className="employee-payment-page">
       <h2 className="section-title">การชำระเงินทั้งหมด</h2>
 
-      {/* ✅ Tabs Filter */}
       <div className="status-tabs">
-        {["ทั้งหมด", "รอตรวจสอบ", "ชำระแล้ว", "ปฏิเสธ"].map((s) => (
+        {["ทั้งหมด", "รอตรวจสอบ", "ชำระแล้ว", "ถูกปฏิเสธ"].map((s) => (
           <button
             key={s}
             className={filter === s ? "active" : ""}
@@ -75,7 +73,7 @@ const EmployeePaymentList: React.FC = () => {
         <EmployeePaymentDetail
           payment={selectedPayment}
           onClose={() => setSelectedPayment(null)}
-          onUpdated={fetchPayments} // ✅ ส่ง callback มาด้วย
+          onUpdated={fetchPayments}
         />
       )}
     </div>

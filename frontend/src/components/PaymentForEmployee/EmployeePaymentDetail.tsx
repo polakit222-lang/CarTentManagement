@@ -14,11 +14,10 @@ interface Payment {
 interface Props {
   payment: Payment;
   onClose: () => void;
-  onUpdated: () => void; // ✅ เพิ่ม callback ให้ refresh list
+  onUpdated: () => void;
 }
 
 const EmployeePaymentDetail: React.FC<Props> = ({ payment, onClose, onUpdated }) => {
-  // ✅ ฟังก์ชันเปลี่ยนสถานะ
   const updateStatus = async (status: string) => {
     if (!payment?.id) {
       alert("❌ ไม่พบ Payment ID");
@@ -27,11 +26,11 @@ const EmployeePaymentDetail: React.FC<Props> = ({ payment, onClose, onUpdated })
 
     try {
       await axios.patch(`http://localhost:8080/api/payments/${payment.id}`, {
-        status, // ✅ ต้องเป็น key ตัวเล็ก
+        status,
       });
       alert(`✅ อัปเดตสถานะเป็น "${status}" สำเร็จ`);
-      onUpdated(); // refresh หน้า list
-      onClose();   // ปิด modal
+      onUpdated();
+      onClose();
     } catch (err) {
       console.error(err);
       alert("❌ ไม่สามารถอัปเดตสถานะได้");
@@ -50,7 +49,6 @@ const EmployeePaymentDetail: React.FC<Props> = ({ payment, onClose, onUpdated })
         <p>พนักงาน: {payment.employee?.name || "ไม่ทราบ"}</p>
 
         <div className="modal-actions">
-          {/* ✅ ปุ่มใหม่ */}
           <button
             className="btn-success"
             onClick={() => updateStatus("ชำระแล้ว")}
@@ -59,7 +57,7 @@ const EmployeePaymentDetail: React.FC<Props> = ({ payment, onClose, onUpdated })
           </button>
           <button
             className="btn-danger"
-            onClick={() => updateStatus("ปฏิเสธ")}
+            onClick={() => updateStatus("ถูกปฏิเสธ")}
           >
             ปฏิเสธ
           </button>
